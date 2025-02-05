@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct HelloWorldApp: App {
+struct NickelApp: App {
     var body: some Scene {
         WindowGroup {
-            MainTabView()        }
+            MainTabView()
+        }
     }
 }
-

@@ -22,7 +22,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                TextField("Enter social media URL", text: $urlInput)
+                TextField("Enter video URL", text: $urlInput)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .keyboardType(.URL)
                     .autocapitalization(.none)
@@ -50,7 +50,7 @@ struct ContentView: View {
                 .padding(.horizontal)
                 .disabled(isLoading)
             }
-            .navigationTitle("Video Downloader")
+            .navigationTitle("Nickel")
             .sheet(item: $downloadedVideoURL) { identifiableURL in
                 ShareSheet(activityItems: [identifiableURL.url])
             }
