@@ -72,6 +72,7 @@ struct ContentView: View {
             do {
                 let videoURL = try await DownloadManager.shared.fetchCobaltURL(inputURL: url)
                 downloadedVideoURL = IdentifiableURL(url: videoURL)
+                print("Download sucessfull")
             } catch {
                 errorMessage = error.localizedDescription
             }

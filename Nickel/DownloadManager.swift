@@ -94,10 +94,56 @@ class DownloadManager {
     }
     
     func downloadVideoFile(from url: URL) async throws -> URL {
+        clearTempFolder()
         let (downloadURL, _) = try await URLSession.shared.download(from: url)
         let tempDir = FileManager.default.temporaryDirectory
         let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".mp4")
-        try FileManager.default.moveItem(at: downloadURL, to: targetURL)
+
+        printTempFolderContents(context: "Before moving file")
+
+        do {
+            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
+            print("✅ File moved successfully to: \(targetURL)")
+        } catch {
+            print("❌ Error moving file: \(error.localizedDescription)")
+        }
+
+        // Verify if the file exists
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            print("✅ File exists at: \(targetURL)")
+        } else {
+            print("⚠️ File does NOT exist at expected location!")
+        }
+
+        printTempFolderContents(context: "After moving file")
+
         return targetURL
     }
+    
+    private func clearTempFolder() {
+        let tempDir = FileManager.default.temporaryDirectory
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+            for file in files {
+                try FileManager.default.removeItem(at: file)
+            }
+            print("🧹 Temp folder cleared. Removed \(files.count) files.")
+        } catch {
+            print("❌ Error clearing temp folder: \(error.localizedDescription)")
+        }
+    }
+    
+    private func printTempFolderContents(context: String) {
+        let tempDir = FileManager.default.temporaryDirectory
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+            print("📂 \(context): Temp folder contains \(files.count) files:")
+            for file in files {
+                print("  - \(file.lastPathComponent)")
+            }
+        } catch {
+            print("❌ Error accessing temp folder: \(error.localizedDescription)")
+        }
+    }
+
 }
