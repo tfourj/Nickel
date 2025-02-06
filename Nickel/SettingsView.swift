@@ -10,7 +10,12 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("customAPIURL") private var customAPIURL: String = ""
     @AppStorage("customAPIKey") private var customAPIKey: String = ""
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false  // Add this line
+    @AppStorage("authMethod") private var authMethod: String = "API Key"
+    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
+    
+    @State private var showAPIKey = false
+    
+    let authMethods = ["Authorization: Bearer", "API Key"]
     
     var body: some View {
         NavigationView {
@@ -20,8 +25,27 @@ struct SettingsView: View {
                         .autocapitalization(.none)
                         .keyboardType(.URL)
                     
-                    TextField("API Key", text: $customAPIKey)
-                        .autocapitalization(.none)
+                    Picker("Authentication Method", selection: $authMethod) {
+                        ForEach(authMethods, id: \.self) { method in
+                            Text(method)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    
+                    if showAPIKey {
+                        TextField("Auth Key", text: $customAPIKey)
+                            .autocapitalization(.none)
+                            .transition(.opacity)
+                    }
+                    
+                    Button(action: {
+                        withAnimation {
+                            showAPIKey.toggle()
+                        }
+                    }) {
+                        Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
+                            .foregroundColor(.blue)
+                    }
                 }
                 
                 Section(header: Text("Video Settings")) {
@@ -41,4 +65,3 @@ struct SettingsView_Previews: PreviewProvider {
         SettingsView()
     }
 }
-

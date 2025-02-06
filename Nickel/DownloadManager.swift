@@ -12,14 +12,14 @@ class DownloadManager {
     static let shared = DownloadManager()
     
     // Default values; these will be used if custom values aren’t set in Settings.
-    private let defaultAPIURLString = ""
-    private let defaultAuthKey = ""
-    private let authType = "Api-Key"
+    private let NONE = ""
+    private let defaultAuthType = "Api-Key"
     
     func fetchCobaltURL(inputURL: URL) async throws -> URL {
         // Get custom API URL and key from UserDefaults, or fall back to defaults.
-        let storedAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? defaultAPIURLString
-        let storedAPIKey = UserDefaults.standard.string(forKey: "customAPIKey") ?? defaultAuthKey
+        let storedAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? NONE
+        let storedAPIKey = UserDefaults.standard.string(forKey: "customAPIKey") ?? NONE
+        let authType = UserDefaults.standard.string(forKey: "authMethod") ?? defaultAuthType
         
         guard let apiURL = URL(string: storedAPIURL) else {
             throw NSError(domain: "ConfigError", code: 0,
