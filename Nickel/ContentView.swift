@@ -9,7 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct IdentifiableURL: Identifiable {
-    let id = UUID()  // Unique identifier
+    let id = UUID()
     let url: URL
 }
 
@@ -17,7 +17,10 @@ struct ContentView: View {
     @State private var urlInput = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
+    @State private var isSuccessMessage = false
     @State private var downloadedVideoURL: IdentifiableURL?
+    
+    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false  // Accessing autoSave setting
     
     var body: some View {
         NavigationView {
@@ -35,7 +38,7 @@ struct ContentView: View {
                 
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
-                        .foregroundColor(.red)
+                        .foregroundColor(isSuccessMessage ? .white : .red)
                         .padding()
                 }
                 
@@ -51,9 +54,6 @@ struct ContentView: View {
                 .disabled(isLoading)
             }
             .navigationTitle("Nickel")
-            .sheet(item: $downloadedVideoURL) { identifiableURL in
-                ShareSheet(activityItems: [identifiableURL.url])
-            }
         }
         .preferredColorScheme(.dark)
     }
@@ -62,6 +62,7 @@ struct ContentView: View {
         guard let url = URL(string: urlInput),
               UIApplication.shared.canOpenURL(url) else {
             errorMessage = "Invalid URL"
+            isSuccessMessage = false
             return
         }
         
@@ -72,18 +73,44 @@ struct ContentView: View {
             do {
                 let videoURL = try await DownloadManager.shared.fetchCobaltURL(inputURL: url)
                 downloadedVideoURL = IdentifiableURL(url: videoURL)
-                print("Download sucessfull")
+                errorMessage = "Download successful"
+                isSuccessMessage = true
+                urlInput = ""  // Clear input field
+                
+                // If autoSaveToPhotos is enabled, save video directly to Photos
+                if autoSaveToPhotos {
+                    UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, nil, nil, nil)
+                    errorMessage = "Saved to Photos"
+                    isSuccessMessage = true
+                } else {
+                    DispatchQueue.main.async {
+                        downloadedVideoURL = IdentifiableURL(url: videoURL)
+                        showShareSheet()
+                    }
+
+                }
+                
             } catch {
                 errorMessage = error.localizedDescription
+                isSuccessMessage = false
             }
             isLoading = false
         }
     }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+    
+    private func showShareSheet() {
+        if let downloadedVideoURL = downloadedVideoURL {
+            // Trigger ShareSheet in your other file
+            let shareSheet = ShareSheet(activityItems: [downloadedVideoURL.url])
+            
+            // Manually present the ShareSheet here
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let topController = scene.windows.first?.rootViewController {
+                let hostingController = UIHostingController(rootView: shareSheet)
+                topController.present(hostingController, animated: true, completion: nil)
+                errorMessage = "Share sheet opened"
+                isSuccessMessage = true
+            }
+        }
     }
 }
-
