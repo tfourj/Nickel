@@ -15,7 +15,7 @@ struct SettingsView: View {
     
     @State private var showAPIKey = false
     
-    let authMethods = ["Authorization: Bearer", "API Key"]
+    let authMethods = ["Bearer", "Api-Key"]
     
     var body: some View {
         NavigationView {
