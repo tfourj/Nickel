@@ -20,16 +20,42 @@ struct ContentView: View {
     @State private var isSuccessMessage = false
     @State private var downloadedVideoURL: IdentifiableURL?
     
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false  // Accessing autoSave setting
+    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
     
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                TextField("Enter video URL", text: $urlInput)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.URL)
-                    .autocapitalization(.none)
-                    .padding()
+                HStack {
+                    TextField("Enter video URL", text: $urlInput)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                        .padding()
+                    
+                    // Right-side button (Paste or Clear)
+                    Button(action: {
+                        if urlInput.isEmpty {
+                            pasteURL()
+                        } else {
+                            urlInput = ""
+                        }
+                    }) {
+                        Image(systemName: urlInput.isEmpty ? "doc.on.clipboard" : "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.trailing, 10)
+                }
+                
+                Button(action: downloadVideo) {
+                    Label("Download", systemImage: "arrow.down.circle")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .disabled(isLoading)
+                .padding(.horizontal)
                 
                 if isLoading {
                     ProgressView()
@@ -41,17 +67,6 @@ struct ContentView: View {
                         .foregroundColor(isSuccessMessage ? .white : .red)
                         .padding()
                 }
-                
-                Button(action: downloadVideo) {
-                    Text("Download Video")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .padding(.horizontal)
-                .disabled(isLoading)
             }
             .navigationTitle("Nickel")
         }
@@ -75,9 +90,8 @@ struct ContentView: View {
                 downloadedVideoURL = IdentifiableURL(url: videoURL)
                 errorMessage = "Download successful"
                 isSuccessMessage = true
-                urlInput = ""  // Clear input field
+                urlInput = ""
                 
-                // If autoSaveToPhotos is enabled, save video directly to Photos
                 if autoSaveToPhotos {
                     UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, nil, nil, nil)
                     errorMessage = "Saved to Photos"
@@ -87,7 +101,6 @@ struct ContentView: View {
                         downloadedVideoURL = IdentifiableURL(url: videoURL)
                         showShareSheet()
                     }
-
                 }
                 
             } catch {
@@ -98,12 +111,20 @@ struct ContentView: View {
         }
     }
     
+    private func pasteURL() {
+        if let clipboardText = UIPasteboard.general.string {
+            urlInput = clipboardText
+            downloadVideo()
+        } else {
+            errorMessage = "Clipboard is empty"
+            isSuccessMessage = false
+        }
+    }
+    
     private func showShareSheet() {
         if let downloadedVideoURL = downloadedVideoURL {
-            // Trigger ShareSheet in your other file
             let shareSheet = ShareSheet(activityItems: [downloadedVideoURL.url])
             
-            // Manually present the ShareSheet here
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let topController = scene.windows.first?.rootViewController {
                 let hostingController = UIHostingController(rootView: shareSheet)
@@ -114,3 +135,6 @@ struct ContentView: View {
         }
     }
 }
+
+
+
