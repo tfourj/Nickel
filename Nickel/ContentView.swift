@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  Nickel
-//
-//  Created by TfourJ on 5. 2. 25.
-//
-
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -14,14 +7,15 @@ struct IdentifiableURL: Identifiable {
 }
 
 struct ContentView: View {
+    @Environment(\.scenePhase) var scenePhase
     @State private var urlInput = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
     @State private var isSuccessMessage = false
     @State private var downloadedVideoURL: IdentifiableURL?
-    
+
     @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
@@ -71,8 +65,25 @@ struct ContentView: View {
             .navigationTitle("Nickel")
         }
         .preferredColorScheme(.dark)
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                errorMessage = ""
+                checkForSharedURL()
+            }
+        }
     }
-    
+
+    private func checkForSharedURL() {
+        print("check for sharedurl called!")
+        let sharedDefaults = UserDefaults(suiteName: "group.com.tfourj.nickel")
+        if let sharedURL = sharedDefaults?.string(forKey: "sharedURL"), !sharedURL.isEmpty {
+            print(sharedURL)
+            urlInput = sharedURL
+            sharedDefaults?.removeObject(forKey: "sharedURL") // Clear it after use
+            downloadVideo() // Auto-start download
+        }
+    }
+
     private func downloadVideo() {
         guard let url = URL(string: urlInput),
               UIApplication.shared.canOpenURL(url) else {
@@ -106,11 +117,12 @@ struct ContentView: View {
             } catch {
                 errorMessage = error.localizedDescription
                 isSuccessMessage = false
+                urlInput = ""
             }
             isLoading = false
         }
     }
-    
+
     private func pasteURL() {
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
@@ -120,7 +132,7 @@ struct ContentView: View {
             isSuccessMessage = false
         }
     }
-    
+
     private func showShareSheet() {
         if let downloadedVideoURL = downloadedVideoURL {
             let shareSheet = ShareSheet(activityItems: [downloadedVideoURL.url])
@@ -135,6 +147,3 @@ struct ContentView: View {
         }
     }
 }
-
-
-
