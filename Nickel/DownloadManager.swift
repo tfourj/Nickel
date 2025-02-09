@@ -144,6 +144,7 @@ class DownloadManager {
             }
         } else {
             fileExtension = extractedExtension
+            logOutput("Automatically fetched file extension: \(extractedExtension)")
         }
 
         let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")

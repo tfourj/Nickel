@@ -34,6 +34,14 @@ struct ConsoleView: View {
                     .font(.system(.footnote, design: .monospaced))
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .contextMenu {
+                        Button(action: {
+                            UIPasteboard.general.string = logger.log
+                        }) {
+                            Text("Copy")
+                            Image(systemName: "doc.on.doc.fill")
+                        }
+                    }
             }
             .navigationTitle("Console")
             .onAppear {
