@@ -33,51 +33,95 @@ struct ContentView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack(spacing: 10) {
                 HStack {
-                    TextField("Enter video URL", text: $urlInput)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.URL)
-                        .autocapitalization(.none)
-                        .padding()
                     
-                    // Right-side button (Paste or Clear)
-                    Button(action: {
-                        if urlInput.isEmpty {
-                            pasteURL()
-                        } else {
-                            urlInput = ""
-                        }
-                    }) {
-                        Image(systemName: urlInput.isEmpty ? "doc.on.clipboard" : "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.trailing, 10)
-                }
-                
-                Button(action: downloadVideo) {
-                    Label("Download", systemImage: "arrow.down.circle")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
+                    Image("Nickel") // Replace with your actual asset name
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80) // Adjust size as needed
+                    
+                    Text("Nickel")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                        .cornerRadius(10)
                 }
-                .disabled(isLoading)
-                .padding(.horizontal)
+
+                Spacer()
                 
                 if isLoading {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                 }
-                
+
+                // Centered Error or Success Message
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
+                        .fontWeight(.semibold)
                         .foregroundColor(isSuccessMessage ? .white : .red)
                         .padding()
+                        .background(Color.black.opacity(0.2))
+                        .cornerRadius(10)
+                        .multilineTextAlignment(.center) // Keep text centered
+                        .frame(maxWidth: .infinity) // Stretch to center
+                        .padding(.horizontal, 24) // Add padding
                 }
+
+                Spacer()
+
+                // Bottom Section: Input Field + Download Button
+                VStack(spacing: 15) {
+                    // URL Input + Paste Button - Unified Design
+                    HStack {
+                        TextField("Enter video URL", text: $urlInput)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .padding()
+                            .frame(height: 50)
+                            .background(Color.black.opacity(0.05))
+                            .cornerRadius(10)
+
+                        Button(action: {
+                            if urlInput.isEmpty {
+                                pasteURL()
+                            } else {
+                                urlInput = ""
+                            }
+                        }) {
+                            Image(systemName: urlInput.isEmpty ? "doc.on.clipboard" : "xmark.circle.fill")
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    .padding(8)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 24)
+
+                    // Download Button - Unified Style
+                    Button(action: downloadVideo) {
+                        HStack {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.title2)
+                            Text("Download")
+                                .fontWeight(.bold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 5)
+                    }
+                    .disabled(isLoading)
+                    .padding(.horizontal, 24)
+                }
+                .offset(y: -50) // Moves the input field and button up a little
             }
-            .navigationTitle("Nickel")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black.ignoresSafeArea())
         }
         .preferredColorScheme(.dark)
         .onChange(of: scenePhase) {
@@ -87,45 +131,45 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showPicker) {
-            VStack {
-                Text("Select a Download Option")
-                    .font(.headline)
-                    .padding()
-                
-                List(pickerOptions, id: \.id) { option in
-                    Button(action: {
-                        selectPickerOption(option)
-                    }) {
-                        HStack {
-                            // Conditionally display either an image or a music note icon
-                            if option.label.contains("audio") {  // Check if label contains "audio"
-                                Image(systemName: "music.note")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 50, height: 50)
-                            } else {
-                                // Image preview
-                                AsyncImage(url: option.url) { image in
-                                    image.resizable()
-                                        .scaledToFit()
-                                        .frame(width: 50, height: 50)
-                                } placeholder: {
-                                    ProgressView()
+                    VStack {
+                        Text("Select a Download Option")
+                            .font(.headline)
+                            .padding()
+                        
+                        List(pickerOptions, id: \.id) { option in
+                            Button(action: {
+                                selectPickerOption(option)
+                            }) {
+                                HStack {
+                                    // Conditionally display either an image or a music note icon
+                                    if option.label.contains("audio") {  // Check if label contains "audio"
+                                        Image(systemName: "music.note")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 50, height: 50)
+                                    } else {
+                                        // Image preview
+                                        AsyncImage(url: option.url) { image in
+                                            image.resizable()
+                                                .scaledToFit()
+                                                .frame(width: 50, height: 50)
+                                        } placeholder: {
+                                            ProgressView()
+                                        }
+                                    }
+                                    
+                                    Text(option.label)
+                                        .padding(.leading)
                                 }
                             }
-                            
-                            Text(option.label)
-                                .padding(.leading)
                         }
                     }
+                    .id(listRefreshID)
+                    .onAppear {
+                        logOutput("Picker appeared with \(pickerOptions.count) options")
+                        listRefreshID = UUID() // Trigger a refresh
+                    }
                 }
-            }
-            .id(listRefreshID)
-            .onAppear {
-                logOutput("Picker appeared with \(pickerOptions.count) options")
-                listRefreshID = UUID() // Trigger a refresh
-            }
-        }
     }
 
     private func checkForSharedURL() {
@@ -144,7 +188,6 @@ struct ContentView: View {
               UIApplication.shared.canOpenURL(url) else {
             errorMessage = "Invalid URL"
             isSuccessMessage = false
-            urlInput = ""
             return
         }
         
@@ -161,6 +204,8 @@ struct ContentView: View {
                     
                 case .pickerOptions(let options):
                     DispatchQueue.main.async {
+                        errorMessage = "Please select option from menu"
+                        isSuccessMessage = true
                         pickerOptions = options
                         listRefreshID = UUID()  // Force list refresh
                         logOutput("Picker options: \(pickerOptions)")  // Log to verify the options are populated
