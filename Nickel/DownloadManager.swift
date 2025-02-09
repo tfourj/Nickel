@@ -45,6 +45,7 @@ class DownloadManager {
         
         // Set the Authorization header
         let authValue = "\(authType) \(storedAPIKey)"
+        logOutput("Auth Value: \(authValue)")
         request.setValue(authValue, forHTTPHeaderField: "Authorization")
         
         // Send the request

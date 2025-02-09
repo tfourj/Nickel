@@ -18,6 +18,14 @@ struct SettingsView: View {
     
     let authMethods = ["Bearer", "Api-Key"]
     
+    // Reading version from Info.plist
+    var appVersion: String {
+        guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            return "Unknown"
+        }
+        return version
+    }
+
     var body: some View {
         NavigationView {
             Form {
@@ -49,12 +57,25 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section(header: Text("Aditional Settings")) {
+                Section(header: Text("Additional Settings")) {
                     Toggle(isOn: $autoSaveToPhotos) {
                         Text("Automatically Save to Photos")
                     }
                     Toggle(isOn: $enableConsole) {
                         Text("Enable Console")
+                    }
+                }
+                
+                // Footer section for version and name
+                Section {
+                    HStack {
+                        Text(appVersion)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text("By TfourJ")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
                     }
                 }
             }
@@ -66,3 +87,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
 }
+
+

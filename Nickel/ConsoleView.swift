@@ -15,8 +15,10 @@ final class ConsoleLogger: ObservableObject {
 }
 
 func logOutput(_ message: String) {
-    // Append the message to the custom console log
-    ConsoleLogger.shared.appendLog(message)
+    let enableConsole = UserDefaults.standard.bool(forKey: "enableConsole")
+    if enableConsole {
+        ConsoleLogger.shared.appendLog(message)
+    }
     // Print the message to Xcode's console
     print(message)
 }
