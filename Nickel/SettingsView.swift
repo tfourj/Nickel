@@ -10,8 +10,9 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("customAPIURL") private var customAPIURL: String = ""
     @AppStorage("customAPIKey") private var customAPIKey: String = ""
-    @AppStorage("authMethod") private var authMethod: String = "API Key"
+    @AppStorage("authMethod") private var authMethod: String = "Api-Key"
     @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
+    @AppStorage("enableConsole") private var enableConsole: Bool = false
     
     @State private var showAPIKey = false
     
@@ -48,11 +49,13 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section(header: Text("Video Settings")) {
+                Section(header: Text("Aditional Settings")) {
                     Toggle(isOn: $autoSaveToPhotos) {
                         Text("Automatically Save to Photos")
                     }
-                    .padding(.vertical)
+                    Toggle(isOn: $enableConsole) {
+                        Text("Enable Console")
+                    }
                 }
             }
             .navigationTitle("Settings")
@@ -60,8 +63,6 @@ struct SettingsView: View {
     }
 }
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-    }
+#Preview {
+    SettingsView()
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @AppStorage("enableConsole") var enableConsole: Bool = false
     var body: some View {
         TabView {
             ContentView()
@@ -19,6 +20,13 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
+            
+            if enableConsole {
+                ConsoleView()
+                    .tabItem {
+                        Label("Console", systemImage: "terminal.fill")
+                    }
+            }
         }
     }
 }

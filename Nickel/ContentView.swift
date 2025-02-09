@@ -74,10 +74,10 @@ struct ContentView: View {
     }
 
     private func checkForSharedURL() {
-        print("check for sharedurl called!")
+        logOutput("check for sharedurl called!")
         let sharedDefaults = UserDefaults(suiteName: "group.com.tfourj.nickel")
         if let sharedURL = sharedDefaults?.string(forKey: "sharedURL"), !sharedURL.isEmpty {
-            print(sharedURL)
+            logOutput(sharedURL)
             urlInput = sharedURL
             sharedDefaults?.removeObject(forKey: "sharedURL") // Clear it after use
             downloadVideo() // Auto-start download

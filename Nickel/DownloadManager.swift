@@ -103,16 +103,16 @@ class DownloadManager {
 
         do {
             try FileManager.default.moveItem(at: downloadURL, to: targetURL)
-            print("✅ File moved successfully to: \(targetURL)")
+            logOutput("✅ File moved successfully to: \(targetURL)")
         } catch {
-            print("❌ Error moving file: \(error.localizedDescription)")
+            logOutput("❌ Error moving file: \(error.localizedDescription)")
         }
 
         // Verify if the file exists
         if FileManager.default.fileExists(atPath: targetURL.path) {
-            print("✅ File exists at: \(targetURL)")
+            logOutput("✅ File exists at: \(targetURL)")
         } else {
-            print("⚠️ File does NOT exist at expected location!")
+            logOutput("⚠️ File does NOT exist at expected location!")
         }
 
         printTempFolderContents(context: "After moving file")
@@ -127,9 +127,9 @@ class DownloadManager {
             for file in files {
                 try FileManager.default.removeItem(at: file)
             }
-            print("🧹 Temp folder cleared. Removed \(files.count) files.")
+            logOutput("🧹 Temp folder cleared. Removed \(files.count) files.")
         } catch {
-            print("❌ Error clearing temp folder: \(error.localizedDescription)")
+            logOutput("❌ Error clearing temp folder: \(error.localizedDescription)")
         }
     }
     
@@ -137,12 +137,12 @@ class DownloadManager {
         let tempDir = FileManager.default.temporaryDirectory
         do {
             let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
-            print("📂 \(context): Temp folder contains \(files.count) files:")
+            logOutput("📂 \(context): Temp folder contains \(files.count) files:")
             for file in files {
-                print("  - \(file.lastPathComponent)")
+                logOutput("  - \(file.lastPathComponent)")
             }
         } catch {
-            print("❌ Error accessing temp folder: \(error.localizedDescription)")
+            logOutput("❌ Error accessing temp folder: \(error.localizedDescription)")
         }
     }
 
