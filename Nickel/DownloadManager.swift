@@ -15,7 +15,12 @@ class DownloadManager {
     private let NONE = ""
     private let defaultAuthType = "Api-Key"
     
-    func fetchCobaltURL(inputURL: URL) async throws -> URL {
+    enum CobaltDownloadResult {
+        case success(URL)
+        case pickerOptions([PickerOption])
+    }
+
+    func fetchCobaltURL(inputURL: URL) async throws -> CobaltDownloadResult {
         // Get custom API URL and key from UserDefaults, or fall back to defaults.
         let storedAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? NONE
         let storedAPIKey = UserDefaults.standard.string(forKey: "customAPIKey") ?? NONE
@@ -75,19 +80,31 @@ class DownloadManager {
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract URL from JSON"])
             }
-            return try await downloadVideoFile(from: mediaURL)
+            return .success(try await downloadVideoFile(from: mediaURL))
+            
         case "picker":
-            throw NSError(domain: "CobaltAPI", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "Multiple options available. Please refine your selection."])
-        case "error":
-            if let errorObject = jsonObject["error"] as? [String: Any],
-               let errorCode = errorObject["code"] as? String {
-                throw NSError(domain: "CobaltAPI", code: 1,
-                              userInfo: [NSLocalizedDescriptionKey: "API returned an error: \(errorCode)"])
-            } else {
-                throw NSError(domain: "CobaltAPI", code: 1,
-                              userInfo: [NSLocalizedDescriptionKey: "An error occurred while processing your request."])
+            // Now accessing the correct 'picker' array
+            guard let pickerArray = jsonObject["picker"] as? [[String: Any]] else {
+                throw NSError(domain: "ParsingError", code: 0,
+                              userInfo: [NSLocalizedDescriptionKey: "Failed to extract picker options"])
             }
+            
+            let options = pickerArray.compactMap { item -> PickerOption? in
+                guard let urlString = item["url"] as? String, let url = URL(string: urlString) else { return nil }
+                
+                let type = item["type"] as? String ?? "Unknown"
+                return PickerOption(label: type, url: url)
+            }
+            
+            // Log the options for debugging
+            logOutput("Picker options: \(options)")
+
+            return .pickerOptions(options)
+            
+        case "error":
+            throw NSError(domain: "CobaltAPI", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "API returned an error."])
+            
         default:
             throw NSError(domain: "CobaltAPI", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected API response."])
@@ -114,6 +131,60 @@ class DownloadManager {
             logOutput("✅ File exists at: \(targetURL)")
         } else {
             logOutput("⚠️ File does NOT exist at expected location!")
+        }
+
+        printTempFolderContents(context: "After moving file")
+
+        return targetURL
+    }
+    
+    func downloadImageFile(from url: URL) async throws -> URL {
+        clearTempFolder()
+        let (downloadURL, _) = try await URLSession.shared.download(from: url)
+        let tempDir = FileManager.default.temporaryDirectory
+        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".jpg") // Assuming JPG for simplicity, you can adjust the file extension
+
+        printTempFolderContents(context: "Before moving file")
+
+        do {
+            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
+            logOutput("✅ Image file moved successfully to: \(targetURL)")
+        } catch {
+            logOutput("❌ Error moving file: \(error.localizedDescription)")
+        }
+
+        // Verify if the file exists
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            logOutput("✅ Image file exists at: \(targetURL)")
+        } else {
+            logOutput("⚠️ Image file does NOT exist at expected location!")
+        }
+
+        printTempFolderContents(context: "After moving file")
+
+        return targetURL
+    }
+    
+    func downloadAudioFile(from url: URL) async throws -> URL {
+        clearTempFolder()
+        let (downloadURL, _) = try await URLSession.shared.download(from: url)
+        let tempDir = FileManager.default.temporaryDirectory
+        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".mp3") // Assuming MP3 for simplicity, adjust as needed
+
+        printTempFolderContents(context: "Before moving file")
+
+        do {
+            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
+            logOutput("✅ Audio file moved successfully to: \(targetURL)")
+        } catch {
+            logOutput("❌ Error moving file: \(error.localizedDescription)")
+        }
+
+        // Verify if the file exists
+        if FileManager.default.fileExists(atPath: targetURL.path) {
+            logOutput("✅ Audio file exists at: \(targetURL)")
+        } else {
+            logOutput("⚠️ Audio file does NOT exist at expected location!")
         }
 
         printTempFolderContents(context: "After moving file")
