@@ -18,24 +18,41 @@ class ShareViewController: UIViewController {
     private func handleSharedURL() {
         print("checking url")
         guard let item = extensionContext?.inputItems.first as? NSExtensionItem,
-              let itemProvider = item.attachments?.first else {
+              let attachments = item.attachments else {
             dismissExtension()
             return
         }
         
-        // Check if the attachment conforms to the URL type.
-        if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-            itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] (loadedItem, error) in
-                if let url = loadedItem as? URL {
-                    print("Shared URL: \(url)")
-                    self?.sendURLToMainApp(url: url)
-                } else {
-                    self?.dismissExtension()
+        // Iterate over all attachments to try different type identifiers.
+        for itemProvider in attachments {
+            // First try the URL type.
+            if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+                itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] (loadedItem, error) in
+                    if let url = loadedItem as? URL {
+                        print("Shared URL: \(url)")
+                        self?.sendURLToMainApp(url: url)
+                    } else {
+                        self?.dismissExtension()
+                    }
                 }
+                return
             }
-        } else {
-            dismissExtension()
+            // If no URL, check for plain text.
+            else if itemProvider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                itemProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] (loadedItem, error) in
+                    if let text = loadedItem as? String, let url = URL(string: text) {
+                        print("Converted text to URL: \(url)")
+                        self?.sendURLToMainApp(url: url)
+                    } else {
+                        self?.dismissExtension()
+                    }
+                }
+                return
+            }
         }
+        
+        // If none of the expected types are found, dismiss the extension.
+        dismissExtension()
     }
     
     private func sendURLToMainApp(url: URL) {
