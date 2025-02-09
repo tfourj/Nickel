@@ -165,17 +165,19 @@ struct ContentView: View {
                 if fileExtension == "mp4" {
                     // Download video
                     downloadURL = try await DownloadManager.shared.downloadVideoFile(from: option.url)
+                    handleDownloadSuccess(downloadURL) // Normal behavior
                 } else if fileExtension == "jpg" || fileExtension == "png" || fileExtension == "jpeg" {
                     // Download image
                     downloadURL = try await DownloadManager.shared.downloadImageFile(from: option.url)
+                    handleDownloadSuccess(downloadURL, forceShare: true) // Force share sheet
                 } else if fileExtension == "mp3" || fileExtension == "aac" || fileExtension == "wav" {
                     // Download audio
                     downloadURL = try await DownloadManager.shared.downloadAudioFile(from: option.url)
+                    handleDownloadSuccess(downloadURL, forceShare: true) // Force share sheet
                 } else {
                     throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
                 }
-
-                handleDownloadSuccess(downloadURL)
+                
             } catch {
                 errorMessage = error.localizedDescription
                 isSuccessMessage = false
@@ -184,17 +186,19 @@ struct ContentView: View {
         }
     }
 
-    private func handleDownloadSuccess(_ videoURL: URL) {
+    private func handleDownloadSuccess(_ videoURL: URL, forceShare: Bool = false) {
         downloadedVideoURL = IdentifiableURL(url: videoURL)
         errorMessage = "Download successful"
         isSuccessMessage = true
 
-        if autoSaveToPhotos {
+        if autoSaveToPhotos && !forceShare {
             UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, nil, nil, nil)
+            logOutput("Saving file dirrectly to Photos")
             errorMessage = "Saved to Photos"
             isSuccessMessage = true
         } else {
             DispatchQueue.main.async {
+                logOutput("Opening share sheet for file")
                 downloadedVideoURL = IdentifiableURL(url: videoURL)
                 showShareSheet()
             }
