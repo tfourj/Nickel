@@ -122,6 +122,7 @@ struct ContentView: View {
               UIApplication.shared.canOpenURL(url) else {
             errorMessage = "Invalid URL"
             isSuccessMessage = false
+            urlInput = ""
             return
         }
         
@@ -147,6 +148,7 @@ struct ContentView: View {
             } catch {
                 errorMessage = error.localizedDescription
                 isSuccessMessage = false
+                urlInput = ""
             }
             isLoading = false
         }
@@ -182,6 +184,7 @@ struct ContentView: View {
             } catch {
                 errorMessage = error.localizedDescription
                 isSuccessMessage = false
+                urlInput = ""
             }
             isLoading = false
         }
@@ -191,6 +194,7 @@ struct ContentView: View {
         downloadedVideoURL = IdentifiableURL(url: videoURL)
         errorMessage = "Download successful"
         isSuccessMessage = true
+        urlInput = ""
 
         if autoSaveToPhotos && !forceShare {
             if isImage {
