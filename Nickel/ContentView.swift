@@ -91,10 +91,32 @@ struct ContentView: View {
                 Text("Select a Download Option")
                     .font(.headline)
                     .padding()
-
+                
                 List(pickerOptions, id: \.id) { option in
-                    Button(option.label) {
+                    Button(action: {
                         selectPickerOption(option)
+                    }) {
+                        HStack {
+                            // Conditionally display either an image or a music note icon
+                            if option.label.contains("audio") {  // Check if label contains "audio"
+                                Image(systemName: "music.note")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 50, height: 50)
+                            } else {
+                                // Image preview
+                                AsyncImage(url: option.url) { image in
+                                    image.resizable()
+                                        .scaledToFit()
+                                        .frame(width: 50, height: 50)
+                                } placeholder: {
+                                    ProgressView()
+                                }
+                            }
+                            
+                            Text(option.label)
+                                .padding(.leading)
+                        }
                     }
                 }
             }
