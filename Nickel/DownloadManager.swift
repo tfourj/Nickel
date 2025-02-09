@@ -80,7 +80,7 @@ class DownloadManager {
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract URL from JSON"])
             }
-            return .success(try await downloadVideoFile(from: mediaURL))
+            return .success(try await downloadFile(from: mediaURL, type: .video))
             
         case "picker":
             // Now accessing the correct 'picker' array
@@ -88,14 +88,19 @@ class DownloadManager {
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract picker options"])
             }
-            
-            let options = pickerArray.compactMap { item -> PickerOption? in
+
+            var options = pickerArray.compactMap { item -> PickerOption? in
                 guard let urlString = item["url"] as? String, let url = URL(string: urlString) else { return nil }
-                
+
                 let type = item["type"] as? String ?? "Unknown"
                 return PickerOption(label: type, url: url)
             }
-            
+
+            // Handle audio separately if it exists
+            if let audioURLString = jsonObject["audio"] as? String, let audioURL = URL(string: audioURLString) {
+                options.append(PickerOption(label: "audio", url: audioURL))
+            }
+
             // Log the options for debugging
             logOutput("Picker options: \(options)")
 
@@ -111,86 +116,60 @@ class DownloadManager {
         }
     }
     
-    func downloadVideoFile(from url: URL) async throws -> URL {
+    enum DownloadType {
+        case video
+        case image
+        case audio
+    }
+
+    func downloadFile(from url: URL, type: DownloadType) async throws -> URL {
         clearTempFolder()
+        
         let (downloadURL, _) = try await URLSession.shared.download(from: url)
         let tempDir = FileManager.default.temporaryDirectory
-        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".mp4")
+        
+        // Try to extract the file extension from the URL
+        let extractedExtension = url.pathExtension
+        let fileExtension: String
+
+        if extractedExtension.isEmpty {
+            // Fallback to hardcoded extensions if extraction fails
+            switch type {
+            case .video:
+                fileExtension = "mp4"
+            case .image:
+                fileExtension = "jpg"
+            case .audio:
+                fileExtension = "mp3"
+            }
+        } else {
+            fileExtension = extractedExtension
+        }
+
+        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
 
         printTempFolderContents(context: "Before moving file")
 
         do {
             try FileManager.default.moveItem(at: downloadURL, to: targetURL)
-            logOutput("✅ File moved successfully to: \(targetURL)")
+            logOutput("✅ \(type) file moved successfully to: \(targetURL)")
         } catch {
-            logOutput("❌ Error moving file: \(error.localizedDescription)")
+            logOutput("❌ Error moving \(type) file: \(error.localizedDescription)")
         }
 
         // Verify if the file exists
         if FileManager.default.fileExists(atPath: targetURL.path) {
-            logOutput("✅ File exists at: \(targetURL)")
+            logOutput("✅ \(type) file exists at: \(targetURL)")
         } else {
-            logOutput("⚠️ File does NOT exist at expected location!")
+            logOutput("⚠️ \(type) file does NOT exist at expected location!")
         }
 
         printTempFolderContents(context: "After moving file")
 
         return targetURL
     }
-    
-    func downloadImageFile(from url: URL) async throws -> URL {
-        clearTempFolder()
-        let (downloadURL, _) = try await URLSession.shared.download(from: url)
-        let tempDir = FileManager.default.temporaryDirectory
-        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".jpg") // Assuming JPG for simplicity, you can adjust the file extension
 
-        printTempFolderContents(context: "Before moving file")
 
-        do {
-            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
-            logOutput("✅ Image file moved successfully to: \(targetURL)")
-        } catch {
-            logOutput("❌ Error moving file: \(error.localizedDescription)")
-        }
-
-        // Verify if the file exists
-        if FileManager.default.fileExists(atPath: targetURL.path) {
-            logOutput("✅ Image file exists at: \(targetURL)")
-        } else {
-            logOutput("⚠️ Image file does NOT exist at expected location!")
-        }
-
-        printTempFolderContents(context: "After moving file")
-
-        return targetURL
-    }
-    
-    func downloadAudioFile(from url: URL) async throws -> URL {
-        clearTempFolder()
-        let (downloadURL, _) = try await URLSession.shared.download(from: url)
-        let tempDir = FileManager.default.temporaryDirectory
-        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".mp3") // Assuming MP3 for simplicity, adjust as needed
-
-        printTempFolderContents(context: "Before moving file")
-
-        do {
-            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
-            logOutput("✅ Audio file moved successfully to: \(targetURL)")
-        } catch {
-            logOutput("❌ Error moving file: \(error.localizedDescription)")
-        }
-
-        // Verify if the file exists
-        if FileManager.default.fileExists(atPath: targetURL.path) {
-            logOutput("✅ Audio file exists at: \(targetURL)")
-        } else {
-            logOutput("⚠️ Audio file does NOT exist at expected location!")
-        }
-
-        printTempFolderContents(context: "After moving file")
-
-        return targetURL
-    }
     
     private func clearTempFolder() {
         let tempDir = FileManager.default.temporaryDirectory
