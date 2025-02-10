@@ -123,13 +123,28 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black.ignoresSafeArea())
         }
+        
         .preferredColorScheme(.dark)
-        .onChange(of: scenePhase) {
-            if scenePhase == .active {
-                errorMessage = ""
-                checkForSharedURL()
+        
+        //.onChange(of: scenePhase) {
+        //    if scenePhase == .active {
+        //        errorMessage = ""
+        //        checkForSharedURL()
+        //    }
+        //}
+        
+        .onOpenURL { url in
+            // Extract the URL from the scheme and set it to urlField
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               let queryItems = components.queryItems,
+               let linkItem = queryItems.first(where: { $0.name == "url" }),
+               let sharedLink = linkItem.value {
+                logOutput("App opened using url scheme. link: \(sharedLink)")
+                urlInput = sharedLink
+                downloadVideo()
             }
         }
+        
         .sheet(isPresented: $showPicker) {
                     VStack {
                         Text("Select a Download Option")

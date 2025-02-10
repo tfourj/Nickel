@@ -56,18 +56,16 @@ class ShareViewController: UIViewController {
     }
     
     private func sendURLToMainApp(url: URL) {
-        // Save the URL into the shared container for your main app to pick up.
-        let sharedDefaults = UserDefaults(suiteName: "group.com.tfourj.nickel")
-        sharedDefaults?.set(url.absoluteString, forKey: "sharedURL")
-        sharedDefaults?.synchronize()
+        // Encode the URL so that it can be safely passed as a query parameter
+        let encodedURL = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         
-        // Construct the URL that should open your main app.
-        guard let appURL = URL(string: "nickel://download") else {
+        // Construct the URL that should open your main app, embedding the shared URL as a parameter
+        guard let appURL = URL(string: "nickel://download?url=\(encodedURL)") else {
             dismissExtension()
             return
         }
         
-        // Grab the window scene from our view so we have a reference.
+        // Grab the window scene from our view so we have a reference
         guard let windowScene = self.view.window?.windowScene else {
             dismissExtension()
             return
@@ -79,7 +77,7 @@ class ShareViewController: UIViewController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 windowScene.open(appURL, options: UIScene.OpenExternalURLOptions(), completionHandler: { success in
                     if success {
-                        print("✅ Main app opened")
+                        print("✅ Main app opened with URL: \(appURL.absoluteString)")
                     } else {
                         print("❌ Failed to open main app")
                     }
