@@ -9,6 +9,9 @@ import SwiftUI
 
 @main
 struct NickelApp: App {
+    init() {
+        logOutput("Nickel started!")
+    }
     var body: some Scene {
         WindowGroup {
             MainTabView()
