@@ -64,6 +64,19 @@ struct ContentView: View {
                         .multilineTextAlignment(.center) // Keep text centered
                         .frame(maxWidth: .infinity) // Stretch to center
                         .padding(.horizontal, 24) // Add padding
+                        .onTapGesture {
+                            // Clear error message on tap
+                            errorMessage = ""
+                        }
+                        .onLongPressGesture {
+                            // Copy error message to clipboard on long press
+                            UIPasteboard.general.string = errorMessage
+                            isSuccessMessage = true
+                            errorMessage = "Copied!"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                errorMessage = ""
+                            }
+                        }
                 }
 
                 Spacer()
