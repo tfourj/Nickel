@@ -36,9 +36,16 @@ struct MainTabView: View {
                     .tag(2) // Console tab
             }
         }
+        .onOpenURL { url in
+            if selectedTab != 0 {
+                selectedTab = 0 // Switch to Home tab if it's not already selected
+            }
+        }
         .onChange(of: scenePhase) {
             if scenePhase == .active && autoOpenHome {
-                selectedTab = 0 // Switch back to the Home tab
+                if selectedTab != 0 {
+                    selectedTab = 0 // Switch to Home tab if it's not already selected
+                }
             }
         }
     }
