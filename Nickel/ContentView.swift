@@ -328,18 +328,10 @@ struct ContentView: View {
 
     private func showShareSheet() {
         if let downloadedVideoURL = downloadedVideoURL {
-            let shareSheet = ShareSheet(activityItems: [downloadedVideoURL.url])
-            
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let topController = scene.windows.first?.rootViewController {
-                let hostingController = UIHostingController(rootView: shareSheet)
-                topController.present(hostingController, animated: true, completion: nil)
-                errorMessage = "Share sheet opened"
-                isSuccessMessage = true
+            (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.present(UIActivityViewController(activityItems: [downloadedVideoURL.url], applicationActivities: nil), animated: true)
             }
         }
     }
-}
 
 #Preview {
     ContentView()
