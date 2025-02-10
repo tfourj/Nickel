@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var listRefreshID = UUID()
 
     @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
+    @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
 
     var body: some View {
         NavigationView {
@@ -139,12 +140,13 @@ struct ContentView: View {
         
         .preferredColorScheme(.dark)
         
-        //.onChange(of: scenePhase) {
-        //    if scenePhase == .active {
-        //        errorMessage = ""
-        //        checkForSharedURL()
-        //    }
-        //}
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                if autoClearErrorMessage {
+                    errorMessage = ""
+                }
+            }
+        }
         
         .onOpenURL { url in
             // Extract the URL from the scheme and set it to urlField

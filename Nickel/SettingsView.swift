@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("authMethod") private var authMethod: String = "Api-Key"
     @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
     @AppStorage("enableConsole") private var enableConsole: Bool = false
+    @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
     
     @State private var showAPIKey = false
     
@@ -63,6 +64,9 @@ struct SettingsView: View {
                     }
                     Toggle(isOn: $enableConsole) {
                         Text("Enable Console")
+                    }
+                    Toggle(isOn: $autoClearErrorMessage) {
+                        Text("Auto Clear Error Message")
                     }
                 }
                 
