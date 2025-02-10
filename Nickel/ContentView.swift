@@ -28,9 +28,10 @@ struct ContentView: View {
     @State private var pickerOptions: [PickerOption] = []
     @State private var showPicker = false
     @State private var listRefreshID = UUID()
-
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
+    
+    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = true
     @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
+    @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
 
     var body: some View {
         NavigationView {
@@ -319,7 +320,9 @@ struct ContentView: View {
     private func pasteURL() {
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
-            downloadVideo()
+            if !disableAutoPasteRun {
+                downloadVideo()
+            }
         } else {
             errorMessage = "Clipboard is empty"
             isSuccessMessage = false

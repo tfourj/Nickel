@@ -11,9 +11,11 @@ struct SettingsView: View {
     @AppStorage("customAPIURL") private var customAPIURL: String = ""
     @AppStorage("customAPIKey") private var customAPIKey: String = ""
     @AppStorage("authMethod") private var authMethod: String = "Api-Key"
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = false
+    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = true
     @AppStorage("enableConsole") private var enableConsole: Bool = false
     @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
+    @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
+    @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
     
     @State private var showAPIKey = false
     
@@ -60,13 +62,19 @@ struct SettingsView: View {
                 
                 Section(header: Text("Additional Settings")) {
                     Toggle(isOn: $autoSaveToPhotos) {
-                        Text("Automatically Save to Photos")
+                        Text("Save Downloads to Photos Automatically")
                     }
                     Toggle(isOn: $enableConsole) {
-                        Text("Enable Console")
+                        Text("Enable Developer Console")
                     }
                     Toggle(isOn: $autoClearErrorMessage) {
-                        Text("Auto Clear Error Message")
+                        Text("Clear Error Messages Automatically")
+                    }
+                    Toggle(isOn: $autoOpenHome) {
+                        Text("Open Home Tab on App Launch")
+                    }
+                    Toggle(isOn: $disableAutoPasteRun) {
+                        Text("Disable Auto-Download After Pasting Link")
                     }
                 }
                 
