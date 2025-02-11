@@ -231,7 +231,16 @@ struct ContentView: View {
                 
                 switch result {
                 case .success(let videoURL):
-                    handleDownloadSuccess(videoURL)
+                    let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
+                        DispatchQueue.main.async {
+                            self.errorMessage = total <= 0 
+                                ? "Downloading: \(String(format: "%.1f", downloaded)) MB"
+                                : "Downloading: \(String(format: "%.1f", downloaded))/\(String(format: "%.1f", total)) MB"
+                            self.isSuccessMessage = true
+                        }
+                    }
+                    let downloadURL = try await FileDownloader.shared.downloadFile(from: videoURL, type: .video, onProgress: progressHandler)
+                    handleDownloadSuccess(downloadURL)
                     
                 case .pickerOptions(let options):
                     DispatchQueue.main.async {
@@ -263,18 +272,27 @@ struct ContentView: View {
                 let label = option.label.lowercased()
                 var downloadURL: URL
 
+                let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
+                    DispatchQueue.main.async {
+                        self.errorMessage = total <= 0 
+                            ? "Downloading: \(String(format: "%.1f", downloaded)) MB"
+                            : "Downloading: \(String(format: "%.1f", downloaded))/\(String(format: "%.1f", total)) MB"
+                        self.isSuccessMessage = true
+                    }
+                }
+
                 if fileExtension == "mp4" || label.contains("video") {
                     // Download video
-                    downloadURL = try await DownloadManager.shared.downloadFile(from: option.url, type: .video)
-                    handleDownloadSuccess(downloadURL) // Normal behavior
+                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .video, onProgress: progressHandler)
+                    handleDownloadSuccess(downloadURL)
                 } else if fileExtension == "jpg" || fileExtension == "png" || fileExtension == "jpeg" || label.contains("photo") || label.contains("image") {
                     // Download image
-                    downloadURL = try await DownloadManager.shared.downloadFile(from: option.url, type: .image)
+                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .image, onProgress: progressHandler)
                     handleDownloadSuccess(downloadURL, isImage: true)
                 } else if fileExtension == "mp3" || fileExtension == "aac" || fileExtension == "wav" || label.contains("audio") || label.contains("sound") {
                     // Download audio
-                    downloadURL = try await DownloadManager.shared.downloadFile(from: option.url, type: .audio)
-                    handleDownloadSuccess(downloadURL, forceShare: true) // Force share sheet
+                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .audio, onProgress: progressHandler)
+                    handleDownloadSuccess(downloadURL, forceShare: true)
                 } else {
                     throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
                 }
@@ -320,7 +338,7 @@ struct ContentView: View {
     private func pasteURL() {
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
-            if !disableAutoPasteRun {
+            if (!disableAutoPasteRun) {
                 downloadVideo()
             }
         } else {

@@ -99,7 +99,7 @@ class DownloadManager {
             }
             
             logOutput("✅ Download URL received: \(mediaURL.absoluteString)")
-            return .success(try await downloadFile(from: mediaURL, type: .video))
+            return .success(mediaURL)
             
         case "picker":
             logOutput("Handling picker response...")
@@ -137,88 +137,4 @@ class DownloadManager {
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected API response."])
         }
     }
-
-    
-    enum DownloadType {
-        case video
-        case image
-        case audio
-    }
-
-    func downloadFile(from url: URL, type: DownloadType) async throws -> URL {
-        clearTempFolder()
-        
-        let (downloadURL, _) = try await URLSession.shared.download(from: url)
-        let tempDir = FileManager.default.temporaryDirectory
-        
-        // Try to extract the file extension from the URL
-        let extractedExtension = url.pathExtension
-        let fileExtension: String
-
-        if extractedExtension.isEmpty {
-            // Fallback to hardcoded extensions if extraction fails
-            switch type {
-            case .video:
-                fileExtension = "mp4"
-            case .image:
-                fileExtension = "jpg"
-            case .audio:
-                fileExtension = "mp3"
-            }
-        } else {
-            fileExtension = extractedExtension
-            logOutput("Automatically fetched file extension: \(extractedExtension)")
-        }
-
-        let targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
-
-        printTempFolderContents(context: "Before moving file")
-
-        do {
-            try FileManager.default.moveItem(at: downloadURL, to: targetURL)
-            logOutput("✅ \(type) file moved successfully to: \(targetURL)")
-        } catch {
-            logOutput("❌ Error moving \(type) file: \(error.localizedDescription)")
-        }
-
-        // Verify if the file exists
-        if FileManager.default.fileExists(atPath: targetURL.path) {
-            logOutput("✅ \(type) file exists at: \(targetURL)")
-        } else {
-            logOutput("⚠️ \(type) file does NOT exist at expected location!")
-        }
-
-        printTempFolderContents(context: "After moving file")
-
-        return targetURL
-    }
-
-
-    
-    private func clearTempFolder() {
-        let tempDir = FileManager.default.temporaryDirectory
-        do {
-            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
-            for file in files {
-                try FileManager.default.removeItem(at: file)
-            }
-            logOutput("🧹 Temp folder cleared. Removed \(files.count) files.")
-        } catch {
-            logOutput("❌ Error clearing temp folder: \(error.localizedDescription)")
-        }
-    }
-    
-    private func printTempFolderContents(context: String) {
-        let tempDir = FileManager.default.temporaryDirectory
-        do {
-            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
-            logOutput("📂 \(context): Temp folder contains \(files.count) files:")
-            for file in files {
-                logOutput("  - \(file.lastPathComponent)")
-            }
-        } catch {
-            logOutput("❌ Error accessing temp folder: \(error.localizedDescription)")
-        }
-    }
-
 }
