@@ -291,6 +291,7 @@ struct ContentView: View {
     private func selectPickerOption(_ option: PickerOption) {
         isLoading = true
         showPicker = false
+        errorMessage = ""
 
         Task {
             do {
