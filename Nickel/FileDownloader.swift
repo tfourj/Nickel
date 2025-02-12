@@ -66,6 +66,16 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         }.0
     }
 
+    func cancelDownload() {
+        downloadTask?.cancel()
+        downloadTask = nil
+        downloadContinuation?.resume(throwing: NSError(domain: "FileDownloader", code: -999, userInfo: [NSLocalizedDescriptionKey: "Download cancelled"]))
+        downloadContinuation = nil
+        targetURL = nil
+        downloadType = nil
+        progressHandler = nil
+    }
+
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
                     didFinishDownloadingTo location: URL) {
         guard let targetURL = self.targetURL, let type = self.downloadType else {

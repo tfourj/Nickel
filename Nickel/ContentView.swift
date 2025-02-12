@@ -85,6 +85,33 @@ struct ContentView: View {
 
                 // Bottom Section: Input Field + Download Button
                 VStack(spacing: 15) {
+                    
+                    // Stop Download button
+                    if isLoading {
+                        Button(action: {
+                            FileDownloader.shared.cancelDownload()
+                            isLoading = false
+                            errorMessage = "Download cancelled"
+                            isSuccessMessage = false
+                        }) {
+                            HStack {
+                                Image(systemName: "stop.circle.fill")
+                                    .font(.title2)
+                                Text("Cancel")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.red, lineWidth: 2)
+                            )
+                        }
+                        .padding(.bottom, 4)
+                    }
+                    
                     // URL Input + Paste Button - Unified Design
                     HStack {
                         TextField("Enter video URL", text: $urlInput)
