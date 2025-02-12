@@ -41,7 +41,6 @@ class DownloadManager {
             "videoQuality": "1080",
             "audioFormat": "mp3",
             "audioBitrate": "128",
-            "filenameStyle": "classic",
             "downloadMode": "auto",
         ]
         

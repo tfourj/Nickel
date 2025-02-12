@@ -19,7 +19,7 @@ struct SettingsView: View {
     
     @State private var showAPIKey = false
     
-    let authMethods = ["Bearer", "Api-Key"]
+    let authMethods = ["None", "Bearer", "Api-Key"]
     
     // Reading version from Info.plist
     var appVersion: String {
