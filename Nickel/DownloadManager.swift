@@ -15,6 +15,13 @@ class DownloadManager {
     private let NONE = ""
     private let defaultAuthType = "Api-Key"
     
+    static let defaultRequestBody: [String: Any] = [
+        "videoQuality": "1080",
+        "audioFormat": "mp3",
+        "audioBitrate": "128",
+        "downloadMode": "auto"
+    ]
+
     enum CobaltDownloadResult {
         case success(URL)
         case pickerOptions([PickerOption])
@@ -36,13 +43,19 @@ class DownloadManager {
                           userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
         }
 
-        let requestBody: [String: Any] = [
-            "url": inputURL.absoluteString,
-            "videoQuality": "1080",
-            "audioFormat": "mp3",
-            "audioBitrate": "128",
-            "downloadMode": "auto",
-        ]
+        // Load custom request body from UserDefaults or use default
+        var requestBody: [String: Any] = {
+            if let savedBodyString = UserDefaults.standard.string(forKey: "customRequestBody"),
+               let data = savedBodyString.data(using: .utf8),
+               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                logOutput("Loading custom request body")
+                return dict
+            }
+            return DownloadManager.defaultRequestBody
+        }()
+        
+        // Add URL to the request body
+        requestBody["url"] = inputURL.absoluteString
         
         logOutput("Request body: \(requestBody)")
 
@@ -55,9 +68,14 @@ class DownloadManager {
         request.httpBody = jsonData
 
         // Set the Authorization header
-        let authValue = "\(authType) \(storedAPIKey)"
-        logOutput("Auth Header: \(authValue)")
-        request.setValue(authValue, forHTTPHeaderField: "Authorization")
+        if authType != "None" {
+            let authValue = "\(authType) \(storedAPIKey)"
+            logOutput("Auth Header: \(authValue)")
+            request.setValue(authValue, forHTTPHeaderField: "Authorization")
+        } else {
+            logOutput("Auth value is set to none so Authorization Headers won't be set")
+        }
+
 
         // Send the request
         logOutput("Sending request to \(apiURL.absoluteString)")
