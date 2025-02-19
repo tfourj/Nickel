@@ -1,0 +1,33 @@
+name: Build Unsigned IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Xcode
+      run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+    - name: Show Xcode Version
+      run: xcodebuild -version
+
+    - name: Make script executable
+      run: chmod +x build_ipa.sh
+
+    - name: Build IPA
+      run: ./build_ipa.sh
+
+    - name: Upload IPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Nickel-unsigned-IPA
+        path: build/*.ipa

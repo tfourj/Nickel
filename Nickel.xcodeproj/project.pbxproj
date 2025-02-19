@@ -3,10 +3,21 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE8350682D66964000861765 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350662D66964000861765 /* ShareViewController.swift */; };
+		FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FE8350642D66964000861765 /* MainInterface.storyboard */; };
+		FE8350782D66964400861765 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE83506B2D66964400861765 /* Preview Assets.xcassets */; };
+		FE8350792D66964400861765 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE83506D2D66964400861765 /* Assets.xcassets */; };
+		FE83507B2D66964400861765 /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE83506E2D66964400861765 /* ConsoleView.swift */; };
+		FE83507C2D66964400861765 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE83506F2D66964400861765 /* ContentView.swift */; };
+		FE83507D2D66964400861765 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350702D66964400861765 /* DownloadManager.swift */; };
+		FE83507E2D66964400861765 /* FileDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350712D66964400861765 /* FileDownloader.swift */; };
+		FE83507F2D66964400861765 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350732D66964400861765 /* MainTabView.swift */; };
+		FE8350802D66964400861765 /* NickelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350752D66964400861765 /* NickelApp.swift */; };
+		FE8350812D66964400861765 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350762D66964400861765 /* SettingsView.swift */; };
 		FEFFCCF62D580350005463B5 /* Nickel Share Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEFFCCEC2D580350005463B5 /* Nickel Share Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -36,44 +47,23 @@
 
 /* Begin PBXFileReference section */
 		FE654B262D53E9C500E89563 /* Nickel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nickel.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE8350622D66964000861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FE8350632D66964000861765 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		FE8350652D66964000861765 /* Nickel Share Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Nickel Share Extension.entitlements"; sourceTree = "<group>"; };
+		FE8350662D66964000861765 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		FE83506B2D66964400861765 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FE83506D2D66964400861765 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FE83506E2D66964400861765 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
+		FE83506F2D66964400861765 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FE8350702D66964400861765 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
+		FE8350712D66964400861765 /* FileDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloader.swift; sourceTree = "<group>"; };
+		FE8350722D66964400861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FE8350732D66964400861765 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		FE8350742D66964400861765 /* Nickel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Nickel.entitlements; sourceTree = "<group>"; };
+		FE8350752D66964400861765 /* NickelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NickelApp.swift; sourceTree = "<group>"; };
+		FE8350762D66964400861765 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FEFFCCEC2D580350005463B5 /* Nickel Share Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Nickel Share Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FEFFCCFA2D580350005463B5 /* Exceptions for "Nickel Share Extension" folder in "Nickel Share Extension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = FEFFCCEB2D580350005463B5 /* Nickel Share Extension */;
-		};
-		FEFFCCFF2D5805C5005463B5 /* Exceptions for "Nickel" folder in "Nickel" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = FE654B252D53E9C500E89563 /* Nickel */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		FE654B282D53E9C500E89563 /* Nickel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FEFFCCFF2D5805C5005463B5 /* Exceptions for "Nickel" folder in "Nickel" target */,
-			);
-			path = Nickel;
-			sourceTree = "<group>";
-		};
-		FEFFCCED2D580350005463B5 /* Nickel Share Extension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FEFFCCFA2D580350005463B5 /* Exceptions for "Nickel Share Extension" folder in "Nickel Share Extension" target */,
-			);
-			path = "Nickel Share Extension";
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		FE654B232D53E9C500E89563 /* Frameworks */ = {
@@ -96,8 +86,8 @@
 		FE654B1D2D53E9C500E89563 = {
 			isa = PBXGroup;
 			children = (
-				FE654B282D53E9C500E89563 /* Nickel */,
-				FEFFCCED2D580350005463B5 /* Nickel Share Extension */,
+				FE8350772D66964400861765 /* Nickel */,
+				FE8350672D66964000861765 /* Nickel Share Extension */,
 				FE654B272D53E9C500E89563 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,6 +99,43 @@
 				FEFFCCEC2D580350005463B5 /* Nickel Share Extension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FE8350672D66964000861765 /* Nickel Share Extension */ = {
+			isa = PBXGroup;
+			children = (
+				FE8350622D66964000861765 /* Info.plist */,
+				FE8350642D66964000861765 /* MainInterface.storyboard */,
+				FE8350652D66964000861765 /* Nickel Share Extension.entitlements */,
+				FE8350662D66964000861765 /* ShareViewController.swift */,
+			);
+			path = "Nickel Share Extension";
+			sourceTree = "<group>";
+		};
+		FE83506C2D66964400861765 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				FE83506B2D66964400861765 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		FE8350772D66964400861765 /* Nickel */ = {
+			isa = PBXGroup;
+			children = (
+				FE83506C2D66964400861765 /* Preview Content */,
+				FE83506D2D66964400861765 /* Assets.xcassets */,
+				FE83506E2D66964400861765 /* ConsoleView.swift */,
+				FE83506F2D66964400861765 /* ContentView.swift */,
+				FE8350702D66964400861765 /* DownloadManager.swift */,
+				FE8350712D66964400861765 /* FileDownloader.swift */,
+				FE8350722D66964400861765 /* Info.plist */,
+				FE8350732D66964400861765 /* MainTabView.swift */,
+				FE8350742D66964400861765 /* Nickel.entitlements */,
+				FE8350752D66964400861765 /* NickelApp.swift */,
+				FE8350762D66964400861765 /* SettingsView.swift */,
+			);
+			path = Nickel;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -128,9 +155,6 @@
 			dependencies = (
 				FEFFCCF52D580350005463B5 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				FE654B282D53E9C500E89563 /* Nickel */,
-			);
 			name = Nickel;
 			packageProductDependencies = (
 			);
@@ -149,9 +173,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				FEFFCCED2D580350005463B5 /* Nickel Share Extension */,
 			);
 			name = "Nickel Share Extension";
 			packageProductDependencies = (
@@ -179,6 +200,7 @@
 				};
 			};
 			buildConfigurationList = FE654B212D53E9C500E89563 /* Build configuration list for PBXProject "Nickel" */;
+			compatibilityVersion = "Xcode 15.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -187,7 +209,6 @@
 			);
 			mainGroup = FE654B1D2D53E9C500E89563;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			productRefGroup = FE654B272D53E9C500E89563 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -203,6 +224,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE8350782D66964400861765 /* Preview Assets.xcassets in Resources */,
+				FE8350792D66964400861765 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -210,6 +233,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,6 +244,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
+				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
+				FE83507D2D66964400861765 /* DownloadManager.swift in Sources */,
+				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,
+				FE83507F2D66964400861765 /* MainTabView.swift in Sources */,
+				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
+				FE8350812D66964400861765 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +258,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE8350682D66964000861765 /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +271,17 @@
 			targetProxy = FEFFCCF42D580350005463B5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		FE8350642D66964000861765 /* MainInterface.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				FE8350632D66964000861765 /* Base */,
+			);
+			name = MainInterface.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		FE654B482D53E9C700E89563 /* Debug */ = {
