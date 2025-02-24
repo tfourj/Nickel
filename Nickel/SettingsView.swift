@@ -16,11 +16,13 @@ struct SettingsView: View {
     @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
     @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
     @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
+    @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
     @State private var showRequestEditor = false
     @State private var showAlert = false
+    @State private var showRestart = false
     @State private var alertMessage = ""
     
     let authMethods = ["None", "Bearer", "Api-Key"]
@@ -119,6 +121,12 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Download Settings")) {
+                    Toggle(isOn: $disableBGDownloads) {
+                            Text("Disable Background Downloads")
+                        }
+                        .onChange(of: disableBGDownloads) { oldValue, newValue in
+                            showRestart = true
+                        }
                     Button("Edit Request Body") {
                         loadSavedRequestBody()
                         showRequestEditor = true
@@ -129,21 +137,7 @@ struct SettingsView: View {
                     }
                     .foregroundColor(.red)
                 }
-                
-                // Footer section for version and name
-                Section {
-                    HStack {
-                        Text(appVersion)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        Spacer()
-                        Text("By TfourJ")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
-                }
             }
-            .navigationTitle("Settings")
             .sheet(isPresented: $showRequestEditor) {
                 NavigationView {
                     VStack {
@@ -164,10 +158,46 @@ struct SettingsView: View {
                     )
                 }
             }
+            
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    ZStack {
+                        HStack {
+                            Text("v\(appVersion)")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            Spacer()
+                            Text("by TfourJ")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        
+                        HStack(spacing: 0) {
+                            Image("Nickel")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 30) // Adjust this value to match text height
+                                .foregroundColor(.primary)
+                            Text("Settings")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
+            
             .alert("Request Body", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
+            }
+            
+            .alert("Restart Required", isPresented: $showRestart) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Please restart the app for changes to take effect.")
             }
         }
     }

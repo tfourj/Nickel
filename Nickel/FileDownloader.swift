@@ -9,6 +9,7 @@ import Foundation
 
 class FileDownloader: NSObject, URLSessionDownloadDelegate {
     static let shared = FileDownloader()
+    let disableBGDownloads = UserDefaults.standard.bool(forKey: "disableBGDownloads")
     
     // Add progress handler type
     typealias ProgressHandler = (Double, Double) -> Void
@@ -21,7 +22,10 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     }
 
     private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.default
+        let config = !disableBGDownloads
+            ? URLSessionConfiguration.background(withIdentifier: "com.tfourj.nickel.filedownloader")
+            : .default
+        logOutput("disableBGD state: \(disableBGDownloads)")
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }()
 
