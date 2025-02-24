@@ -17,6 +17,7 @@ struct SettingsView: View {
     @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
     @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
     @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
+    @AppStorage("disableNotifications") private var disableNotifications: Bool = false
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
@@ -118,14 +119,14 @@ struct SettingsView: View {
                     Toggle(isOn: $disableAutoPasteRun) {
                         Text("Disable Auto-Download After Pasting Link")
                     }
+                    Toggle(isOn: $disableNotifications) {
+                        Text("Disable Download Notifications")
+                    }
                 }
                 
                 Section(header: Text("Download Settings")) {
                     Toggle(isOn: $disableBGDownloads) {
                             Text("Disable Background Downloads")
-                        }
-                        .onChange(of: disableBGDownloads) { oldValue, newValue in
-                            showRestart = true
                         }
                     Button("Edit Request Body") {
                         loadSavedRequestBody()
@@ -137,6 +138,11 @@ struct SettingsView: View {
                     }
                     .foregroundColor(.red)
                 }
+                
+                .onChange(of: disableNotifications || disableBGDownloads) { oldValue, newValue in
+                    showRestart = true
+                }
+                
             }
             .sheet(isPresented: $showRequestEditor) {
                 NavigationView {

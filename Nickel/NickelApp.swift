@@ -11,6 +11,7 @@ import SwiftUI
 struct NickelApp: App {
     init() {
         logOutput("Nickel started!")
+        NotificationManager.requestPermission()
     }
     var body: some Scene {
         WindowGroup {

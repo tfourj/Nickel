@@ -272,6 +272,7 @@ struct ContentView: View {
                 case .pickerOptions(let options):
                     DispatchQueue.main.async {
                         errorMessage = "Please select option from menu"
+                        NotificationManager.sendDownloadCompleteNotification(text: "Please open app to download file from picker options")
                         isSuccessMessage = true
                         pickerOptions = options
                         listRefreshID = UUID()  // Force list refresh
@@ -346,17 +347,20 @@ struct ContentView: View {
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                     logOutput("Saving image dirrectly to Photos \(image)")
                     errorMessage = "Image saved to Photos"
+                    NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
                     isSuccessMessage = true
                 }
             } else {
                 UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, nil, nil, nil)
                 logOutput("Saving video dirrectly to Photos \(videoURL)")
                 errorMessage = "Video saved to Photos"
+                NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
                 isSuccessMessage = true
             }
         } else {
             DispatchQueue.main.async {
                 logOutput("Opening share sheet for file")
+                NotificationManager.sendDownloadCompleteNotification(text: "File downloaded, open app to proceed")
                 downloadedVideoURL = IdentifiableURL(url: videoURL)
                 showShareSheet()
             }
