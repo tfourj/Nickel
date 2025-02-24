@@ -25,6 +25,8 @@ struct SettingsView: View {
     @State private var showAlert = false
     @State private var showRestart = false
     @State private var alertMessage = ""
+    @State private var longPressTimer: Timer?
+    @GestureState private var isDetectingLongPress = false
     
     let authMethods = ["None", "Bearer", "Api-Key"]
     
@@ -71,6 +73,39 @@ struct SettingsView: View {
             showAlert = true
         }
     }
+    
+    private func decodeBase64Credentials() {
+        guard let clipboard = UIPasteboard.general.string,
+              let data = Data(base64Encoded: clipboard),
+              let decoded = String(data: data, encoding: .utf8) else {
+            return
+        }
+        
+        let components = decoded.components(separatedBy: "|")
+        
+        // Validate format and "nickel" prefix
+        guard components.count >= 4,
+              components[0].lowercased() == "nickel" else {
+            return
+        }
+        
+        // Validate auth method
+        let auth = components[1]
+        guard auth == "Api-Key" || auth == "Bearer" else {
+            return
+        }
+        
+        // Set values
+        authMethod = auth
+        customAPIURL = components[2]
+        customAPIKey = components[3]
+        showAPIKey = true
+        
+        // Exit app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            exit(0)
+        }
+    }
 
     var body: some View {
         NavigationView {
@@ -93,14 +128,24 @@ struct SettingsView: View {
                             .transition(.opacity)
                     }
                     
-                    Button(action: {
-                        withAnimation {
-                            showAPIKey.toggle()
-                        }
-                    }) {
+                    Button(action: {}) {
                         Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
                             .foregroundColor(.blue)
                     }
+                    .simultaneousGesture(
+                        TapGesture()
+                            .onEnded { _ in
+                                withAnimation {
+                                    showAPIKey.toggle()
+                                }
+                            }
+                    )
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 2)
+                            .onEnded { _ in
+                                decodeBase64Credentials()
+                            }
+                    )
                 }
                 
                 Section(header: Text("Additional Settings")) {
