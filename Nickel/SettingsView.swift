@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var showAlert = false
     @State private var showRestart = false
     @State private var alertMessage = ""
+    @State private var showCredentialsAlert = false
     @State private var longPressTimer: Timer?
     @GestureState private var isDetectingLongPress = false
     
@@ -75,6 +76,7 @@ struct SettingsView: View {
     }
     
     private func decodeBase64Credentials() {
+        logOutput("Decode credentials called.")
         guard let clipboard = UIPasteboard.general.string,
               let data = Data(base64Encoded: clipboard),
               let decoded = String(data: data, encoding: .utf8) else {
@@ -99,12 +101,9 @@ struct SettingsView: View {
         authMethod = auth
         customAPIURL = components[2]
         customAPIKey = components[3]
-        showAPIKey = true
         
-        // Exit app
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            exit(0)
-        }
+        // Show alert and exit app
+        showCredentialsAlert = true
     }
 
     var body: some View {
@@ -128,24 +127,14 @@ struct SettingsView: View {
                             .transition(.opacity)
                     }
                     
-                    Button(action: {}) {
+                    Button(action: {
+                        withAnimation {
+                            showAPIKey.toggle()
+                        }
+                    }) {
                         Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
                             .foregroundColor(.blue)
                     }
-                    .simultaneousGesture(
-                        TapGesture()
-                            .onEnded { _ in
-                                withAnimation {
-                                    showAPIKey.toggle()
-                                }
-                            }
-                    )
-                    .simultaneousGesture(
-                        LongPressGesture(minimumDuration: 2)
-                            .onEnded { _ in
-                                decodeBase64Credentials()
-                            }
-                    )
                 }
                 
                 Section(header: Text("Additional Settings")) {
@@ -234,6 +223,12 @@ struct SettingsView: View {
                                 .font(.headline)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
+                                .gesture(
+                                    LongPressGesture(minimumDuration: 2)
+                                        .onEnded { _ in
+                                            decodeBase64Credentials()
+                                        }
+                                )
                         }
                     }
                 }
@@ -249,6 +244,16 @@ struct SettingsView: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text("Please restart the app for changes to take effect.")
+            }
+            
+            .alert("Nickel", isPresented: $showCredentialsAlert) {
+                Button("OK", role: .cancel) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        exit(0)
+                    }
+                }
+            } message: {
+                Text("Credentials set, app will be restarted.")
             }
         }
     }
