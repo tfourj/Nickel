@@ -3,7 +3,7 @@
 <img src="Nickel/Assets.xcassets/Nickel.imageset/nickel_dark-removebg-preview.png" alt="Nickel Logo" width="200">
 
 # Nickel
-A native iOS client app for [Cobalt.tools](https://cobalt.tools) that allows downloading media from various social platforms via self-hosted Cobalt API servers.\
+A native third-party iOS client app for [Cobalt.tools](https://cobalt.tools) that allows downloading media from various social platforms via self-hosted Cobalt API servers.\
 Project was inspired from cranci1's [Osmium](https://github.com/cranci1/Osmium)
 
 </div>
