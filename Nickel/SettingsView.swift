@@ -160,8 +160,13 @@ struct SettingsView: View {
                 
                 Section(header: Text("Download Settings")) {
                     Toggle(isOn: $disableBGDownloads) {
-                            Text("Disable Background Downloads")
-                        }
+                        Text("Disable Background Downloads")
+                        Text("Enable if using on device IPA signers")
+                            .font(.footnote) // Smaller font size
+                            .foregroundColor(.gray) // Gray color
+                            .padding(.top, 5) // Optional: Adds a little space between the toggle and the text
+                    }
+
                     Button("Edit Request Body") {
                         loadSavedRequestBody()
                         showRequestEditor = true

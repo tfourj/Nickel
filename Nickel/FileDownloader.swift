@@ -23,7 +23,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
 
     private lazy var session: URLSession = {
         let config = !disableBGDownloads
-            ? URLSessionConfiguration.background(withIdentifier: "com.tfourj.nickel.filedownloader")
+            ? URLSessionConfiguration.background(withIdentifier: "com.tfourj.Nickel.filedownloader")
             : .default
         logOutput("disableBGD state: \(disableBGDownloads)")
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
