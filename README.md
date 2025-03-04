@@ -46,6 +46,7 @@ The app does not interface directly with social media platforms - it relies on y
    - AltStore
    - ESign 
    - Or other sideloading tools
+3. Go to Settings tab and toggle `Disable Bakcground Downloads` (this is only needed for on device IPA signers to fix downloading)
 
 ## Configuration
 
