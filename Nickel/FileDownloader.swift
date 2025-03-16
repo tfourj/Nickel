@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 class FileDownloader: NSObject, URLSessionDownloadDelegate {
     static let shared = FileDownloader()
@@ -23,7 +24,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
 
     private lazy var session: URLSession = {
         let config = !disableBGDownloads
-            ? URLSessionConfiguration.background(withIdentifier: "com.tfourj.Nickel.filedownloader")
+            ? URLSessionConfiguration.background(withIdentifier: "\(Bundle.main.bundleIdentifier ?? "com.tfourj.Nickel").filedownloader")
             : .default
         logOutput("disableBGD state: \(disableBGDownloads)")
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
@@ -130,6 +131,52 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         progressHandler?(downloadedMB, totalMB)
     }
 
+    // Add handling for background session errors
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error {
+            logOutput("❌ Download task failed with error: \(error.localizedDescription)")
+            
+            // If we hit an error with the background configuration, we can retry with a foreground session
+            if !disableBGDownloads, let originalRequest = task.originalRequest {
+                logOutput("⚠️ Background download failed, attempting foreground download")
+                
+                // Show alert about background download failure
+                showBackgroundDownloadFailureAlert()
+                
+                let foregroundSession = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+                let newTask = foregroundSession.downloadTask(with: originalRequest)
+                downloadTask = newTask
+                newTask.resume()
+                return
+            }
+            
+            downloadContinuation?.resume(throwing: error)
+            downloadContinuation = nil
+            targetURL = nil
+            downloadType = nil
+            progressHandler = nil
+        }
+    }
+    
+    // Add method to show alert when background downloads fail
+    private func showBackgroundDownloadFailureAlert() {
+        DispatchQueue.main.async {
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let rootViewController = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else {
+                return
+            }
+
+            let alertController = UIAlertController(
+                title: "Download Issue",
+                message: "Background download isn't working due to signing method, file was downloaded with foreground download method.\n\nTo disable this error notification, please turn on Disable Background Downloads in settings.",
+                preferredStyle: .alert
+            )
+
+            alertController.addAction(UIAlertAction(title: "OK", style: .default))
+            rootViewController.present(alertController, animated: true)
+        }
+    }
+    
     private func clearTempFolder() {
         let tempDir = FileManager.default.temporaryDirectory
         do {
