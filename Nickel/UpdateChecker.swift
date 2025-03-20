@@ -38,8 +38,21 @@ func checkForUpdates(appVersion: String, completion: @escaping (String?, String?
 
 // Helper function to compare semantic versions
 func compareVersions(_ version1: String, _ version2: String) -> ComparisonResult {
-    let v1Components = version1.components(separatedBy: ".").compactMap { Int($0) }
-    let v2Components = version2.components(separatedBy: ".").compactMap { Int($0) }
+    // Check if either version has a beta indicator (e.g., "b")
+    let v1IsBeta = version1.contains("b")
+    let v2IsBeta = version2.contains("b")
+    
+    // If user is on stable release and remote is beta, don't suggest update
+    if !v1IsBeta && v2IsBeta {
+        return .orderedDescending // Consider current version "newer" to avoid update
+    }
+    
+    // Extract base version numbers without beta indicators
+    let cleanV1 = version1.split(separator: "b")[0]
+    let cleanV2 = version2.split(separator: "b")[0]
+    
+    let v1Components = cleanV1.components(separatedBy: ".").compactMap { Int($0) }
+    let v2Components = cleanV2.components(separatedBy: ".").compactMap { Int($0) }
 
     for i in 0..<min(v1Components.count, v2Components.count) {
         if v1Components[i] < v2Components[i] {
@@ -53,6 +66,25 @@ func compareVersions(_ version1: String, _ version2: String) -> ComparisonResult
         return .orderedAscending
     } else if v1Components.count > v2Components.count {
         return .orderedDescending
+    }
+    
+    // If base versions are the same but one is beta, the beta is "older"
+    if v1IsBeta && !v2IsBeta {
+        return .orderedAscending
+    } else if !v1IsBeta && v2IsBeta {
+        return .orderedDescending
+    }
+    
+    // If both are beta, compare beta numbers
+    if v1IsBeta && v2IsBeta {
+        let v1BetaNum = Int(version1.split(separator: "b").last ?? "0") ?? 0
+        let v2BetaNum = Int(version2.split(separator: "b").last ?? "0") ?? 0
+        
+        if v1BetaNum < v2BetaNum {
+            return .orderedAscending
+        } else if v1BetaNum > v2BetaNum {
+            return .orderedDescending
+        }
     }
 
     return .orderedSame
