@@ -101,6 +101,18 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             // Verify the move was successful
             if FileManager.default.fileExists(atPath: targetURL.path) {
                 logOutput("✅ \(type) file exists at: \(targetURL)")
+                
+                // Check if the file is 0 bytes
+                let fileAttributes = try FileManager.default.attributesOfItem(atPath: targetURL.path)
+                let fileSize = fileAttributes[.size] as? Int64 ?? 0
+                
+                if fileSize == 0 {
+                    let error = NSError(domain: "FileDownloader", code: -4, userInfo: [NSLocalizedDescriptionKey: "Downloaded file is 0 bytes"])
+                    logOutput("⚠️ \(type) file is 0 bytes, returning error")
+                    downloadContinuation?.resume(throwing: error)
+                    return
+                }
+                
                 if let response = downloadTask.response {
                     downloadContinuation?.resume(returning: (targetURL, response))
                 } else {
@@ -136,8 +148,12 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         if let error = error {
             logOutput("❌ Download task failed with error: \(error.localizedDescription)")
             
-            // If we hit an error with the background configuration, we can retry with a foreground session
-            if !disableBGDownloads, let originalRequest = task.originalRequest {
+            // Check if this is a cancellation error
+            let errorCode = (error as NSError).code
+            let isCancellationError = errorCode == NSURLErrorCancelled // -999
+            
+            // If we hit an error with the background configuration (and it's not a cancellation)
+            if !disableBGDownloads && !isCancellationError, let originalRequest = task.originalRequest {
                 logOutput("⚠️ Background download failed, attempting foreground download")
                 
                 // Show alert about background download failure
