@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
+		82BDA7ED2D981D9000E33E30 /* UpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7EC2D981D9000E33E30 /* UpdateCheckerTests.swift */; };
 		82BFD4A52D8CAE0A00C72CB5 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BFD4A42D8CAE0A00C72CB5 /* UpdateChecker.swift */; };
 		FE8350682D66964000861765 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350662D66964000861765 /* ShareViewController.swift */; };
 		FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FE8350642D66964000861765 /* MainInterface.storyboard */; };
@@ -49,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		82BDA7EC2D981D9000E33E30 /* UpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateCheckerTests.swift; sourceTree = "<group>"; };
 		82BFD4A42D8CAE0A00C72CB5 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		FE654B262D53E9C500E89563 /* Nickel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nickel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE8350622D66964000861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -87,6 +89,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		82BDA7EF2D981F0600E33E30 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				82BDA7EC2D981D9000E33E30 /* UpdateCheckerTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		FE654B1D2D53E9C500E89563 = {
 			isa = PBXGroup;
 			children = (
@@ -127,6 +137,7 @@
 		FE8350772D66964400861765 /* Nickel */ = {
 			isa = PBXGroup;
 			children = (
+				82BDA7EF2D981F0600E33E30 /* Tests */,
 				FE83506C2D66964400861765 /* Preview Content */,
 				FE83506D2D66964400861765 /* Assets.xcassets */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
@@ -252,6 +263,7 @@
 			files = (
 				82BFD4A52D8CAE0A00C72CB5 /* UpdateChecker.swift in Sources */,
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
+				82BDA7ED2D981D9000E33E30 /* UpdateCheckerTests.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
 				FE83507D2D66964400861765 /* DownloadManager.swift in Sources */,
 				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,
@@ -350,7 +362,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SHARED_VERSION_NUMBER = 1.4.2b1;
+				SHARED_VERSION_NUMBER = 1.4.2b2;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -407,7 +419,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SHARED_VERSION_NUMBER = 1.4.2b1;
+				SHARED_VERSION_NUMBER = 1.4.2b2;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};

@@ -12,10 +12,23 @@ struct NickelApp: App {
     init() {
         logOutput("Nickel started!")
         NotificationManager.requestPermission()
+        runAppTests()
     }
     var body: some Scene {
         WindowGroup {
             MainTabView()
         }
     }
+}
+
+func runAppTests() {
+    // Only run tests when in the simulator
+    #if targetEnvironment(simulator)
+        logOutput("Running in simulator - executing tests")
+    
+        testVersionComparisons()
+    
+    #else
+        logOutput("Running on device - tests skipped")
+    #endif
 }
