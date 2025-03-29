@@ -20,6 +20,7 @@ struct SettingsView: View {
     @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
     @AppStorage("disableNotifications") private var disableNotifications: Bool = false
     @AppStorage("autoCheckUpdates") private var autoCheckUpdates: Bool = true
+    @AppStorage("enableBetaUpdates") private var enableBetaUpdates: Bool = false
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
@@ -33,8 +34,10 @@ struct SettingsView: View {
     @State private var isCheckingForUpdate = false
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
+    @State private var requestBodyItems: [(key: String, value: String, type: String)] = []
     
     let authMethods = ["None", "Bearer", "Api-Key"]
+    let valueTypes = ["String", "Bool"]
     
     // Reading version from Info.plist
     var appVersion: String {
@@ -81,39 +84,70 @@ struct SettingsView: View {
     }
     
     private func loadSavedRequestBody() {
-        if let saved = UserDefaults.standard.string(forKey: "customRequestBody") {
-            customRequestBody = saved
+        logOutput("Loading custom request body values called")
+        if let saved = UserDefaults.standard.string(forKey: "customRequestBody"),
+           let jsonData = saved.data(using: .utf8),
+           let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+            DispatchQueue.main.async {
+                requestBodyItems = jsonObject
+                    .sorted { $0.key < $1.key }
+                    .map { key, value in
+                        let stringValue = "\(value)"
+                        let type = value is Bool ? "Bool" : "String"
+                        return (key: key, value: stringValue, type: type)
+                    }
+                    logOutput("Returning custom request body values")
+            }
         } else {
-            // Convert default request body to JSON string
-            if let jsonData = try? JSONSerialization.data(withJSONObject: DownloadManager.defaultRequestBody, options: .prettyPrinted),
-               let jsonString = String(data: jsonData, encoding: .utf8) {
-                customRequestBody = jsonString
+            DispatchQueue.main.async {
+                requestBodyItems = DownloadManager.defaultRequestBody
+                    .sorted { $0.key < $1.key }
+                    .map { key, value in
+                        let stringValue = "\(value)"
+                        // Only treat actual boolean values as Boolean type
+                        let type = value is Bool ? "Bool" : "String"
+                        return (key: key, value: stringValue, type: type)
+                    }
+                    logOutput("Returning default request body values")
             }
         }
     }
     
     private func saveRequestBody() {
-        guard !customRequestBody.isEmpty else { return }
+        var jsonObject: [String: Any] = [:]
+        for item in requestBodyItems {
+            if item.type == "Bool" {
+                if item.value == "1" {
+                    jsonObject[item.key] = true
+                } else if item.value == "0" {
+                    jsonObject[item.key] = false
+                } else {
+                    jsonObject[item.key] = item.value.lowercased() == "true"
+                }
+            } else {
+                jsonObject[item.key] = item.value
+            }
+        }
         
-        // Validate JSON
-        if let jsonData = customRequestBody.data(using: .utf8),
-           (try? JSONSerialization.jsonObject(with: jsonData)) != nil {
-            UserDefaults.standard.set(customRequestBody, forKey: "customRequestBody")
+        if let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            UserDefaults.standard.set(jsonString, forKey: "customRequestBody")
             alertMessage = "Settings saved successfully"
         } else {
-            alertMessage = "Invalid JSON format"
+            alertMessage = "Failed to save request body"
         }
         showAlert = true
     }
     
     private func resetRequestBody() {
-        if let jsonData = try? JSONSerialization.data(withJSONObject: DownloadManager.defaultRequestBody, options: .prettyPrinted),
-           let jsonString = String(data: jsonData, encoding: .utf8) {
-            customRequestBody = jsonString
-            UserDefaults.standard.removeObject(forKey: "customRequestBody")
-            alertMessage = "Request body reset to default"
-            showAlert = true
+        requestBodyItems = DownloadManager.defaultRequestBody.map { key, value in
+            let stringValue = "\(value)"
+            let type = value is Bool ? "Boolean" : "String"
+            return (key: key, value: stringValue, type: type)
         }
+        UserDefaults.standard.removeObject(forKey: "customRequestBody")
+        alertMessage = "Request body reset to default"
+        showAlert = true
     }
     
     private func decodeBase64Credentials() {
@@ -224,6 +258,10 @@ struct SettingsView: View {
                         Text("Check for Updates Automatically")
                     }
                     
+                    Toggle(isOn: $enableBetaUpdates) {
+                        Text("Check for Beta versions")
+                    }
+                    
                     HStack {
                         Text("Nickel Version")
                         Spacer()
@@ -243,29 +281,114 @@ struct SettingsView: View {
                     }
                 }
                 
-                .onChange(of: disableNotifications || disableBGDownloads) { oldValue, newValue in
+                .onChange(of: disableNotifications || disableBGDownloads || enableBetaUpdates) { oldValue, newValue in
                     showRestart = true
                 }
                 
             }
             .sheet(isPresented: $showRequestEditor) {
                 NavigationView {
-                    VStack {
-                        TextEditor(text: $customRequestBody)
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Form {
+                        ForEach($requestBodyItems.indices, id: \.self) { index in
+                            GeometryReader { geometry in
+                                HStack(spacing: 0) {
+                                    // Key field - left 35% of width
+                                    TextField("Key", text: $requestBodyItems[index].key)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .frame(width: geometry.size.width * 0.35, alignment: .leading)
+                                    
+                                    // Type selector - fixed center 30% of width
+                                    ZStack {
+                                        Spacer()
+                                        Menu {
+                                            ForEach(valueTypes, id: \.self) { type in
+                                                Button(type) {
+                                                    requestBodyItems[index].type = type
+                                                }
+                                            }
+                                        } label: {
+                                            HStack {
+                                                Text(requestBodyItems[index].type)
+                                                    .foregroundColor(.primary)
+                                                Image(systemName: "chevron.down")
+                                                    .foregroundColor(.gray)
+                                                    .font(.caption)
+                                            }
+                                            .padding(5)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(Color.gray, lineWidth: 0.5)
+                                            )
+                                        }
+                                        .frame(width: 80)
+                                        Spacer()
+                                    }
+                                    .frame(width: geometry.size.width * 0.3)
+                                    
+                                    // Value area - right 35% of width
+                                    ZStack {
+                                        if requestBodyItems[index].type == "Bool" {
+                                            Toggle("", isOn: Binding(
+                                                get: { 
+                                                    let value = requestBodyItems[index].value.lowercased()
+                                                    return value == "true" || value == "1" 
+                                                },
+                                                set: { newValue in
+                                                    // Only update if it's different from current value
+                                                    let currentValue = requestBodyItems[index].value.lowercased()
+                                                    let isCurrentlyTrue = currentValue == "true" || currentValue == "1"
+                                                    
+                                                    if newValue != isCurrentlyTrue {
+                                                        // Preserve numeric format if that's what was used
+                                                        if currentValue == "1" || currentValue == "0" {
+                                                            requestBodyItems[index].value = newValue ? "1" : "0"
+                                                        } else {
+                                                            requestBodyItems[index].value = newValue ? "true" : "false"
+                                                        }
+                                                    }
+                                                }
+                                            ))
+                                            .labelsHidden()
+                                        } else {
+                                            TextField("Value", text: $requestBodyItems[index].value)
+                                                .autocapitalization(.none)
+                                                .disableAutocorrection(true)
+                                                .multilineTextAlignment(.trailing)
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                        }
+                                    }
+                                    .frame(width: geometry.size.width * 0.35, alignment: .trailing)
+                                }
+                            }
+                            .frame(height: 40)
+                        }
+                        .onDelete { indices in
+                            requestBodyItems.remove(atOffsets: indices)
+                        }
+                        
+                        Button("Add New Item") {
+                            requestBodyItems.append((key: "", value: "", type: "String"))
+                        }
                     }
                     .navigationTitle("Request Body Editor")
                     .navigationBarItems(
                         leading: Button("Cancel") {
                             showRequestEditor = false
                         },
-                        trailing: Button("Save") {
-                            saveRequestBody()
-                            showRequestEditor = false
-                        }
+                        trailing: EditButton()
                     )
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Save") {
+                                saveRequestBody()
+                                showRequestEditor = false
+                            }
+                        }
+                    }
                 }
             }
             

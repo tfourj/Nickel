@@ -43,7 +43,8 @@ func compareVersions(_ version1: String, _ version2: String) -> ComparisonResult
     let v2IsBeta = version2.contains("b")
     
     // If user is on stable release and remote is beta, don't suggest update
-    if !v1IsBeta && v2IsBeta {
+    let enableBetaUpdates = UserDefaults.standard.bool(forKey: "enableBetaUpdates")
+    if !v1IsBeta && v2IsBeta && !enableBetaUpdates {
         return .orderedDescending // Consider current version "newer" to avoid update
     }
     
