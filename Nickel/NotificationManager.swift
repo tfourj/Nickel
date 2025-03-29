@@ -15,16 +15,16 @@ class NotificationManager {
         }
     }
     
-    static func sendDownloadCompleteNotification(text: String) {
+    static func sendDownloadCompleteNotification(text: String, forceNotification: Bool = false) {
         // Check if notis are disabled
         let disableNotifications = UserDefaults.standard.bool(forKey: "disableNotifications")
-        if disableNotifications {
+        if disableNotifications && !forceNotification {
             logOutput("Notifications are disabled by user")
             return
         }
         
         // Only send notification if app is in background
-        guard UIApplication.shared.applicationState != .active else {
+        if !forceNotification && UIApplication.shared.applicationState == .active {
             logOutput("User is currently in app, skipping notification send.")
             return
         }
@@ -39,5 +39,6 @@ class NotificationManager {
                                           trigger: nil)
         
         UNUserNotificationCenter.current().add(request)
+        logOutput("Notification was sent with output: \(text)")
     }
 }

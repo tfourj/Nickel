@@ -24,11 +24,14 @@ struct NickelApp: App {
 func runAppTests() {
     // Only run tests when in the simulator
     #if targetEnvironment(simulator)
-        logOutput("Running in simulator - executing tests")
+    logOutput("Running in simulator - executing tests")
     
-        testVersionComparisons()
+    testVersionComparisons()
+    TestNotification()
     
     #else
-        logOutput("Running on device - tests skipped")
+    
+    logOutput("Running on device - tests skipped")
+    
     #endif
 }
