@@ -300,33 +300,30 @@ struct SettingsView: View {
                                         .truncationMode(.tail)
                                         .frame(width: geometry.size.width * 0.35, alignment: .leading)
                                     
-                                    // Type selector - fixed center 30% of width
-                                    ZStack {
-                                        Spacer()
-                                        Menu {
-                                            ForEach(valueTypes, id: \.self) { type in
-                                                Button(type) {
-                                                    requestBodyItems[index].type = type
-                                                }
+                                    // Type selector - using fixed width
+                                    Menu {
+                                        ForEach(valueTypes, id: \.self) { type in
+                                            Button(type) {
+                                                requestBodyItems[index].type = type
                                             }
-                                        } label: {
-                                            HStack {
-                                                Text(requestBodyItems[index].type)
-                                                    .foregroundColor(.primary)
-                                                Image(systemName: "chevron.down")
-                                                    .foregroundColor(.gray)
-                                                    .font(.caption)
-                                            }
-                                            .padding(5)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 5)
-                                                    .stroke(Color.gray, lineWidth: 0.5)
-                                            )
                                         }
+                                    } label: {
+                                        HStack {
+                                            Text(requestBodyItems[index].type)
+                                                .foregroundColor(.primary)
+                                            Image(systemName: "chevron.down")
+                                                .foregroundColor(.gray)
+                                                .font(.caption)
+                                        }
+                                        .padding(5)
                                         .frame(width: 80)
-                                        Spacer()
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 5)
+                                                .stroke(Color.gray, lineWidth: 0.5)
+                                        )
                                     }
-                                    .frame(width: geometry.size.width * 0.3)
+                                    .frame(minWidth: 80, maxWidth: 80)
+                                    .padding(.horizontal, 5)
                                     
                                     // Value area - right 35% of width
                                     ZStack {
