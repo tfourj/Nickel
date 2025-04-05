@@ -16,6 +16,7 @@ func testVersionComparisons() {
         
         // Beta vs Beta
         ("1.4.2b1", "1.4.2b2", true, true, "Newer beta available"),
+        ("1.4.2b1", "1.4.2b2", false, true, "Newer beta available"),
         ("1.4.2b2", "1.4.2b1", true, false, "Current beta newer than remote"),
         
         // Same version, beta vs stable
