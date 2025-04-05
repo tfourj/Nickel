@@ -5,7 +5,7 @@ PROJECT_NAME="Nickel"
 SCHEME_NAME="Nickel"
 BUILD_DIR="build"
 
-VERSION=$(grep 'SHARED_VERSION_NUMBER' Nickel.xcodeproj/project.pbxproj | head -n 1 | sed -E 's/.*SHARED_VERSION_NUMBER = ([0-9\.]+);.*/\1/')
+VERSION=$(grep 'SHARED_VERSION_NUMBER' Nickel.xcodeproj/project.pbxproj | head -n 1 | sed -E 's/.*SHARED_VERSION_NUMBER = ([0-9\.]+[a-zA-Z0-9]*);.*/\1/')
 IPA_NAME="Nickel-${VERSION}-uBeta.ipa"
 echo "Extracted version: ${VERSION}"
 echo "IPA will be named: ${IPA_NAME}"
