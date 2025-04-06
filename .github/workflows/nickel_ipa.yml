@@ -3,6 +3,8 @@ name: Build Unsigned IPA
 on:
   push:
     branches: [main]
+    paths:
+      - 'Nickel.xcodeproj/project.pbxproj'
   workflow_dispatch:
 
 jobs:

@@ -1,0 +1,98 @@
+name: Update apps.json on new release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:  # Add manual trigger for testing
+
+jobs:
+  generate-apps-json:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Explicitly set write permissions
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4  # Updated to v4
+
+      - name: Set up jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Generate apps.json
+        run: |
+          echo "Fetching release info..."
+          
+          # Handle both manual runs and release event triggers
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual workflow run detected, fetching latest release..."
+            LATEST_RELEASE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest")
+            VERSION=$(echo "$LATEST_RELEASE" | jq -r .tag_name | sed 's/^v//')
+            PUBLISHED=$(echo "$LATEST_RELEASE" | jq -r .published_at)
+            IPA_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | endswith(".ipa")) | .browser_download_url')
+            DESCRIPTION=$(echo "$LATEST_RELEASE" | jq -r .body | head -n 1 || echo "Nickel for iOS")
+          else
+            # Release event trigger
+            RELEASE_URL="${{ github.event.release.url }}"
+            RELEASE_JSON=$(curl -s "$RELEASE_URL")
+            VERSION=$(echo "$RELEASE_JSON" | jq -r .tag_name | sed 's/^v//')
+            PUBLISHED=$(echo "$RELEASE_JSON" | jq -r .published_at)
+            IPA_URL=$(echo "$RELEASE_JSON" | jq -r '.assets[] | select(.name | endswith(".ipa")) | .browser_download_url')
+            DESCRIPTION=$(echo "$RELEASE_JSON" | jq -r .body | head -n 1 || echo "Nickel for iOS")
+          fi
+          
+          # Check if variables were set properly
+          if [[ -z "$VERSION" || -z "$PUBLISHED" || -z "$IPA_URL" ]]; then
+            echo "::error::Failed to fetch release information. Using fallback values."
+            VERSION=${VERSION:-"1.0.0"}
+            PUBLISHED=${PUBLISHED:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+            IPA_URL=${IPA_URL:-"https://github.com/${{ github.repository }}/releases/latest/download/Nickel.ipa"}
+            DESCRIPTION=${DESCRIPTION:-"Nickel for iOS"}
+          fi
+          
+          echo "Fetching app size..."
+          APP_SIZE=$(curl -sL "$IPA_URL" | wc -c)
+
+          # Validate APP_SIZE
+          if [[ -z "$APP_SIZE" || ! "$APP_SIZE" =~ ^[0-9]+$ ]]; then
+            echo "::error::Failed to fetch app size. Defaulting to 0."
+            APP_SIZE=0
+          fi
+
+          echo "Generating apps.json for version $VERSION"
+          
+          # Create JSON with jq instead of heredoc
+          jq -n \
+            --arg name "Nickel AltStore Repo" \
+            --arg identifier "com.tfourj.nickel.repo" \
+            --arg app_name "Nickel" \
+            --arg bundle_id "com.tfourj.nickel" \
+            --arg dev "tfourj" \
+            --arg version "$VERSION" \
+            --arg published "$PUBLISHED" \
+            --arg download "$IPA_URL" \
+            --arg desc "A native third-party iOS client app for Cobalt.tools" \
+            --argjson size "$APP_SIZE" \
+            '{
+              name: $name,
+              identifier: $identifier,
+              apps: [
+                {
+                  name: $app_name,
+                  bundleIdentifier: $bundle_id,
+                  developerName: $dev,
+                  version: $version,
+                  versionDate: $published,
+                  dateUpdated: $published,
+                  downloadURL: $download,
+                  localizedDescription: $desc,
+                  size: $size,
+                  iconURL: "https://raw.githubusercontent.com/tfourj/Nickel/main/Nickel/Assets.xcassets/AppIcon.appiconset/nickel_dark.png"
+                }
+              ]
+            }' > apps.json
+
+      - name: Commit and push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🔄 Update apps.json for v${{ github.event.release.tag_name || 'manual-run' }}"
+          file_pattern: apps.json
