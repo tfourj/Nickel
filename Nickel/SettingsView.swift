@@ -11,7 +11,7 @@ import Foundation
 struct SettingsView: View {
     @AppStorage("customAPIURL") private var customAPIURL: String = ""
     @AppStorage("customAPIKey") private var customAPIKey: String = ""
-    @AppStorage("authMethod") private var authMethod: String = "Api-Key"
+    @AppStorage("authMethod") private var authMethod: String = "Nickel-Auth"
     @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = true
     @AppStorage("enableConsole") private var enableConsole: Bool = false
     @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
@@ -19,6 +19,7 @@ struct SettingsView: View {
     @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
     @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
     @AppStorage("disableNotifications") private var disableNotifications: Bool = false
+    @AppStorage("customAuthServerURL") private var customAuthServerURL: String = ""
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
@@ -34,7 +35,7 @@ struct SettingsView: View {
     @State private var latestVersion: String = ""
     @State private var requestBodyItems: [(key: String, value: String, type: String)] = []
     
-    let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth"]
+    let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth", "Nickel-Auth (Custom)"]
     let valueTypes = ["String", "Bool"]
     
     // Reading version from Info.plist
@@ -164,15 +165,19 @@ struct SettingsView: View {
                             Button(action: {
                                 authMethod = method
                             }) {
-                                Text(method)
-                                if authMethod == method {
-                                    Image(systemName: "checkmark")
+                                HStack {
+                                    Text(method)
+                                    if authMethod == method {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.blue)
+                                    }
                                 }
                             }
                         }
                     } label: {
                         HStack {
-                            Text("Authentication Method")
+                            Text("Auth Method")
                             Spacer()
                             Text(authMethod)
                                 .foregroundColor(.gray)
@@ -194,7 +199,7 @@ struct SettingsView: View {
                             Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
                                 .foregroundColor(.blue)
                         }
-                    } else if authMethod == "Nickel-Auth" {
+                    } else if authMethod == "Nickel-Auth" || authMethod == "Nickel-Auth (Custom)" {
                         Button(action: {
                             if let url = URL(string: "https://getnickel.site/instances/") {
                                 UIApplication.shared.open(url)
@@ -202,6 +207,12 @@ struct SettingsView: View {
                         }) {
                             Text("Browse Compatible Instances")
                                 .foregroundColor(.blue)
+                        }
+                        
+                        if authMethod == "Nickel-Auth (Custom)" {
+                            TextField("Custom Auth Server URL", text: $customAuthServerURL)
+                                .autocapitalization(.none)
+                                .keyboardType(.URL)
                         }
                     }
                 }
