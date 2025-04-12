@@ -215,13 +215,24 @@ struct SettingsView: View {
                             .transition(.opacity)
                     }
                     
-                    Button(action: {
-                        withAnimation {
-                            showAPIKey.toggle()
+                    if authMethod == "Api-Key" || authMethod == "Bearer" {
+                        Button(action: {
+                            withAnimation {
+                                showAPIKey.toggle()
+                            }
+                        }) {
+                            Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
+                                .foregroundColor(.blue)
                         }
-                    }) {
-                        Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
-                            .foregroundColor(.blue)
+                    } else if authMethod == "Nickel-Auth" {
+                        Button(action: {
+                            if let url = URL(string: "https://getnickel.site/instances/") {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            Text("Browse Compatible Instances")
+                                .foregroundColor(.blue)
+                        }
                     }
                 }
                 

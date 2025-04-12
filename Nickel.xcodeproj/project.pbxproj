@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		820F25A62DAAB68400289272 /* AppAttest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820F25A52DAAB66400289272 /* AppAttest.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
 		82BDA7ED2D981D9000E33E30 /* UpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7EC2D981D9000E33E30 /* UpdateCheckerTests.swift */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
@@ -50,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7EC2D981D9000E33E30 /* UpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateCheckerTests.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 		FE8350772D66964400861765 /* Nickel */ = {
 			isa = PBXGroup;
 			children = (
+				820F25A52DAAB66400289272 /* AppAttest.swift */,
 				82BDA7EF2D981F0600E33E30 /* Tests */,
 				FE83506C2D66964400861765 /* Preview Content */,
 				FE83506D2D66964400861765 /* Assets.xcassets */,
@@ -268,6 +271,7 @@
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
 				82BDA7ED2D981D9000E33E30 /* UpdateCheckerTests.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
+				820F25A62DAAB68400289272 /* AppAttest.swift in Sources */,
 				82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */,
 				FE83507D2D66964400861765 /* DownloadManager.swift in Sources */,
 				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,

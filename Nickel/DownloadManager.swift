@@ -85,15 +85,20 @@ class DownloadManager {
 
         // Set the Authorization header
         if authType == "Nickel-Auth" {
-            let authValue: String
-            do {
-                authValue = try await generateDeviceCheckToken()
-                logOutput("Generated DeviceCheck token: \(authValue)")
-            } catch {
-                logOutput("❌ Failed to generate DeviceCheck token: \(error.localizedDescription)")
-                throw NSError(domain: "DeviceCheckError", code: 0,
-                              userInfo: [NSLocalizedDescriptionKey: "Failed to generate DeviceCheck token."])
+            var authValue: String
+            if let tempKey = UserDefaults.standard.string(forKey: "TempKey") {
+                logOutput("Validating stored TempKey: \(tempKey)")
+                let isValid = try await validateTempKey(tempKey)
+                if isValid {
+                    authValue = tempKey
+                } else {
+                    authValue = try await regenerateTempKey()
+                }
+            } else {
+                logOutput("TempKey not found. Generating a new one...")
+                authValue = try await regenerateTempKey()
             }
+
             request.setValue("Nickel-Auth \(authValue)", forHTTPHeaderField: "Authorization")
         } else if authType != "None" {
             let authValue = "\(authType) \(storedAPIKey)"
@@ -185,6 +190,43 @@ class DownloadManager {
             throw NSError(domain: "CobaltAPI", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected API response."])
         }
+    }
+
+    private func validateTempKey(_ tempKey: String) async throws -> Bool {
+        var request = URLRequest(url: URL(string: "https://getnickel.site/ios-validate")!)
+        request.httpMethod = "POST"
+        request.setValue("Nickel-Auth \(tempKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        logOutput("Validating TempKey via Authorization header.")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "ValidationError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No HTTP response received."])
+        }
+
+        if httpResponse.statusCode == 200 {
+            logOutput("✅ TempKey validation succeeded.")
+            return true
+        } else if httpResponse.statusCode == 401 {
+            logOutput("❌ TempKey validation failed with 401 Unauthorized. Details: \(String(data: data, encoding: .utf8) ?? "Unknown error")")
+            return false
+        } else if httpResponse.statusCode == 403 {
+            logOutput("❌ TempKey validation failed with 403 Forbidden.")
+            return false
+        } else {
+            let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
+            logOutput("❌ TempKey validation failed with status code: \(httpResponse.statusCode). Details: \(errorDetails)")
+            throw NSError(domain: "ValidationError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorDetails])
+        }
+    }
+
+    private func regenerateTempKey() async throws -> String {
+        let newTempKey = try await AppAttestClient().attestKey()
+        logOutput("Generated new TempKey: \(newTempKey)")
+        UserDefaults.standard.set(newTempKey, forKey: "TempKey")
+        return newTempKey
     }
 
     private func generateDeviceCheckToken() async throws -> String {

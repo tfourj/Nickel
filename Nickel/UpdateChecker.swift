@@ -2,11 +2,10 @@ import Foundation
 
 // GitHub repository info
 let githubRepoURL = "https://github.com/tfourj/Nickel/releases"
-let versionCheckURL = "https://raw.githubusercontent.com/tfourj/Nickel/refs/heads/main/Nickel.xcodeproj/project.pbxproj"
+let versionCheckURL = "https://raw.githubusercontent.com/tfourj/Nickel/refs/heads/main/nickel_ver"
 
 // Function to check for updates
 func checkForUpdates(appVersion: String, completion: @escaping (String?, String?) -> Void) {
-    //testVersionComparisons()
     guard let url = URL(string: versionCheckURL) else {
         completion(nil, "Invalid update check URL")
         return
@@ -18,21 +17,11 @@ func checkForUpdates(appVersion: String, completion: @escaping (String?, String?
             return
         }
 
-        guard let data = data, let fileContent = String(data: data, encoding: .utf8) else {
+        guard let data = data, let remoteVersion = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
             completion(nil, "Unable to read version information")
             return
         }
 
-        // Extract version number using regex - updated to handle beta versions
-        let pattern = "SHARED_VERSION_NUMBER\\s*=\\s*([0-9]+\\.[0-9]+\\.[0-9]+(?:b[0-9]+)?)"
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: fileContent, range: NSRange(fileContent.startIndex..., in: fileContent)),
-              let versionRange = Range(match.range(at: 1), in: fileContent) else {
-            completion(nil, "Unable to parse version information")
-            return
-        }
-
-        let remoteVersion = String(fileContent[versionRange])
         completion(remoteVersion, nil)
     }.resume()
 }
