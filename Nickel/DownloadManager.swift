@@ -7,6 +7,7 @@
 
 
 import Foundation
+import DeviceCheck
 
 class DownloadManager {
     static let shared = DownloadManager()
@@ -37,10 +38,22 @@ class DownloadManager {
 
         logOutput("Loaded config - API URL: \(storedAPIURL), Auth Type: \(authType)")
 
-        guard let apiURL = URL(string: storedAPIURL) else {
-            logOutput("❌ Invalid API URL in UserDefaults")
-            throw NSError(domain: "ConfigError", code: 0,
-                          userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
+        var apiURL: URL
+
+        if authType == "Nickel-Auth" {
+            guard let nickelURL = URL(string: "https://getnickel.site/ios-request") else {
+                logOutput("❌ Invalid Nickel-Auth URL")
+                throw NSError(domain: "ConfigError", code: 0,
+                              userInfo: [NSLocalizedDescriptionKey: "Invalid Nickel-Auth URL"])
+            }
+            apiURL = nickelURL
+        } else {
+            guard let customURL = URL(string: storedAPIURL) else {
+                logOutput("❌ Invalid API URL in UserDefaults")
+                throw NSError(domain: "ConfigError", code: 0,
+                              userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
+            }
+            apiURL = customURL
         }
 
         // Load custom request body from UserDefaults or use default
@@ -54,8 +67,11 @@ class DownloadManager {
             return DownloadManager.defaultRequestBody
         }()
         
-        // Add URL to the request body
+        // Add URL and api-url to the request body
         requestBody["url"] = inputURL.absoluteString
+        if authType == "Nickel-Auth" {
+            requestBody["api-url"] = storedAPIURL
+        }
         
         logOutput("Request body: \(requestBody)")
 
@@ -68,14 +84,24 @@ class DownloadManager {
         request.httpBody = jsonData
 
         // Set the Authorization header
-        if authType != "None" {
+        if authType == "Nickel-Auth" {
+            let authValue: String
+            do {
+                authValue = try await generateDeviceCheckToken()
+                logOutput("Generated DeviceCheck token: \(authValue)")
+            } catch {
+                logOutput("❌ Failed to generate DeviceCheck token: \(error.localizedDescription)")
+                throw NSError(domain: "DeviceCheckError", code: 0,
+                              userInfo: [NSLocalizedDescriptionKey: "Failed to generate DeviceCheck token."])
+            }
+            request.setValue("Nickel-Auth \(authValue)", forHTTPHeaderField: "Authorization")
+        } else if authType != "None" {
             let authValue = "\(authType) \(storedAPIKey)"
             logOutput("Auth Header: \(authValue)")
             request.setValue(authValue, forHTTPHeaderField: "Authorization")
         } else {
             logOutput("Auth value is set to none so Authorization Headers won't be set")
         }
-
 
         // Send the request
         logOutput("Sending request to \(apiURL.absoluteString)")
@@ -87,6 +113,12 @@ class DownloadManager {
         }
 
         logOutput("Received response with status code: \(httpResponse.statusCode)")
+
+        if httpResponse.statusCode == 404 {
+            logOutput("❌ Server unavailable: Received 404 Not Found")
+            throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "Server unavailable. Please check the API URL or try again later."])
+        }
 
         if httpResponse.statusCode != 200 {
             let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
@@ -152,6 +184,21 @@ class DownloadManager {
             logOutput("❌ Unexpected API response: \(status)")
             throw NSError(domain: "CobaltAPI", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected API response."])
+        }
+    }
+
+    private func generateDeviceCheckToken() async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            DCDevice.current.generateToken { data, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let data = data {
+                    continuation.resume(returning: data.base64EncodedString())
+                } else {
+                    continuation.resume(throwing: NSError(domain: "DeviceCheckError", code: 0,
+                                                          userInfo: [NSLocalizedDescriptionKey: "Unknown error generating DeviceCheck token."]))
+                }
+            }
         }
     }
 }

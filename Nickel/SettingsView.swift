@@ -36,7 +36,7 @@ struct SettingsView: View {
     @State private var latestVersion: String = ""
     @State private var requestBodyItems: [(key: String, value: String, type: String)] = []
     
-    let authMethods = ["None", "Bearer", "Api-Key"]
+    let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth"]
     let valueTypes = ["String", "Bool"]
     
     // Reading version from Info.plist
@@ -189,12 +189,25 @@ struct SettingsView: View {
                         .autocapitalization(.none)
                         .keyboardType(.URL)
                     
-                    Picker("Authentication Method", selection: $authMethod) {
+                    Menu {
                         ForEach(authMethods, id: \.self) { method in
-                            Text(method)
+                            Button(action: {
+                                authMethod = method
+                            }) {
+                                Text(method)
+                                if authMethod == method {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Authentication Method")
+                            Spacer()
+                            Text(authMethod)
+                                .foregroundColor(.gray)
                         }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     
                     if showAPIKey {
                         TextField("Auth Key", text: $customAPIKey)
