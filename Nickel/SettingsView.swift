@@ -45,6 +45,14 @@ struct SettingsView: View {
         return version
     }
     
+    // Reading build number from Info.plist
+    var appBuild: String {
+        guard let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String else {
+            return "Unknown"
+        }
+        return build
+    }
+    
     private func loadSavedRequestBody() {
         logOutput("Loading custom request body values called")
         if let saved = UserDefaults.standard.string(forKey: "customRequestBody"),
@@ -352,7 +360,7 @@ struct SettingsView: View {
                 ToolbarItem(placement: .principal) {
                     ZStack {
                         HStack {
-                            Text("v\(appVersion)")
+                            Text("v\(appVersion)\(appBuild != "1" ? " (\(appBuild))" : "")")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                             Spacer()
