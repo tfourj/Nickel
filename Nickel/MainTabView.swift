@@ -10,7 +10,6 @@ import SwiftUI
 struct MainTabView: View {
     @AppStorage("enableConsole") var enableConsole: Bool = false
     @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
-    @AppStorage("autoCheckUpdates") private var autoCheckUpdates: Bool = true
     @Environment(\.scenePhase) var scenePhase
 
     @State private var selectedTab = 0 // 0 = Home, 1 = Settings, 2 = Console
@@ -51,39 +50,7 @@ struct MainTabView: View {
                 }
             }
         }
-        .onAppear {
-            if autoCheckUpdates {
-                logOutput("Checking for updates...")
-                checkForUpdates()
-            }
-        }
-        .alert("Update Available", isPresented: $showUpdateAvailable) {
-            Button("Open Github") {
-                openGitHubReleases()
-            }
-            Button("Later", role: .cancel) { }
-        } message: {
-            Text("Version \(latestVersion) is available. Please update the app.")
-        }
     }
-
-    private func checkForUpdates() {
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        Nickel.checkForUpdates(appVersion: appVersion) { remoteVersion, errorMessage in
-            DispatchQueue.main.async {
-                if let remoteVersion = remoteVersion, compareVersions(appVersion, remoteVersion) == .orderedAscending {
-                    latestVersion = remoteVersion
-                    showUpdateAvailable = true
-                }
-            }
-        }
-    }
-    
-    public func openGitHubReleases() {
-        if let url = URL(string: githubRepoURL), UIApplication.shared.canOpenURL(url) {        UIApplication.shared.open(url)
-        }
-    }
-    
 }
 
 struct MainTabView_Previews: PreviewProvider {

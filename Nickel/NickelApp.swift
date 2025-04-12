@@ -26,7 +26,6 @@ func runAppTests() {
     #if targetEnvironment(simulator)
     logOutput("Running in simulator - executing tests")
     
-    testVersionComparisons()
     TestNotification()
     
     #else

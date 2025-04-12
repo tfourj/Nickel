@@ -19,8 +19,6 @@ struct SettingsView: View {
     @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
     @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
     @AppStorage("disableNotifications") private var disableNotifications: Bool = false
-    @AppStorage("autoCheckUpdates") private var autoCheckUpdates: Bool = true
-    @AppStorage("enableBetaUpdates") private var enableBetaUpdates: Bool = false
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
@@ -45,42 +43,6 @@ struct SettingsView: View {
             return "Unknown"
         }
         return version
-    }
-    
-    func checkForUpdates() {
-        isCheckingForUpdate = true
-
-        Nickel.checkForUpdates(appVersion: appVersion) { remoteVersion, errorMessage in
-            DispatchQueue.main.async {
-                isCheckingForUpdate = false
-
-                if let errorMessage = errorMessage {
-                    alertMessage = errorMessage
-                    showAlert = true
-                    return
-                }
-
-                guard let remoteVersion = remoteVersion else {
-                    alertMessage = "Unable to retrieve version information"
-                    showAlert = true
-                    return
-                }
-
-                latestVersion = remoteVersion
-
-                if compareVersions(appVersion, remoteVersion) == .orderedAscending {
-                    showUpdateAvailable = true
-                } else {
-                    alertMessage = "You have the latest version (\(appVersion))"
-                    showAlert = true
-                }
-            }
-        }
-    }
-    
-    public func openGitHubReleases() {
-        if let url = URL(string: githubRepoURL), UIApplication.shared.canOpenURL(url) {        UIApplication.shared.open(url)
-        }
     }
     
     private func loadSavedRequestBody() {
@@ -277,35 +239,7 @@ struct SettingsView: View {
                     .foregroundColor(.red)
                 }
                 
-                Section(header: Text("Updates")) {
-                    Toggle(isOn: $autoCheckUpdates) {
-                        Text("Check for Updates Automatically")
-                    }
-                    
-                    Toggle(isOn: $enableBetaUpdates) {
-                        Text("Check for Beta versions")
-                    }
-                    
-                    HStack {
-                        Text("Nickel Version")
-                        Spacer()
-                        Text(appVersion)
-                            .foregroundColor(.gray)
-                    }
-                    
-                    Button(action: checkForUpdates) {
-                        HStack {
-                            Text("Check for Updates")
-                            Spacer()
-                            if isCheckingForUpdate {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle())
-                            }
-                        }
-                    }
-                }
-                
-                .onChange(of: disableNotifications || disableBGDownloads || enableBetaUpdates) { oldValue, newValue in
+                .onChange(of: disableNotifications || disableBGDownloads) { oldValue, newValue in
                     showRestart = true
                 }
                 
@@ -468,15 +402,6 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("Credentials set, app will be restarted.")
-            }
-            
-            .alert("Update Available", isPresented: $showUpdateAvailable) {
-                Button("Open GitHub", role: .none) {
-                    openGitHubReleases()
-                }
-                Button("Later", role: .cancel) { }
-            } message: {
-                Text("Version \(latestVersion) is available. You currently have version \(appVersion).")
             }
         }
     }
