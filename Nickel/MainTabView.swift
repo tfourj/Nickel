@@ -10,11 +10,14 @@ import SwiftUI
 struct MainTabView: View {
     @AppStorage("enableConsole") var enableConsole: Bool = false
     @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
+    @AppStorage("customAPIURL") private var customAPIURL: String = ""
+    @AppStorage("authMethod") private var authMethod: String = ""
     @Environment(\.scenePhase) var scenePhase
 
     @State private var selectedTab = 0 // 0 = Home, 1 = Settings, 2 = Console
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
+    @State private var showURLSetAlert = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -39,6 +42,15 @@ struct MainTabView: View {
             }
         }
         .onOpenURL { url in
+            if url.scheme == "nickel", url.host == "setapiurl",
+               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               let queryItems = components.queryItems,
+               let instanceURL = queryItems.first(where: { $0.name == "url" })?.value {
+                customAPIURL = instanceURL // Save to AppStorage
+                authMethod = "Nickel-Auth" // Update authMethod
+                logOutput("Updated customAPIURL to: \(instanceURL) and authMethod to: Nickel-Auth")
+                showURLSetAlert = true
+            }
             if selectedTab != 0 {
                 selectedTab = 0 // Switch to Home tab if it's not already selected
             }
@@ -49,6 +61,11 @@ struct MainTabView: View {
                     selectedTab = 0 // Switch to Home tab if it's not already selected
                 }
             }
+        }
+        .alert("URL Set", isPresented: $showURLSetAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("The API URL has been updated to: \(customAPIURL) and authMethod to: Nickel-Auth")
         }
     }
 }

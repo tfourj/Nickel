@@ -178,7 +178,8 @@ struct ContentView: View {
         
         .onOpenURL { url in
             // Extract the URL from the scheme and set it to urlField
-            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            if url.scheme == "nickel", url.host == "download",
+               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                let queryItems = components.queryItems,
                let linkItem = queryItems.first(where: { $0.name == "url" }),
                let sharedLink = linkItem.value {
