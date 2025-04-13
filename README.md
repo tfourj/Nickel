@@ -12,14 +12,13 @@ Project was inspired from cranci1's [Osmium](https://github.com/cranci1/Osmium)
 ```
 The app does not interface directly with social media platforms - it relies on your own Cobalt API server instance to handle the media downloads.
 ```
+This project is designed to work with:
+- [Cobalt API](https://cobalt.tools)
+- [Nickel-Auth](https://github.com/tfourj/Nickel-Auth) *(optional, but recommended)*
 
 ## Features
 
-- Share links directly from any app using the iOS share sheet
-- Automatic saving of downloaded files to Photos app
-- Background download support with completion notifications 
-- Customizable API settings and authentication
-- Support for video, audio and image downloads
+Visit [getnickel.site](https://getnickel.site) for the latest features and updates.
 
 ## Requirements
 
@@ -30,28 +29,13 @@ The app does not interface directly with social media platforms - it relies on y
 
 ## Installation
 
-### Option 1: Build from Source
-
-1. Clone this repository
-2. Open `Nickel.xcodeproj` in Xcode
-3. Configure your development team and signing certificates
-4. Build and run on your device
-
-### Option 2: Sideload Pre-built IPA
-
-1. Download the latest IPA file from:
-   - [GitHub Actions Artifacts](../../actions) (requires GitHub account)
-   - [Releases](../../releases) page
-2. Install using your preferred sideloading method:
-   - AltStore
-   - ESign 
-   - Or other sideloading tools
-3. Go to Settings tab and toggle `Disable Bakcground Downloads` (this is only needed for on device IPA signers to fix downloading)
+- Download from [TestFlight](https://getnickel.site/testflight)
+- Sideload the [IPA](https://github.com/tfourj/Nickel/actions) using tools like AltStore or ESign
 
 ## Configuration
 
 1. Open app settings
-2. Enter your custom API URL and authentication details
+2. Enter your custom API URL and authentication details or get them from [public list](https://getnickel.site/instances)
 3. Configure optional settings like auto-save and notifications
 
 ## Contributing
