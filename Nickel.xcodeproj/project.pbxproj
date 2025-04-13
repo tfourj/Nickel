@@ -10,6 +10,7 @@
 		820F25A62DAAB68400289272 /* AppAttest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820F25A52DAAB66400289272 /* AppAttest.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
+		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		FE8350682D66964000861765 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350662D66964000861765 /* ShareViewController.swift */; };
 		FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FE8350642D66964000861765 /* MainInterface.storyboard */; };
 		FE8350782D66964400861765 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE83506B2D66964400861765 /* Preview Assets.xcassets */; };
@@ -52,6 +53,7 @@
 		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
+		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		FE654B262D53E9C500E89563 /* Nickel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nickel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE8350622D66964000861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FE8350632D66964000861765 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				FE83506D2D66964400861765 /* Assets.xcassets */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
 				FE83506F2D66964400861765 /* ContentView.swift */,
+				82D449E42DAC65C3005D3763 /* LandingPageView.swift */,
 				FE8350702D66964400861765 /* DownloadManager.swift */,
 				FE8350712D66964400861765 /* FileDownloader.swift */,
 				829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */,
@@ -268,6 +271,7 @@
 				FE83507D2D66964400861765 /* DownloadManager.swift in Sources */,
 				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,
 				FE83507F2D66964400861765 /* MainTabView.swift in Sources */,
+				82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */,
 				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
 				829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */,
 				FE8350812D66964400861765 /* SettingsView.swift in Sources */,
@@ -363,7 +367,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 003;
+				SHARED_BUILD_NUMBER = 004;
 				SHARED_VERSION_NUMBER = 2.0.0;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -422,7 +426,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 003;
+				SHARED_BUILD_NUMBER = 004;
 				SHARED_VERSION_NUMBER = 2.0.0;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
@@ -444,6 +448,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Nickel/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nickel;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "\"This app requires access to save downloaded videos to your photo library.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -486,6 +491,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Nickel/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nickel;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "\"This app requires access to save downloaded videos to your photo library.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

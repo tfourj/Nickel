@@ -18,27 +18,37 @@ struct MainTabView: View {
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
     @State private var showURLSetAlert = false
+    private let currentLandingPageVersion = 1
+    @State private var completedLandingPageVersion = UserDefaults.standard.integer(forKey: "landingPageVersion")
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            ContentView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-                .tag(0) // Home tab
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
-                .tag(1) // Settings tab
-            
-            if enableConsole {
-                ConsoleView()
+        ZStack {
+            // Main app content
+            TabView(selection: $selectedTab) {
+                ContentView()
                     .tabItem {
-                        Label("Console", systemImage: "terminal.fill")
+                        Label("Home", systemImage: "house.fill")
                     }
-                    .tag(2) // Console tab
+                    .tag(0) // Home tab
+                
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape.fill")
+                    }
+                    .tag(1) // Settings tab
+                
+                if enableConsole {
+                    ConsoleView()
+                        .tabItem {
+                            Label("Console", systemImage: "terminal.fill")
+                        }
+                        .tag(2) // Console tab
+                }
+            }
+            if completedLandingPageVersion != currentLandingPageVersion {
+                LandingPageView(completedVersion: $completedLandingPageVersion, currentVersion: currentLandingPageVersion)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .onOpenURL { url in

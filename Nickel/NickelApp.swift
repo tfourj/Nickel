@@ -12,6 +12,12 @@ struct NickelApp: App {
     init() {
         logOutput("Nickel started!")
         NotificationManager.requestPermission()
+        
+        if UserDefaults.standard.object(forKey: "landingPageVersion") == nil {
+            UserDefaults.standard.set(0, forKey: "landingPageVersion")
+            logOutput("First launch detected, landing page version initialized to 0")
+        }
+        
         runAppTests()
     }
     var body: some Scene {
