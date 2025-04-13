@@ -166,8 +166,6 @@ struct ContentView: View {
             .background(Color.black.ignoresSafeArea())
         }
         
-        .preferredColorScheme(.dark)
-        
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 if autoClearErrorMessage {
@@ -228,7 +226,9 @@ struct ContentView: View {
                         logOutput("Picker appeared with \(pickerOptions.count) options")
                         listRefreshID = UUID() // Trigger a refresh
                     }
-                }
+        }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .preferredColorScheme(.dark)
     }
 
     private func checkForSharedURL() {

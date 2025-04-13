@@ -423,6 +423,8 @@ struct SettingsView: View {
                 Text("Credentials set, app will be restarted.")
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .preferredColorScheme(.dark)
     }
 }
 

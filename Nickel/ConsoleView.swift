@@ -49,6 +49,8 @@ struct ConsoleView: View {
                 // logOutput("Test output: ConsoleView appeared")
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .preferredColorScheme(.dark)
     }
 }
 
