@@ -107,7 +107,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
                 let fileSize = fileAttributes[.size] as? Int64 ?? 0
                 
                 if fileSize == 0 {
-                    let error = NSError(domain: "FileDownloader", code: -4, userInfo: [NSLocalizedDescriptionKey: "Downloaded file is 0 bytes"])
+                    let error = NSError(domain: "FileDownloader", code: -4, userInfo: [NSLocalizedDescriptionKey: "Downloaded file is 0 bytes \n\n Try to enable youtubeHLS in request body settings and retry \n (Note that this solution may not work in all cases)."])
                     logOutput("⚠️ \(type) file is 0 bytes, returning error")
                     downloadContinuation?.resume(throwing: error)
                     return
