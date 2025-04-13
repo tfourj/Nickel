@@ -371,7 +371,7 @@ struct SettingsView: View {
                 ToolbarItem(placement: .principal) {
                     ZStack {
                         HStack {
-                            Text("v\(appVersion)\(appBuild != "1" ? " (\(appBuild))" : "")")
+                            Text("v\(appVersion)\(appBuild != "1000" ? " (\(appBuild))" : "")")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
                             Spacer()
