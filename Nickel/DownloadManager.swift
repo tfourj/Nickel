@@ -43,8 +43,7 @@ class DownloadManager {
         if authType.contains("Nickel-Auth") {
             logOutput("Fetching Nickel-Auth URL from AppAttestClient")
             let appAttestClient = AppAttestClient()
-            let nickelURL = appAttestClient.serverURL.appendingPathComponent("/ios-request")
-            apiURL = nickelURL
+            apiURL = appAttestClient.buildEndpointURL(path: "ios-request")
         } else {
             guard let customURL = URL(string: storedAPIURL) else {
                 logOutput("❌ Invalid API URL in UserDefaults")

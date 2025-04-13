@@ -42,10 +42,16 @@ class AppAttestClient {
         return tempKey
     }
 
-    private func fetchChallenge() async throws -> String {
-        let challengeURL = serverURL.appendingPathComponent("/ios-challenge")
-        logOutput("Fetching challenge from: \(challengeURL.absoluteString)")
+    func buildEndpointURL(path: String) -> URL {
+        let baseURL = serverURL.absoluteString
+        let cleanBaseURL = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        return URL(string: cleanBaseURL + "/" + path)!
+    }
 
+    private func fetchChallenge() async throws -> String {
+        let challengeURL = buildEndpointURL(path: "ios-challenge")
+        logOutput("Fetching challenge from: \(challengeURL.absoluteString)")
+        
         var request = URLRequest(url: challengeURL)
         request.httpMethod = "GET"
 
@@ -72,9 +78,9 @@ class AppAttestClient {
     }
 
     private func sendAttestationToServer(attestation: Data, challenge: String, keyId: String) async throws -> String {
-        let url = serverURL.appendingPathComponent("/ios-auth")
+        let url = buildEndpointURL(path: "ios-auth")
         logOutput("Sending attestation to server")
-
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -103,7 +109,9 @@ class AppAttestClient {
     }
 
     func validateTempKey(_ tempKey: String) async throws -> Bool {
-        var request = URLRequest(url: serverURL.appendingPathComponent("/ios-validate"))
+        let validateURL = buildEndpointURL(path: "ios-validate")
+        
+        var request = URLRequest(url: validateURL)
         request.httpMethod = "POST"
         request.setValue("Nickel-Auth \(tempKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
