@@ -9,17 +9,7 @@ import SwiftUI
 import Foundation
 
 struct SettingsView: View {
-    @AppStorage("customAPIURL") private var customAPIURL: String = ""
-    @AppStorage("customAPIKey") private var customAPIKey: String = ""
-    @AppStorage("authMethod") private var authMethod: String = "Nickel-Auth"
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = true
-    @AppStorage("enableConsole") private var enableConsole: Bool = false
-    @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
-    @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
-    @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
-    @AppStorage("disableBGDownloads") private var disableBGDownloads: Bool = false
-    @AppStorage("disableNotifications") private var disableNotifications: Bool = false
-    @AppStorage("customAuthServerURL") private var customAuthServerURL: String = ""
+    @EnvironmentObject var settings: SettingsModel
     
     @State private var showAPIKey = false
     @State private var customRequestBody: String = ""
@@ -144,9 +134,9 @@ struct SettingsView: View {
         }
         
         // Set values
-        authMethod = auth
-        customAPIURL = components[2]
-        customAPIKey = components[3]
+        settings.authMethod = auth
+        settings.customAPIURL = components[2]
+        settings.customAPIKey = components[3]
         
         // Show alert and exit app
         showCredentialsAlert = true
@@ -156,18 +146,18 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 Section(header: Text("API Settings")) {
-                    TextField("API URL", text: $customAPIURL)
+                    TextField("API URL", text: $settings.customAPIURL)
                         .autocapitalization(.none)
                         .keyboardType(.URL)
                     
                     Menu {
                         ForEach(authMethods, id: \.self) { method in
                             Button(action: {
-                                authMethod = method
+                                settings.authMethod = method
                             }) {
                                 HStack {
                                     Text(method)
-                                    if authMethod == method {
+                                    if settings.authMethod == method {
                                         Spacer()
                                         Image(systemName: "checkmark")
                                             .foregroundColor(.blue)
@@ -179,18 +169,18 @@ struct SettingsView: View {
                         HStack {
                             Text("Auth Method")
                             Spacer()
-                            Text(authMethod)
+                            Text(settings.authMethod)
                                 .foregroundColor(.gray)
                         }
                     }
                     
                     if showAPIKey {
-                        TextField("Auth Key", text: $customAPIKey)
+                        TextField("Auth Key", text: $settings.customAPIKey)
                             .autocapitalization(.none)
                             .transition(.opacity)
                     }
                     
-                    if authMethod == "Api-Key" || authMethod == "Bearer" {
+                    if settings.authMethod == "Api-Key" || settings.authMethod == "Bearer" {
                         Button(action: {
                             withAnimation {
                                 showAPIKey.toggle()
@@ -199,7 +189,7 @@ struct SettingsView: View {
                             Text(showAPIKey ? "Hide Auth Key" : "Show Auth Key")
                                 .foregroundColor(.blue)
                         }
-                    } else if authMethod == "Nickel-Auth" || authMethod == "Nickel-Auth (Custom)" {
+                    } else if settings.authMethod == "Nickel-Auth" || settings.authMethod == "Nickel-Auth (Custom)" {
                         Button(action: {
                             if let url = URL(string: "https://getnickel.site/instances/") {
                                 UIApplication.shared.open(url)
@@ -209,8 +199,8 @@ struct SettingsView: View {
                                 .foregroundColor(.blue)
                         }
                         
-                        if authMethod == "Nickel-Auth (Custom)" {
-                            TextField("Custom Auth Server URL", text: $customAuthServerURL)
+                        if settings.authMethod == "Nickel-Auth (Custom)" {
+                            TextField("Custom Auth Server URL", text: $settings.customAuthServerURL)
                                 .autocapitalization(.none)
                                 .keyboardType(.URL)
                         }
@@ -218,28 +208,28 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Additional Settings")) {
-                    Toggle(isOn: $autoSaveToPhotos) {
+                    Toggle(isOn: $settings.autoSaveToPhotos) {
                         Text("Save Downloads to Photos Automatically")
                     }
-                    Toggle(isOn: $enableConsole) {
+                    Toggle(isOn: $settings.enableConsole) {
                         Text("Enable Developer Console")
                     }
-                    Toggle(isOn: $autoClearErrorMessage) {
+                    Toggle(isOn: $settings.autoClearErrorMessage) {
                         Text("Clear Error Messages Automatically")
                     }
-                    Toggle(isOn: $autoOpenHome) {
+                    Toggle(isOn: $settings.autoOpenHome) {
                         Text("Open Home Tab on App Launch")
                     }
-                    Toggle(isOn: $disableAutoPasteRun) {
+                    Toggle(isOn: $settings.disableAutoPasteRun) {
                         Text("Disable Auto-Download After Pasting Link")
                     }
-                    Toggle(isOn: $disableNotifications) {
+                    Toggle(isOn: $settings.disableNotifications) {
                         Text("Disable Download Notifications")
                     }
                 }
                 
                 Section(header: Text("Download Settings")) {
-                    Toggle(isOn: $disableBGDownloads) {
+                    Toggle(isOn: $settings.disableBGDownloads) {
                         Text("Disable Background Downloads")
                         Text("Enable if using on device IPA signers")
                             .font(.footnote) // Smaller font size
@@ -258,7 +248,7 @@ struct SettingsView: View {
                     .foregroundColor(.red)
                 }
                 
-                .onChange(of: disableNotifications || disableBGDownloads) { oldValue, newValue in
+                .onChange(of: settings.disableNotifications || settings.disableBGDownloads) { oldValue, newValue in
                     showRestart = true
                 }
                 

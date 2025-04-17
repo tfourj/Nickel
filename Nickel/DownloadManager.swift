@@ -12,6 +12,8 @@ import DeviceCheck
 class DownloadManager {
     static let shared = DownloadManager()
     
+    var settings: SettingsModel = SettingsModel()
+    
     // Default values; these will be used if custom values aren’t set in Settings.
     private let NONE = ""
     private let defaultAuthType = "Api-Key"
@@ -32,10 +34,9 @@ class DownloadManager {
     func fetchCobaltURL(inputURL: URL) async throws -> CobaltDownloadResult {
         logOutput("Starting fetchCobaltURL with input URL: \(inputURL.absoluteString)")
 
-        // Get custom API URL and key from UserDefaults, or fall back to defaults.
-        let storedAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? NONE
-        let storedAPIKey = UserDefaults.standard.string(forKey: "customAPIKey") ?? NONE
-        let authType = UserDefaults.standard.string(forKey: "authMethod") ?? defaultAuthType
+        let storedAPIURL = settings.customAPIURL
+        let storedAPIKey = settings.customAPIKey
+        let authType = settings.authMethod
 
         logOutput("Loaded config - API URL: \(storedAPIURL), Auth Type: \(authType)")
 

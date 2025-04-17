@@ -10,8 +10,8 @@ import UIKit
 
 class FileDownloader: NSObject, URLSessionDownloadDelegate {
     static let shared = FileDownloader()
-    let disableBGDownloads = UserDefaults.standard.bool(forKey: "disableBGDownloads")
-    
+    var settings: SettingsModel = SettingsModel()
+
     // Add progress handler type
     typealias ProgressHandler = (Double, Double) -> Void
     private var progressHandler: ProgressHandler?
@@ -23,10 +23,10 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     }
 
     private lazy var session: URLSession = {
-        let config = !disableBGDownloads
+        let config = !settings.disableBGDownloads
             ? URLSessionConfiguration.background(withIdentifier: "\(Bundle.main.bundleIdentifier ?? "com.tfourj.Nickel").filedownloader")
             : .default
-        logOutput("disableBGD state: \(disableBGDownloads)")
+        logOutput("disableBGD state: \(settings.disableBGDownloads)")
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }()
 
@@ -153,7 +153,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             let isCancellationError = errorCode == NSURLErrorCancelled // -999
             
             // If we hit an error with the background configuration (and it's not a cancellation)
-            if !disableBGDownloads && !isCancellationError, let originalRequest = task.originalRequest {
+            if !settings.disableBGDownloads && !isCancellationError, let originalRequest = task.originalRequest {
                 logOutput("⚠️ Background download failed, attempting foreground download")
                 
                 // Show alert about background download failure

@@ -29,16 +29,14 @@ struct ContentView: View {
     @State private var showPicker = false
     @State private var listRefreshID = UUID()
     
-    @AppStorage("autoSaveToPhotos") private var autoSaveToPhotos: Bool = true
-    @AppStorage("autoClearErrorMessage") private var autoClearErrorMessage: Bool = false
-    @AppStorage("disableAutoPasteRun") private var disableAutoPasteRun: Bool = false
+    @EnvironmentObject var settings: SettingsModel
 
     var body: some View {
         NavigationView {
             VStack(spacing: 10) {
                 HStack {
                     
-                    Image("Nickel") // Replace with your actual asset name
+                    Image("Nickel")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80) // Adjust size as needed
@@ -168,7 +166,7 @@ struct ContentView: View {
         
         .onChange(of: scenePhase) {
             if scenePhase == .active {
-                if autoClearErrorMessage {
+                if settings.autoClearErrorMessage {
                     errorMessage = ""
                 }
             }
@@ -229,17 +227,6 @@ struct ContentView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
-    }
-
-    private func checkForSharedURL() {
-        logOutput("check for sharedurl called!")
-        let sharedDefaults = UserDefaults(suiteName: "group.com.tfourj.nickel")
-        if let sharedURL = sharedDefaults?.string(forKey: "sharedURL"), !sharedURL.isEmpty {
-            logOutput(sharedURL)
-            urlInput = sharedURL
-            sharedDefaults?.removeObject(forKey: "sharedURL") // Clear it after use
-            downloadVideo() // Auto-start download
-        }
     }
 
     private func downloadVideo() {
@@ -342,7 +329,7 @@ struct ContentView: View {
         isSuccessMessage = true
         urlInput = ""
 
-        if autoSaveToPhotos && !forceShare {
+        if settings.autoSaveToPhotos && !forceShare {
             if isImage {
                 if let image = UIImage(contentsOfFile: videoURL.path) {
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
@@ -371,7 +358,7 @@ struct ContentView: View {
     private func pasteURL() {
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
-            if (!disableAutoPasteRun) {
+            if (!settings.disableAutoPasteRun) {
                 downloadVideo()
             }
         } else {

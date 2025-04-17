@@ -8,10 +8,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @AppStorage("enableConsole") var enableConsole: Bool = false
-    @AppStorage("autoOpenHome") private var autoOpenHome: Bool = false
-    @AppStorage("customAPIURL") private var customAPIURL: String = ""
-    @AppStorage("authMethod") private var authMethod: String = ""
+    @EnvironmentObject var settings: SettingsModel
     @Environment(\.scenePhase) var scenePhase
 
     @State private var selectedTab = 0 // 0 = Home, 1 = Settings, 2 = Console
@@ -37,7 +34,7 @@ struct MainTabView: View {
                     }
                     .tag(1) // Settings tab
                 
-                if enableConsole {
+                if settings.enableConsole {
                     ConsoleView()
                         .tabItem {
                             Label("Console", systemImage: "terminal.fill")
@@ -56,8 +53,8 @@ struct MainTabView: View {
                let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                let queryItems = components.queryItems,
                let instanceURL = queryItems.first(where: { $0.name == "url" })?.value {
-                customAPIURL = instanceURL // Save to AppStorage
-                authMethod = "Nickel-Auth" // Update authMethod
+                settings.customAPIURL = instanceURL // Save to SettingsModel
+                settings.authMethod = "Nickel-Auth" // Update authMethod
                 logOutput("Updated customAPIURL to: \(instanceURL) and authMethod to: Nickel-Auth")
                 showURLSetAlert = true
             }
@@ -66,7 +63,7 @@ struct MainTabView: View {
             }
         }
         .onChange(of: scenePhase) {
-            if scenePhase == .active && autoOpenHome {
+            if scenePhase == .active && settings.autoOpenHome {
                 if selectedTab != 0 {
                     selectedTab = 0 // Switch to Home tab if it's not already selected
                 }
@@ -75,7 +72,7 @@ struct MainTabView: View {
         .alert("URL Set", isPresented: $showURLSetAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("The API URL has been updated to: \(customAPIURL) and authMethod to: Nickel-Auth")
+            Text("The API URL has been updated to: \(settings.customAPIURL) and authMethod to: Nickel-Auth")
         }
     }
 }

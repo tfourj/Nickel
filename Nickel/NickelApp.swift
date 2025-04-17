@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct NickelApp: App {
+    @StateObject private var settings = SettingsModel()
+
     init() {
         logOutput("Nickel started!")
         NotificationManager.requestPermission()
@@ -23,6 +25,7 @@ struct NickelApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(settings)
         }
     }
 }

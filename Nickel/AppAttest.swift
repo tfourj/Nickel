@@ -9,10 +9,12 @@ import DeviceCheck
 import CryptoKit
 
 class AppAttestClient {
+    var settings: SettingsModel = SettingsModel()
+
     var serverURL: URL {
-        if let customURLString = UserDefaults.standard.string(forKey: "customAuthServerURL"),
-           let customURL = URL(string: customURLString),
-           UserDefaults.standard.string(forKey: "authMethod") == "Nickel-Auth (Custom)" {
+        if !settings.customAuthServerURL.isEmpty,
+           let customURL = URL(string: settings.customAuthServerURL),
+           settings.authMethod == "Nickel-Auth (Custom)" {
             logOutput("Using custom authentication server: \(customURL)")
             return customURL
         }

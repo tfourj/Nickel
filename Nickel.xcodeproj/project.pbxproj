@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */; };
 		820F25A62DAAB68400289272 /* AppAttest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820F25A52DAAB66400289272 /* AppAttest.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
@@ -50,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
@@ -154,6 +156,7 @@
 				FE8350742D66964400861765 /* Nickel.entitlements */,
 				FE8350752D66964400861765 /* NickelApp.swift */,
 				FE8350762D66964400861765 /* SettingsView.swift */,
+				82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */,
 			);
 			path = Nickel;
 			sourceTree = "<group>";
@@ -264,6 +267,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */,
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
 				820F25A62DAAB68400289272 /* AppAttest.swift in Sources */,
@@ -367,7 +371,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 004;
+				SHARED_BUILD_NUMBER = 006;
 				SHARED_VERSION_NUMBER = 2.0.0;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -426,7 +430,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 004;
+				SHARED_BUILD_NUMBER = 006;
 				SHARED_VERSION_NUMBER = 2.0.0;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;

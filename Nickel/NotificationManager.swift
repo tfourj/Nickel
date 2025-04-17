@@ -9,6 +9,8 @@ import UIKit
 import UserNotifications
 
 class NotificationManager {
+    static var settings: SettingsModel = SettingsModel()
+
     static func requestPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             logOutput("Notification permission granted: \(granted)")
@@ -17,7 +19,7 @@ class NotificationManager {
     
     static func sendDownloadCompleteNotification(text: String, forceNotification: Bool = false) {
         // Check if notis are disabled
-        let disableNotifications = UserDefaults.standard.bool(forKey: "disableNotifications")
+        let disableNotifications = settings.disableNotifications
         if disableNotifications && !forceNotification {
             logOutput("Notifications are disabled by user")
             return
