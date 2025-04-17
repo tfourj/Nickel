@@ -225,6 +225,14 @@ struct ContentView: View {
                         listRefreshID = UUID() // Trigger a refresh
                     }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowMessageUI"))) { notification in
+            if let text = notification.userInfo?["text"] as? String {
+                DispatchQueue.main.async {
+                    self.errorMessage = text
+                    self.isSuccessMessage = true
+                }
+            }
+        }
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
     }
@@ -372,7 +380,7 @@ struct ContentView: View {
             (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.present(UIActivityViewController(activityItems: [downloadedVideoURL.url], applicationActivities: nil), animated: true)
             }
         }
-    }
+}
 
 #Preview {
     ContentView()

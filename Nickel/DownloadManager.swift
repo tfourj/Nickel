@@ -87,14 +87,23 @@ class DownloadManager {
             var authValue: String
             if let tempKey = UserDefaults.standard.string(forKey: "TempKey") {
                 let isValid = try await AppAttestClient().validateTempKey(tempKey)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Validating authorization key with Auth server"])
+                }
                 if isValid {
                     authValue = tempKey
                 } else {
                     authValue = try await AppAttestClient().regenerateTempKey()
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is invalid, regenerating a new one"])
+                    }
                 }
             } else {
                 logOutput("TempKey not found. Generating a new one...")
                 authValue = try await AppAttestClient().regenerateTempKey()
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is not found, generating a new one"])
+                }
             }
 
             request.setValue("Nickel-Auth \(authValue)", forHTTPHeaderField: "Authorization")
@@ -108,6 +117,9 @@ class DownloadManager {
 
         // Send the request
         logOutput("Sending request to \(apiURL.absoluteString)")
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Sending request to API url"])
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
