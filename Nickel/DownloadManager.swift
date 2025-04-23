@@ -31,7 +31,7 @@ class DownloadManager {
         case pickerOptions([PickerOption])
     }
 
-    func fetchCobaltURL(inputURL: URL) async throws -> CobaltDownloadResult {
+    func fetchCobaltURL(inputURL: URL, downloadModeOverride: String? = nil) async throws -> CobaltDownloadResult {
         logOutput("Starting fetchCobaltURL with input URL: \(inputURL.absoluteString)")
 
         let storedAPIURL = settings.customAPIURL
@@ -70,6 +70,11 @@ class DownloadManager {
         requestBody["url"] = inputURL.absoluteString
         if authType.contains("Nickel-Auth") {
             requestBody["api-url"] = storedAPIURL
+        }
+
+        // Override downloadMode if provided
+        if let override = downloadModeOverride {
+            requestBody["downloadMode"] = override
         }
         
         logOutput("Request body: \(requestBody)")

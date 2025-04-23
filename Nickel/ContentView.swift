@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var pickerOptions: [PickerOption] = []
     @State private var showPicker = false
     @State private var listRefreshID = UUID()
+    @State private var selectedDownloadMode: String = "auto"
     
     @EnvironmentObject var settings: SettingsModel
 
@@ -110,6 +111,16 @@ struct ContentView: View {
                         .padding(.bottom, 4)
                     }
                     
+                    // Picker for download mode overwrite
+                    Picker("Download Mode", selection: $selectedDownloadMode) {
+                        Text("Auto").tag("auto")
+                        Text("Audio").tag("audio")
+                        Text("Mute").tag("mute")
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 4)
+                    
                     // URL Input + Paste Button - Unified Design
                     HStack {
                         TextField("Enter video URL", text: $urlInput)
@@ -141,7 +152,7 @@ struct ContentView: View {
                     .padding(.horizontal, 24)
 
                     // Download Button - Unified Style
-                    Button(action: downloadVideo) {
+                    Button(action: { downloadVideo(mode: selectedDownloadMode) }) {
                         HStack {
                             Image(systemName: "arrow.down.circle.fill")
                                 .font(.title2)
@@ -181,7 +192,7 @@ struct ContentView: View {
                let sharedLink = linkItem.value {
                 logOutput("App opened using url scheme. link: \(sharedLink)")
                 urlInput = sharedLink
-                downloadVideo()
+                downloadVideo(mode: selectedDownloadMode)
             }
         }
         
@@ -237,7 +248,7 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
     }
 
-    private func downloadVideo() {
+    private func downloadVideo(mode: String = "auto") {
         guard let url = URL(string: urlInput),
               UIApplication.shared.canOpenURL(url) else {
             errorMessage = "Invalid URL"
@@ -250,7 +261,7 @@ struct ContentView: View {
         
         Task {
             do {
-                let result = try await DownloadManager.shared.fetchCobaltURL(inputURL: url)
+                let result = try await DownloadManager.shared.fetchCobaltURL(inputURL: url, downloadModeOverride: mode)
                 
                 switch result {
                 case .success(let videoURL, let filename):
@@ -368,7 +379,7 @@ struct ContentView: View {
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
             if (!settings.disableAutoPasteRun) {
-                downloadVideo()
+                downloadVideo(mode: selectedDownloadMode)
             }
         } else {
             errorMessage = "Clipboard is empty"
