@@ -35,33 +35,38 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     private var downloadType: DownloadType?
     private var targetURL: URL?
 
-    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil) async throws -> URL {
+    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil) async throws -> URL {
         clearTempFolder()
         
         downloadType = type
         progressHandler = onProgress
-        
-        // Try to extract the file extension from the URL
-        let extractedExtension = url.pathExtension
-        let fileExtension: String
-
-        if extractedExtension.isEmpty {
-            // Fallback to hardcoded extensions if extraction fails
-            switch type {
-            case .video:
-                fileExtension = "mp4"
-            case .image:
-                fileExtension = "jpg"
-            case .audio:
-                fileExtension = "mp3"
-            }
-        } else {
-            fileExtension = extractedExtension
-            logOutput("Automatically fetched file extension: \(extractedExtension)")
-        }
 
         let tempDir = FileManager.default.temporaryDirectory
-        targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
+
+        if let filename = filename, !filename.isEmpty {
+            logOutput("Using provided filename: \(filename)")
+            targetURL = tempDir.appendingPathComponent(filename)
+        } else {
+            // Fallback to generating a filename
+            let extractedExtension = url.pathExtension
+            let fileExtension: String
+
+            if extractedExtension.isEmpty {
+                logOutput("⚠️ No file extension found in URL, using fallback method")
+                switch type {
+                case .video:
+                    fileExtension = "mp4"
+                case .image:
+                    fileExtension = "jpg"
+                case .audio:
+                    fileExtension = "mp3"
+                }
+            } else {
+                fileExtension = extractedExtension
+                logOutput("Automatically fetched file extension: \(extractedExtension)")
+            }
+            targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
+        }
         
         downloadTask = session.downloadTask(with: url)
         downloadTask?.resume()

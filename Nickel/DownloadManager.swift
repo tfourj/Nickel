@@ -27,7 +27,7 @@ class DownloadManager {
     ]
 
     enum CobaltDownloadResult {
-        case success(URL)
+        case success(URL, String?)
         case pickerOptions([PickerOption])
     }
 
@@ -161,9 +161,10 @@ class DownloadManager {
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract URL from JSON"])
             }
-            
-            logOutput("✅ Download URL received: \(mediaURL.absoluteString)")
-            return .success(mediaURL)
+            // Extract filename from response if available
+            let filename = jsonObject["filename"] as? String
+            logOutput("✅ Download URL received: \(mediaURL.absoluteString), filename: \(filename ?? "nil")")
+            return .success(mediaURL, filename)
             
         case "picker":
             logOutput("Handling picker response...")

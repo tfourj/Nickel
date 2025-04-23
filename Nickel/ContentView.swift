@@ -253,7 +253,7 @@ struct ContentView: View {
                 let result = try await DownloadManager.shared.fetchCobaltURL(inputURL: url)
                 
                 switch result {
-                case .success(let videoURL):
+                case .success(let videoURL, let filename):
                     let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
                         DispatchQueue.main.async {
                             self.errorMessage = total <= 0 
@@ -262,7 +262,7 @@ struct ContentView: View {
                             self.isSuccessMessage = true
                         }
                     }
-                    let downloadURL = try await FileDownloader.shared.downloadFile(from: videoURL, type: .video, onProgress: progressHandler)
+                    let downloadURL = try await FileDownloader.shared.downloadFile(from: videoURL, type: .video, onProgress: progressHandler, filename: filename)
                     handleDownloadSuccess(downloadURL)
                     
                 case .pickerOptions(let options):
@@ -292,10 +292,10 @@ struct ContentView: View {
 
         Task {
             do {
-                // Check the file extension or MIME type
                 let fileExtension = option.url.pathExtension.lowercased()
                 let label = option.label.lowercased()
                 var downloadURL: URL
+                var downloadType: FileDownloader.DownloadType = .video
 
                 let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
                     DispatchQueue.main.async {
@@ -306,22 +306,18 @@ struct ContentView: View {
                     }
                 }
 
-                if fileExtension == "mp4" || label.contains("video") {
-                    // Download video
-                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .video, onProgress: progressHandler)
-                    handleDownloadSuccess(downloadURL)
-                } else if fileExtension == "jpg" || fileExtension == "png" || fileExtension == "jpeg" || label.contains("photo") || label.contains("image") {
-                    // Download image
-                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .image, onProgress: progressHandler)
-                    handleDownloadSuccess(downloadURL, isImage: true)
-                } else if fileExtension == "mp3" || fileExtension == "aac" || fileExtension == "wav" || label.contains("audio") || label.contains("sound") {
-                    // Download audio
-                    downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: .audio, onProgress: progressHandler)
-                    handleDownloadSuccess(downloadURL, forceShare: true)
+                if ["mp4", "mov", "webm", "mkv"].contains(fileExtension) || label.contains("video") {
+                    downloadType = .video
+                } else if ["jpg", "png", "jpeg", "gif", "bmp", "webp"].contains(fileExtension) || label.contains("photo") || label.contains("image") {
+                    downloadType = .image
+                } else if ["mp3", "aac", "wav", "m4a", "ogg"].contains(fileExtension) || label.contains("audio") || label.contains("sound") {
+                    downloadType = .audio
                 } else {
                     throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
                 }
-                
+
+                downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: downloadType, onProgress: progressHandler)
+                handleDownloadSuccess(downloadURL)
             } catch {
                 errorMessage = error.localizedDescription
                 isSuccessMessage = false
@@ -331,24 +327,29 @@ struct ContentView: View {
         }
     }
 
-    private func handleDownloadSuccess(_ videoURL: URL, forceShare: Bool = false, isImage: Bool = false) {
-        downloadedVideoURL = IdentifiableURL(url: videoURL)
+    private func handleDownloadSuccess(_ fileURL: URL) {
+        downloadedVideoURL = IdentifiableURL(url: fileURL)
         errorMessage = "Download successful"
         isSuccessMessage = true
         urlInput = ""
 
-        if settings.autoSaveToPhotos && !forceShare {
+        // Determine file type by extension for saving or sharing
+        let ext = fileURL.pathExtension.lowercased()
+        let isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].contains(ext)
+        let isVideo = ["mp4", "mov", "webm", "mkv"].contains(ext)
+
+        if settings.autoSaveToPhotos && (isImage || isVideo) {
             if isImage {
-                if let image = UIImage(contentsOfFile: videoURL.path) {
+                if let image = UIImage(contentsOfFile: fileURL.path) {
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    logOutput("Saving image dirrectly to Photos \(image)")
+                    logOutput("Saving image directly to Photos \(image)")
                     errorMessage = "Image saved to Photos"
                     NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
                     isSuccessMessage = true
                 }
-            } else {
-                UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, nil, nil, nil)
-                logOutput("Saving video dirrectly to Photos \(videoURL)")
+            } else if isVideo {
+                UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
+                logOutput("Saving video directly to Photos \(fileURL)")
                 errorMessage = "Video saved to Photos"
                 NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
                 isSuccessMessage = true
@@ -357,7 +358,7 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 logOutput("Opening share sheet for file")
                 NotificationManager.sendDownloadCompleteNotification(text: "File downloaded, open app to proceed")
-                downloadedVideoURL = IdentifiableURL(url: videoURL)
+                downloadedVideoURL = IdentifiableURL(url: fileURL)
                 showShareSheet()
             }
         }
