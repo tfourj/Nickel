@@ -13,7 +13,7 @@ Project was inspired from cranci1's [Osmium](https://github.com/cranci1/Osmium)
 The app does not interface directly with social media platforms - it relies on your own Cobalt API server instance to handle the media downloads.
 ```
 This project is designed to work with:
-- [Cobalt API](https://cobalt.tools)
+- [Cobalt API](https://github.com/imputnet/cobalt)
 - [Nickel-Auth](https://github.com/tfourj/Nickel-Auth) *(optional, but recommended)*
 
 ## Features
