@@ -31,7 +31,11 @@ class DownloadManager {
         case pickerOptions([PickerOption])
     }
 
-    func fetchCobaltURL(inputURL: URL, downloadModeOverride: String? = nil) async throws -> CobaltDownloadResult {
+    func fetchCobaltURL(
+        inputURL: URL,
+        downloadModeOverride: String? = nil,
+        shouldCancel: (() -> Bool)? = nil
+    ) async throws -> CobaltDownloadResult {
         logOutput("Starting fetchCobaltURL with input URL: \(inputURL.absoluteString)")
 
         let storedAPIURL = settings.customAPIURL
@@ -92,6 +96,7 @@ class DownloadManager {
             var authValue: String
             if let tempKey = UserDefaults.standard.string(forKey: "TempKey") {
                 let isValid = try await AppAttestClient().validateTempKey(tempKey)
+                if shouldCancel?() == true { throw CancellationError() }
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Validating authorization key with Auth server"])
                 }
@@ -99,6 +104,7 @@ class DownloadManager {
                     authValue = tempKey
                 } else {
                     authValue = try await AppAttestClient().regenerateTempKey()
+                    if shouldCancel?() == true { throw CancellationError() }
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is invalid, regenerating a new one"])
                     }
@@ -106,6 +112,7 @@ class DownloadManager {
             } else {
                 logOutput("TempKey not found. Generating a new one...")
                 authValue = try await AppAttestClient().regenerateTempKey()
+                if shouldCancel?() == true { throw CancellationError() }
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is not found, generating a new one"])
                 }
@@ -122,6 +129,7 @@ class DownloadManager {
 
         // Send the request
         logOutput("Sending request to \(apiURL.absoluteString)")
+        if shouldCancel?() == true { throw CancellationError() }
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Sending request to API url"])
         }

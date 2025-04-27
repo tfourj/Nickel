@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var showPicker = false
     @State private var listRefreshID = UUID()
     @State private var selectedDownloadMode: String = "auto"
+    @State private var shouldCancelDownload = false
     
     @EnvironmentObject var settings: SettingsModel
 
@@ -88,6 +89,7 @@ struct ContentView: View {
                     // Stop Download button
                     if isLoading {
                         Button(action: {
+                            shouldCancelDownload = true
                             FileDownloader.shared.cancelDownload()
                             isLoading = false
                             errorMessage = "Download cancelled"
@@ -257,11 +259,24 @@ struct ContentView: View {
         }
         
         isLoading = true
+        shouldCancelDownload = false
         errorMessage = ""
         
         Task {
             do {
-                let result = try await DownloadManager.shared.fetchCobaltURL(inputURL: url, downloadModeOverride: mode)
+                let result = try await DownloadManager.shared.fetchCobaltURL(
+                    inputURL: url,
+                    downloadModeOverride: mode,
+                    shouldCancel: { shouldCancelDownload }
+                )
+                
+                // Check again after fetchCobaltURL returns, in case cancel was pressed during async
+                if shouldCancelDownload {
+                    isLoading = false
+                    errorMessage = "Download cancelled"
+                    isSuccessMessage = false
+                    return
+                }
                 
                 switch result {
                 case .success(let videoURL, let filename):
@@ -288,8 +303,13 @@ struct ContentView: View {
                     }
                 }
             } catch {
-                errorMessage = error.localizedDescription
-                isSuccessMessage = false
+                if shouldCancelDownload {
+                    errorMessage = "Download cancelled"
+                    isSuccessMessage = false
+                } else {
+                    errorMessage = error.localizedDescription
+                    isSuccessMessage = false
+                }
                 urlInput = ""
             }
             isLoading = false
