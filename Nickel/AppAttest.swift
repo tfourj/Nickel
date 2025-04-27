@@ -18,7 +18,7 @@ class AppAttestClient {
             logOutput("Using custom authentication server: \(customURL)")
             return customURL
         }
-        return URL(string: "https://getnickel.site")!
+        return URL(string: "https://auth.getnickel.site")!
     }
 
     func attestKey() async throws -> String {
