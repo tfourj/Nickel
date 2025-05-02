@@ -12,6 +12,7 @@ struct NickelApp: App {
     @StateObject private var settings = SettingsModel()
 
     init() {
+        SettingsModel.checkSettings()
         logOutput("Nickel started!")
         NotificationManager.requestPermission()
         

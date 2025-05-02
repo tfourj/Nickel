@@ -42,7 +42,33 @@ class SettingsModel: ObservableObject {
         didSet { UserDefaults.standard.set(enableDebugTab, forKey: "enableDebugTab") }
     }
 
+    static func checkSettings() {
+        let defaultValues: [(String, Any)] = [
+            ("customAPIURL", ""),
+            ("customAPIKey", ""),
+            ("authMethod", "Nickel-Auth"),
+            ("autoSaveToPhotos", true),
+            ("enableConsole", false),
+            ("autoClearErrorMessage", false),
+            ("autoOpenHome", false),
+            ("disableAutoPasteRun", false),
+            ("disableBGDownloads", false),
+            ("disableNotifications", false),
+            ("customAuthServerURL", ""),
+            ("rememberPickerDownloadOption", true),
+            ("enableDebugTab", false)
+        ]
+        for (key, value) in defaultValues {
+            if UserDefaults.standard.object(forKey: key) == nil {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+    }
+
     init() {
+        #if DEBUG
+        logOutput("SettingsModel initialized")
+        #endif
         self.customAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? ""
         self.customAPIKey = UserDefaults.standard.string(forKey: "customAPIKey") ?? ""
         self.authMethod = UserDefaults.standard.string(forKey: "authMethod") ?? "Nickel-Auth"
