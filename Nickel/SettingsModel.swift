@@ -38,6 +38,9 @@ class SettingsModel: ObservableObject {
     @Published var rememberPickerDownloadOption: Bool {
         didSet { UserDefaults.standard.set(rememberPickerDownloadOption, forKey: "rememberPickerDownloadOption") }
     }
+    @Published var enableDebugTab: Bool {
+        didSet { UserDefaults.standard.set(enableDebugTab, forKey: "enableDebugTab") }
+    }
 
     init() {
         self.customAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? ""
@@ -52,5 +55,6 @@ class SettingsModel: ObservableObject {
         self.disableNotifications = UserDefaults.standard.object(forKey: "disableNotifications") as? Bool ?? false
         self.customAuthServerURL = UserDefaults.standard.string(forKey: "customAuthServerURL") ?? ""
         self.rememberPickerDownloadOption = UserDefaults.standard.object(forKey: "rememberPickerDownloadOption") as? Bool ?? true
+        self.enableDebugTab = UserDefaults.standard.object(forKey: "enableDebugTab") as? Bool ?? false
     }
 }

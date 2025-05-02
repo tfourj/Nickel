@@ -229,6 +229,11 @@ struct SettingsView: View {
                     Toggle(isOn: $settings.disableNotifications) {
                         Text("Disable Download Notifications")
                     }
+                    #if DEBUG
+                    Toggle(isOn: $settings.enableDebugTab) {
+                        Text("Show Debug Tab")
+                    }
+                    #endif
                 }
                 
                 Section(header: Text("Download Settings")) {
