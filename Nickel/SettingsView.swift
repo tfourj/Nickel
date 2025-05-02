@@ -209,19 +209,22 @@ struct SettingsView: View {
                 
                 Section(header: Text("Additional Settings")) {
                     Toggle(isOn: $settings.autoSaveToPhotos) {
-                        Text("Save Downloads to Photos Automatically")
+                        Text("Automatically Save Downloads to Photos")
+                    }
+                    Toggle(isOn: $settings.rememberPickerDownloadOption) {
+                        Text("Remember Picker Download Option")
                     }
                     Toggle(isOn: $settings.enableConsole) {
                         Text("Enable Developer Console")
                     }
                     Toggle(isOn: $settings.autoClearErrorMessage) {
-                        Text("Clear Error Messages Automatically")
+                        Text("Auto-Clear Error Messages")
                     }
                     Toggle(isOn: $settings.autoOpenHome) {
-                        Text("Open Home Tab on App Launch")
+                        Text("Open Home Tab at Launch")
                     }
                     Toggle(isOn: $settings.disableAutoPasteRun) {
-                        Text("Disable Auto-Download After Pasting Link")
+                        Text("Disable Auto-Download on Paste")
                     }
                     Toggle(isOn: $settings.disableNotifications) {
                         Text("Disable Download Notifications")
@@ -248,7 +251,7 @@ struct SettingsView: View {
                     .foregroundColor(.red)
                 }
                 
-                .onChange(of: settings.disableNotifications || settings.disableBGDownloads) { oldValue, newValue in
+                .onChange(of: settings.disableNotifications || settings.disableBGDownloads || settings.rememberPickerDownloadOption) { oldValue, newValue in
                     showRestart = true
                 }
                 

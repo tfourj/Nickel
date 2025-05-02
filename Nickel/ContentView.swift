@@ -33,6 +33,14 @@ struct ContentView: View {
     
     @EnvironmentObject var settings: SettingsModel
 
+    init() {
+        if UserDefaults.standard.bool(forKey: "rememberPickerDownloadOption") {
+            if let savedMode = UserDefaults.standard.string(forKey: "selectedDownloadMode") {
+                _selectedDownloadMode = State(initialValue: savedMode)
+            }
+        }
+    }
+
     var body: some View {
         NavigationView {
             VStack(spacing: 10) {
@@ -41,7 +49,7 @@ struct ContentView: View {
                     Image("Nickel")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 80, height: 80) // Adjust size as needed
+                        .frame(width: 80, height: 80)
                     
                     Text("Nickel")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
@@ -122,6 +130,12 @@ struct ContentView: View {
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal, 24)
                     .padding(.bottom, 4)
+                    .onChange(of: selectedDownloadMode) {
+                        if settings.rememberPickerDownloadOption {
+                            logOutput("Picker option set to: \(selectedDownloadMode)")
+                            UserDefaults.standard.set(selectedDownloadMode, forKey: "selectedDownloadMode")
+                        }
+                    }
                     
                     // URL Input + Paste Button - Unified Design
                     HStack {

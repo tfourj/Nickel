@@ -35,6 +35,9 @@ class SettingsModel: ObservableObject {
     @Published var customAuthServerURL: String {
         didSet { UserDefaults.standard.set(customAuthServerURL, forKey: "customAuthServerURL") }
     }
+    @Published var rememberPickerDownloadOption: Bool {
+        didSet { UserDefaults.standard.set(rememberPickerDownloadOption, forKey: "rememberPickerDownloadOption") }
+    }
 
     init() {
         self.customAPIURL = UserDefaults.standard.string(forKey: "customAPIURL") ?? ""
@@ -48,5 +51,6 @@ class SettingsModel: ObservableObject {
         self.disableBGDownloads = UserDefaults.standard.object(forKey: "disableBGDownloads") as? Bool ?? false
         self.disableNotifications = UserDefaults.standard.object(forKey: "disableNotifications") as? Bool ?? false
         self.customAuthServerURL = UserDefaults.standard.string(forKey: "customAuthServerURL") ?? ""
+        self.rememberPickerDownloadOption = UserDefaults.standard.object(forKey: "rememberPickerDownloadOption") as? Bool ?? true
     }
 }
