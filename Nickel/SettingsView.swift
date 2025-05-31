@@ -174,6 +174,12 @@ struct SettingsView: View {
                         }
                     }
                     
+                    .onChange(of: settings.authMethod) { oldValue, newValue in
+                        if newValue != "Api-Key" && newValue != "Bearer" {
+                            showAPIKey = false
+                        }
+                    }
+                    
                     if showAPIKey {
                         TextField("Auth Key", text: $settings.customAPIKey)
                             .autocapitalization(.none)
@@ -190,6 +196,7 @@ struct SettingsView: View {
                                 .foregroundColor(.blue)
                         }
                     } else if settings.authMethod == "Nickel-Auth" || settings.authMethod == "Nickel-Auth (Custom)" {
+                        
                         Button(action: {
                             if let url = URL(string: "https://getnickel.site/instances/") {
                                 UIApplication.shared.open(url)
