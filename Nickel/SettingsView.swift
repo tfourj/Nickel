@@ -8,6 +8,14 @@
 import SwiftUI
 import Foundation
 
+struct RequestBodyItem: Identifiable {
+    let id = UUID()
+    var key: String
+    var value: String
+    var type: String
+    var order: Int
+}
+
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsModel
     
@@ -23,7 +31,7 @@ struct SettingsView: View {
     @State private var isCheckingForUpdate = false
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
-    @State private var requestBodyItems: [(key: String, value: String, type: String)] = []
+    @State private var requestBodyItems: [RequestBodyItem] = []
     
     let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth", "Nickel-Auth (Custom)"]
     let valueTypes = ["String", "Bool"]
@@ -50,33 +58,66 @@ struct SettingsView: View {
            let jsonData = saved.data(using: .utf8),
            let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
             DispatchQueue.main.async {
-                requestBodyItems = jsonObject
-                    .sorted { $0.key < $1.key }
-                    .map { key, value in
-                        let stringValue = "\(value)"
-                        let type = value is Bool ? "Bool" : "String"
-                        return (key: key, value: stringValue, type: type)
+                var items: [RequestBodyItem] = []
+                
+                // Check if we have order information stored
+                if let orderData = UserDefaults.standard.data(forKey: "requestBodyOrder"),
+                   let orderArray = try? JSONSerialization.jsonObject(with: orderData) as? [String] {
+                    // Load items in stored order
+                    for (index, key) in orderArray.enumerated() {
+                        if let value = jsonObject[key] {
+                            let stringValue = "\(value)"
+                            let type = value is Bool ? "Bool" : "String"
+                            items.append(RequestBodyItem(key: key, value: stringValue, type: type, order: index))
+                        }
                     }
-                    logOutput("Returning custom request body values")
+                    // Add any new items that weren't in the order list
+                    for (key, value) in jsonObject {
+                        if !orderArray.contains(key) {
+                            let stringValue = "\(value)"
+                            let type = value is Bool ? "Bool" : "String"
+                            items.append(RequestBodyItem(key: key, value: stringValue, type: type, order: items.count))
+                        }
+                    }
+                } else {
+                    // Fallback to alphabetical order if no order data exists
+                    items = jsonObject
+                        .sorted { $0.key < $1.key }
+                        .enumerated()
+                        .map { index, element in
+                            let stringValue = "\(element.value)"
+                            let type = element.value is Bool ? "Bool" : "String"
+                            return RequestBodyItem(key: element.key, value: stringValue, type: type, order: index)
+                        }
+                }
+                
+                requestBodyItems = items
+                logOutput("Returning custom request body values")
             }
         } else {
             DispatchQueue.main.async {
                 requestBodyItems = DownloadManager.defaultRequestBody
                     .sorted { $0.key < $1.key }
-                    .map { key, value in
-                        let stringValue = "\(value)"
-                        // Only treat actual boolean values as Boolean type
-                        let type = value is Bool ? "Bool" : "String"
-                        return (key: key, value: stringValue, type: type)
+                    .enumerated()
+                    .map { index, element in
+                        let stringValue = "\(element.value)"
+                        let type = element.value is Bool ? "Bool" : "String"
+                        return RequestBodyItem(key: element.key, value: stringValue, type: type, order: index)
                     }
-                    logOutput("Returning default request body values")
+                logOutput("Returning default request body values")
             }
         }
     }
     
     private func saveRequestBody() {
         var jsonObject: [String: Any] = [:]
-        for item in requestBodyItems {
+        var orderArray: [String] = []
+        
+        // Sort items by order before saving
+        let sortedItems = requestBodyItems.sorted { $0.order < $1.order }
+        
+        for item in sortedItems {
+            orderArray.append(item.key)
             if item.type == "Bool" {
                 if item.value == "1" {
                     jsonObject[item.key] = true
@@ -90,9 +131,16 @@ struct SettingsView: View {
             }
         }
         
+        // Save the JSON data
         if let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             UserDefaults.standard.set(jsonString, forKey: "customRequestBody")
+            
+            // Save the order information
+            if let orderData = try? JSONSerialization.data(withJSONObject: orderArray, options: []) {
+                UserDefaults.standard.set(orderData, forKey: "requestBodyOrder")
+            }
+            
             alertMessage = "Settings saved successfully"
         } else {
             alertMessage = "Failed to save request body"
@@ -101,12 +149,16 @@ struct SettingsView: View {
     }
     
     private func resetRequestBody() {
-        requestBodyItems = DownloadManager.defaultRequestBody.map { key, value in
-            let stringValue = "\(value)"
-            let type = value is Bool ? "Boolean" : "String"
-            return (key: key, value: stringValue, type: type)
-        }
+        requestBodyItems = DownloadManager.defaultRequestBody
+            .sorted { $0.key < $1.key }
+            .enumerated()
+            .map { index, element in
+                let stringValue = "\(element.value)"
+                let type = element.value is Bool ? "Bool" : "String"
+                return RequestBodyItem(key: element.key, value: stringValue, type: type, order: index)
+            }
         UserDefaults.standard.removeObject(forKey: "customRequestBody")
+        UserDefaults.standard.removeObject(forKey: "requestBodyOrder")
         alertMessage = "Request body reset to default"
         showAlert = true
     }
@@ -271,86 +323,134 @@ struct SettingsView: View {
             .sheet(isPresented: $showRequestEditor) {
                 NavigationView {
                     Form {
-                        ForEach($requestBodyItems.indices, id: \.self) { index in
-                            GeometryReader { geometry in
-                                HStack(spacing: 0) {
-                                    // Key field - left 35% of width
-                                    TextField("Key", text: $requestBodyItems[index].key)
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .frame(width: geometry.size.width * 0.35, alignment: .leading)
-                                    
-                                    // Type selector - using fixed width
-                                    Menu {
-                                        ForEach(valueTypes, id: \.self) { type in
-                                            Button(type) {
-                                                requestBodyItems[index].type = type
+                        ForEach(requestBodyItems.sorted { $0.order < $1.order }) { item in
+                            if let index = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                GeometryReader { geometry in
+                                    HStack(spacing: 0) {
+                                        // Key field - left 35% of width
+                                        TextField("Key", text: Binding(
+                                            get: { requestBodyItems.first(where: { $0.id == item.id })?.key ?? "" },
+                                            set: { newValue in
+                                                if let idx = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                                    requestBodyItems[idx].key = newValue
+                                                }
                                             }
-                                        }
-                                    } label: {
-                                        HStack {
-                                            Text(requestBodyItems[index].type)
-                                                .foregroundColor(.primary)
-                                            Image(systemName: "chevron.down")
-                                                .foregroundColor(.gray)
-                                                .font(.caption)
-                                        }
-                                        .padding(5)
-                                        .frame(width: 80)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 5)
-                                                .stroke(Color.gray, lineWidth: 0.5)
-                                        )
-                                    }
-                                    .frame(minWidth: 80, maxWidth: 80)
-                                    .padding(.horizontal, 5)
-                                    
-                                    // Value area - right 35% of width
-                                    ZStack {
-                                        if requestBodyItems[index].type == "Bool" {
-                                            Toggle("", isOn: Binding(
-                                                get: { 
-                                                    let value = requestBodyItems[index].value.lowercased()
-                                                    return value == "true" || value == "1" 
-                                                },
-                                                set: { newValue in
-                                                    // Only update if it's different from current value
-                                                    let currentValue = requestBodyItems[index].value.lowercased()
-                                                    let isCurrentlyTrue = currentValue == "true" || currentValue == "1"
-                                                    
-                                                    if newValue != isCurrentlyTrue {
-                                                        // Preserve numeric format if that's what was used
-                                                        if currentValue == "1" || currentValue == "0" {
-                                                            requestBodyItems[index].value = newValue ? "1" : "0"
-                                                        } else {
-                                                            requestBodyItems[index].value = newValue ? "true" : "false"
-                                                        }
+                                        ))
+                                            .autocapitalization(.none)
+                                            .disableAutocorrection(true)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .frame(width: geometry.size.width * 0.35, alignment: .leading)
+                                        
+                                        // Type selector - using fixed width
+                                        Menu {
+                                            ForEach(valueTypes, id: \.self) { type in
+                                                Button(type) {
+                                                    if let idx = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                                        requestBodyItems[idx].type = type
                                                     }
                                                 }
-                                            ))
-                                            .labelsHidden()
-                                        } else {
-                                            TextField("Value", text: $requestBodyItems[index].value)
-                                                .autocapitalization(.none)
-                                                .disableAutocorrection(true)
-                                                .multilineTextAlignment(.trailing)
-                                                .lineLimit(1)
-                                                .truncationMode(.tail)
+                                            }
+                                        } label: {
+                                            HStack {
+                                                Text(requestBodyItems.first(where: { $0.id == item.id })?.type ?? "String")
+                                                    .foregroundColor(.primary)
+                                                Image(systemName: "chevron.down")
+                                                    .foregroundColor(.gray)
+                                                    .font(.caption)
+                                            }
+                                            .padding(5)
+                                            .frame(width: 80)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(Color.gray, lineWidth: 0.5)
+                                            )
                                         }
+                                        .frame(minWidth: 80, maxWidth: 80)
+                                        .padding(.horizontal, 5)
+                                        
+                                        // Value area - right 35% of width
+                                        ZStack {
+                                            if let currentItem = requestBodyItems.first(where: { $0.id == item.id }),
+                                               currentItem.type == "Bool" {
+                                                Toggle("", isOn: Binding(
+                                                    get: { 
+                                                        guard let currentItem = requestBodyItems.first(where: { $0.id == item.id }) else { return false }
+                                                        let value = currentItem.value.lowercased()
+                                                        return value == "true" || value == "1" 
+                                                    },
+                                                    set: { newValue in
+                                                        if let idx = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                                            let currentValue = requestBodyItems[idx].value.lowercased()
+                                                            let isCurrentlyTrue = currentValue == "true" || currentValue == "1"
+                                                            
+                                                            if newValue != isCurrentlyTrue {
+                                                                // Preserve numeric format if that's what was used
+                                                                if currentValue == "1" || currentValue == "0" {
+                                                                    requestBodyItems[idx].value = newValue ? "1" : "0"
+                                                                } else {
+                                                                    requestBodyItems[idx].value = newValue ? "true" : "false"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ))
+                                                .labelsHidden()
+                                            } else {
+                                                TextField("Value", text: Binding(
+                                                    get: { requestBodyItems.first(where: { $0.id == item.id })?.value ?? "" },
+                                                    set: { newValue in
+                                                        if let idx = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                                            requestBodyItems[idx].value = newValue
+                                                        }
+                                                    }
+                                                ))
+                                                    .autocapitalization(.none)
+                                                    .disableAutocorrection(true)
+                                                    .multilineTextAlignment(.trailing)
+                                                    .lineLimit(1)
+                                                    .truncationMode(.tail)
+                                            }
+                                        }
+                                        .frame(width: geometry.size.width * 0.35, alignment: .trailing)
                                     }
-                                    .frame(width: geometry.size.width * 0.35, alignment: .trailing)
                                 }
+                                .frame(height: 40)
                             }
-                            .frame(height: 40)
                         }
                         .onDelete { indices in
-                            requestBodyItems.remove(atOffsets: indices)
+                            let sortedItems = requestBodyItems.sorted { $0.order < $1.order }
+                            let itemsToDelete = indices.map { sortedItems[$0] }
+                            
+                            for itemToDelete in itemsToDelete {
+                                if let index = requestBodyItems.firstIndex(where: { $0.id == itemToDelete.id }) {
+                                    requestBodyItems.remove(at: index)
+                                }
+                            }
+                            
+                            // Reorder remaining items to maintain sequence
+                            for (newOrder, item) in requestBodyItems.sorted(by: { $0.order < $1.order }).enumerated() {
+                                if let index = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                                    requestBodyItems[index].order = newOrder
+                                }
+                            }
+                        }
+                        .onMove { source, destination in
+                            let sortedItems = requestBodyItems.sorted { $0.order < $1.order }
+                            var newOrderedItems = sortedItems
+                            newOrderedItems.move(fromOffsets: source, toOffset: destination)
+                            
+                            // Update order values in the original array
+                            for (newOrder, movedItem) in newOrderedItems.enumerated() {
+                                if let index = requestBodyItems.firstIndex(where: { $0.id == movedItem.id }) {
+                                    requestBodyItems[index].order = newOrder
+                                }
+                            }
                         }
                         
                         Button("Add New Item") {
-                            requestBodyItems.append((key: "", value: "", type: "String"))
+                            let newOrder = (requestBodyItems.map { $0.order }.max() ?? -1) + 1
+                            requestBodyItems.append(RequestBodyItem(key: "", value: "", type: "String", order: newOrder))
                         }
                     }
                     .navigationTitle("Request Body Editor")
