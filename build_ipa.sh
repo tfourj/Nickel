@@ -14,12 +14,23 @@ echo "IPA will be named: ${IPA_NAME}"
 rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR
 
+echo "--- Building project ---"
+xcodebuild clean build \
+  -project "$PROJECT_NAME.xcodeproj" \
+  -scheme "$SCHEME_NAME" \
+  -configuration Release \
+  -destination "generic/platform=iOS" \
+  CODE_SIGN_IDENTITY="" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO || { echo "Build failed"; exit 1; }
+
 echo "--- Archiving project ---"
-xcodebuild clean archive \
+xcodebuild archive \
   -project "$PROJECT_NAME.xcodeproj" \
   -scheme "$SCHEME_NAME" \
   -configuration Release \
   -archivePath "$BUILD_DIR/archive.xcarchive" \
+  -destination "generic/platform=iOS" \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO || { echo "Archive failed"; exit 1; }
