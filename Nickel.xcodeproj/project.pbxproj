@@ -10,6 +10,11 @@
 		82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */; };
 		820F25A62DAAB68400289272 /* AppAttest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820F25A52DAAB66400289272 /* AppAttest.swift */; };
 		826237A82DBEF101007F8397 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826237A72DBEF0FF007F8397 /* DebugView.swift */; };
+		829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A62E19C13600658375 /* AppSettingsView.swift */; };
+		829523AB2E19C13600658375 /* TabButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A92E19C13600658375 /* TabButton.swift */; };
+		829523AC2E19C13600658375 /* InstanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A72E19C13600658375 /* InstanceSettingsView.swift */; };
+		829523AD2E19C13600658375 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A52E19C13600658375 /* AboutView.swift */; };
+		829523AE2E19C13600658375 /* RequestBodyEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A82E19C13600658375 /* RequestBodyEditorView.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
@@ -56,6 +61,11 @@
 		82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
 		826237A72DBEF0FF007F8397 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
+		829523A52E19C13600658375 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		829523A62E19C13600658375 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
+		829523A72E19C13600658375 /* InstanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceSettingsView.swift; sourceTree = "<group>"; };
+		829523A82E19C13600658375 /* RequestBodyEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestBodyEditorView.swift; sourceTree = "<group>"; };
+		829523A92E19C13600658375 /* TabButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabButton.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
@@ -141,6 +151,11 @@
 				82D449E42DAC65C3005D3763 /* LandingPageView.swift */,
 				FE8350732D66964400861765 /* MainTabView.swift */,
 				FE8350762D66964400861765 /* SettingsView.swift */,
+				829523A52E19C13600658375 /* AboutView.swift */,
+				829523A62E19C13600658375 /* AppSettingsView.swift */,
+				829523A72E19C13600658375 /* InstanceSettingsView.swift */,
+				829523A82E19C13600658375 /* RequestBodyEditorView.swift */,
+				829523A92E19C13600658375 /* TabButton.swift */,
 				826237A72DBEF0FF007F8397 /* DebugView.swift */,
 			);
 			path = Views;
@@ -318,6 +333,11 @@
 				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
 				826237A82DBEF101007F8397 /* DebugView.swift in Sources */,
 				829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */,
+				829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */,
+				829523AB2E19C13600658375 /* TabButton.swift in Sources */,
+				829523AC2E19C13600658375 /* InstanceSettingsView.swift in Sources */,
+				829523AD2E19C13600658375 /* AboutView.swift in Sources */,
+				829523AE2E19C13600658375 /* RequestBodyEditorView.swift in Sources */,
 				FE8350812D66964400861765 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
