@@ -98,11 +98,7 @@ struct ContentView: View {
                     // Stop Download button
                     if isLoading {
                         Button(action: {
-                            shouldCancelDownload = true
-                            FileDownloader.shared.cancelDownload()
-                            isLoading = false
-                            errorMessage = "Download cancelled"
-                            isSuccessMessage = false
+                            cancelAllOperations()
                         }) {
                             HStack {
                                 Image(systemName: "stop.circle.fill")
@@ -283,7 +279,7 @@ struct ContentView: View {
             logOutput("⚠️ Background task expired for video download")
         }
         
-        Task {
+        currentTask = Task {
             defer {
                 // End background task when the task completes
                 if backgroundTaskID != .invalid {
@@ -348,7 +344,7 @@ struct ContentView: View {
                     handleDownloadSuccess(processedFileURL)
                 }
             } catch {
-                if shouldCancelDownload {
+                if shouldCancelDownload || error is CancellationError {
                     errorMessage = "Download cancelled"
                     isSuccessMessage = false
                 } else {
@@ -372,7 +368,7 @@ struct ContentView: View {
             logOutput("⚠️ Background task expired for picker download")
         }
 
-        Task {
+        currentTask = Task {
             defer {
                 // End background task when the task completes
                 if backgroundTaskID != .invalid {
@@ -409,8 +405,13 @@ struct ContentView: View {
                 downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: downloadType, onProgress: progressHandler)
                 handleDownloadSuccess(downloadURL)
             } catch {
-                errorMessage = error.localizedDescription
-                isSuccessMessage = false
+                if shouldCancelDownload || error is CancellationError {
+                    errorMessage = "Download cancelled"
+                    isSuccessMessage = false
+                } else {
+                    errorMessage = error.localizedDescription
+                    isSuccessMessage = false
+                }
                 urlInput = ""
             }
             isLoading = false
@@ -471,6 +472,22 @@ struct ContentView: View {
             (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.present(UIActivityViewController(activityItems: [downloadedVideoURL.url], applicationActivities: nil), animated: true)
             }
         }
+
+    private func cancelAllOperations() {
+        shouldCancelDownload = true
+        FileDownloader.shared.cancelDownload()
+        DownloadManager.shared.cancelDownload()
+        LocalProcessingManager.shared.cancelProcessing()
+        isLoading = false
+        errorMessage = "Download cancelled"
+        isSuccessMessage = false
+        urlInput = ""
+        downloadedVideoURL = nil
+        pickerOptions = []
+        showPicker = false
+        listRefreshID = UUID()
+        currentTask?.cancel()
+    }
 }
 
 #Preview {

@@ -14,6 +14,7 @@ class DownloadManager {
     static let shared = DownloadManager()
     
     var settings: SettingsModel = SettingsModel()
+    private var shouldCancel = false
     
     // Default values; these will be used if custom values aren’t set in Settings.
     private let NONE = ""
@@ -38,6 +39,9 @@ class DownloadManager {
         downloadModeOverride: String? = nil,
         shouldCancel: (() -> Bool)? = nil
     ) async throws -> CobaltDownloadResult {
+        // Reset cancellation flag
+        self.shouldCancel = false
+        
         // Start background task to ensure completion even if app goes to background
         let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "CobaltDownload") {
             // This will be called if the background task expires
@@ -110,14 +114,22 @@ class DownloadManager {
             var authValue: String
             let appAttestClient = AppAttestClient()
             
+            // Check for cancellation before starting auth
+            if shouldCancel?() == true || self.shouldCancel {
+                throw CancellationError()
+            }
+            
             // Use the new background-safe method
             do {
                 authValue = try await appAttestClient.ensureValidTempKey()
-                if shouldCancel?() == true { throw CancellationError() }
+                if shouldCancel?() == true || self.shouldCancel { throw CancellationError() }
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authentication completed successfully"])
                 }
             } catch {
+                if error is CancellationError {
+                    throw error
+                }
                 logOutput("❌ AppAttest authentication failed: \(error.localizedDescription)")
                 throw NSError(domain: "AppAttest", code: 1, userInfo: [NSLocalizedDescriptionKey: "Authentication failed: \(error.localizedDescription)"])
             }
@@ -133,7 +145,7 @@ class DownloadManager {
 
         // Send the request
         logOutput("Sending request to \(apiURL.absoluteString)")
-        if shouldCancel?() == true { throw CancellationError() }
+        if shouldCancel?() == true || self.shouldCancel { throw CancellationError() }
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Sending request to API url"])
         }
@@ -215,7 +227,6 @@ class DownloadManager {
             
         case "local-processing":
             logOutput("Handling local-processing response...")
-            logOutput("Full JSON response: \(jsonObject)")
             
             // Parse the local processing response
             guard let type = jsonObject["type"] as? String,
@@ -225,11 +236,6 @@ class DownloadManager {
                   let outputFilename = outputDict["filename"] as? String,
                   !tunnel.isEmpty else {
                 logOutput("❌ Failed to extract local-processing details")
-                logOutput("Available keys in JSON: \(jsonObject.keys)")
-                if let type = jsonObject["type"] { logOutput("Type value: \(type)") }
-                if let service = jsonObject["service"] { logOutput("Service value: \(service)") }
-                if let tunnel = jsonObject["tunnel"] { logOutput("Tunnel value: \(tunnel)") }
-                if let output = jsonObject["output"] { logOutput("Output value: \(output)") }
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract local-processing details"])
             }
@@ -255,7 +261,7 @@ class DownloadManager {
                     size: nil,
                     format: "audio/m4a"
                 )
-                logOutput("✅ Audio URL found for merge: \(audioURL)")
+                logOutput("✅ Audio URL found for merge")
             } else if let audioDict = jsonObject["audio"] as? [String: Any],
                       let audioURL = audioDict["url"] as? String,
                       let audioFilename = audioDict["filename"] as? String {
@@ -277,7 +283,7 @@ class DownloadManager {
                 isHLS: jsonObject["isHLS"] as? Bool
             )
             
-            logOutput("✅ Local processing response parsed: type=\(type), service=\(service), tunnel count=\(tunnel.count)")
+            logOutput("✅ Local processing response parsed: type=\(type), service=\(service)")
             return .localProcessing(localProcessingResponse)
             
         default:
@@ -285,5 +291,10 @@ class DownloadManager {
             throw NSError(domain: "CobaltAPI", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected API response."])
         }
+    }
+    
+    func cancelDownload() {
+        shouldCancel = true
+        logOutput("🛑 DownloadManager cancellation requested")
     }
 }

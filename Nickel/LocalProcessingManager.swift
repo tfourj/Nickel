@@ -38,6 +38,7 @@ struct AudioDetails {
 
 class LocalProcessingManager {
     static let shared = LocalProcessingManager()
+    private var shouldCancel = false
     
     enum ProcessingType: String, CaseIterable {
         case merge = "merge"
@@ -83,6 +84,9 @@ class LocalProcessingManager {
     }
     
     func processLocalResponse(_ response: LocalProcessingResponse, progressHandler: ((String) -> Void)? = nil) async throws -> URL {
+        // Reset cancellation flag
+        shouldCancel = false
+        
         logOutput("Starting local processing for type: \(response.type)")
         progressHandler?("Starting \(response.type) processing...")
         
@@ -109,6 +113,11 @@ class LocalProcessingManager {
             filename: response.output.filename
         )
         
+        // Check for cancellation after download
+        if shouldCancel {
+            throw CancellationError()
+        }
+        
         // Handle different processing types
         switch processingType {
         case .merge:
@@ -126,9 +135,19 @@ class LocalProcessingManager {
         }
     }
     
+    func cancelProcessing() {
+        shouldCancel = true
+        logOutput("🛑 LocalProcessingManager cancellation requested")
+    }
+    
     private func handleMerge(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
         logOutput("Handling merge processing")
         progressHandler?("Processing merge...")
+        
+        // Check for cancellation
+        if shouldCancel {
+            throw CancellationError()
+        }
         
         guard let audio = response.audio,
               let audioURL = URL(string: audio.url) else {
@@ -142,6 +161,12 @@ class LocalProcessingManager {
         try FileManager.default.copyItem(at: mainFile, to: videoFileCopy)
         logOutput("Video file copied to safe location: \(videoFileCopy)")
         
+        // Check for cancellation before downloading audio
+        if shouldCancel {
+            try? FileManager.default.removeItem(at: videoFileCopy)
+            throw CancellationError()
+        }
+        
         // Download audio file
         progressHandler?("Downloading audio file...")
         let audioFile = try await FileDownloader.shared.downloadFile(
@@ -153,6 +178,12 @@ class LocalProcessingManager {
         )
         
         logOutput("Audio file downloaded to: \(audioFile)")
+        
+        // Check for cancellation before merging
+        if shouldCancel {
+            try? FileManager.default.removeItem(at: videoFileCopy)
+            throw CancellationError()
+        }
         
         // Merge video and audio using AVFoundation
         progressHandler?("Merging video and audio...")
@@ -382,14 +413,27 @@ class LocalProcessingManager {
         
         return try await withCheckedThrowingContinuation { continuation in
             let session = exportSession // Capture in local variable to avoid Sendable issue
+            
+            // Check for cancellation before starting export
+            if shouldCancel {
+                continuation.resume(throwing: CancellationError())
+                return
+            }
+            
             session.exportAsynchronously {
+                // Check for cancellation during export
+                if self.shouldCancel {
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                
                 switch session.status {
                 case .completed:
                     continuation.resume(returning: outputURL)
                 case .failed:
                     continuation.resume(throwing: ProcessingError.processingFailed(session.error?.localizedDescription ?? "Export failed"))
                 case .cancelled:
-                    continuation.resume(throwing: ProcessingError.processingFailed("Export cancelled"))
+                    continuation.resume(throwing: CancellationError())
                 default:
                     continuation.resume(throwing: ProcessingError.processingFailed("Export failed with status: \(session.status.rawValue)"))
                 }
