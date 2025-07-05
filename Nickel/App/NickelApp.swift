@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Darwin
 
 @main
 struct NickelApp: App {
@@ -43,4 +44,24 @@ func runAppTests() {
     logOutput("Running on device - tests skipped")
     
     #endif
+    
+    #if DEBUG
+    if isDebuggerAttached() {
+        logOutput("Debugger detected")
+        UIPasteboard.general.string = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        logOutput("🎵 Debug mode: URL set to clipboard")
+    }
+    #endif
 }
+
+/// Detects if a debugger is attached to the current process
+func isDebuggerAttached() -> Bool {
+    var info = kinfo_proc()
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+    var size = MemoryLayout<kinfo_proc>.size
+    let junk = sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0)
+    assert(junk == 0, "sysctl failed")
+    
+    return (info.kp_proc.p_flag & P_TRACED) != 0
+}
+
