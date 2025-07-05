@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var listRefreshID = UUID()
     @State private var selectedDownloadMode: String = "auto"
     @State private var shouldCancelDownload = false
+    @State private var currentTask: Task<Void, Never>?
     
     @EnvironmentObject var settings: SettingsModel
 
@@ -276,7 +277,21 @@ struct ContentView: View {
         shouldCancelDownload = false
         errorMessage = ""
         
+        // Start background task to ensure completion even if app goes to background
+        let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "VideoDownload") {
+            // This will be called if the background task expires
+            logOutput("⚠️ Background task expired for video download")
+        }
+        
         Task {
+            defer {
+                // End background task when the task completes
+                if backgroundTaskID != .invalid {
+                    UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                    logOutput("🔵 Ended background task for video download")
+                }
+            }
+            
             do {
                 let result = try await DownloadManager.shared.fetchCobaltURL(
                     inputURL: url,
@@ -351,7 +366,21 @@ struct ContentView: View {
         showPicker = false
         errorMessage = ""
 
+        // Start background task to ensure completion even if app goes to background
+        let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "PickerDownload") {
+            // This will be called if the background task expires
+            logOutput("⚠️ Background task expired for picker download")
+        }
+
         Task {
+            defer {
+                // End background task when the task completes
+                if backgroundTaskID != .invalid {
+                    UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                    logOutput("🔵 Ended background task for picker download")
+                }
+            }
+            
             do {
                 let fileExtension = option.url.pathExtension.lowercased()
                 let label = option.label.lowercased()

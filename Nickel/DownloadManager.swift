@@ -8,6 +8,7 @@
 
 import Foundation
 import DeviceCheck
+import UIKit
 
 class DownloadManager {
     static let shared = DownloadManager()
@@ -37,6 +38,18 @@ class DownloadManager {
         downloadModeOverride: String? = nil,
         shouldCancel: (() -> Bool)? = nil
     ) async throws -> CobaltDownloadResult {
+        // Start background task to ensure completion even if app goes to background
+        let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "CobaltDownload") {
+            // This will be called if the background task expires
+            logOutput("⚠️ Background task expired for Cobalt download")
+        }
+        defer {
+            if backgroundTaskID != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                logOutput("🔵 Ended background task for Cobalt download")
+            }
+        }
+        
         logOutput("Starting fetchCobaltURL with input URL: \(inputURL.absoluteString)")
 
         let storedAPIURL = settings.customAPIURL
@@ -95,28 +108,18 @@ class DownloadManager {
         // Set the Authorization header
         if authType.contains("Nickel-Auth") {
             var authValue: String
-            if let tempKey = UserDefaults.standard.string(forKey: "TempKey") {
-                let isValid = try await AppAttestClient().validateTempKey(tempKey)
+            let appAttestClient = AppAttestClient()
+            
+            // Use the new background-safe method
+            do {
+                authValue = try await appAttestClient.ensureValidTempKey()
                 if shouldCancel?() == true { throw CancellationError() }
                 DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Validating authorization key with Auth server"])
+                    NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authentication completed successfully"])
                 }
-                if isValid {
-                    authValue = tempKey
-                } else {
-                    authValue = try await AppAttestClient().regenerateTempKey()
-                    if shouldCancel?() == true { throw CancellationError() }
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is invalid, regenerating a new one"])
-                    }
-                }
-            } else {
-                logOutput("TempKey not found. Generating a new one...")
-                authValue = try await AppAttestClient().regenerateTempKey()
-                if shouldCancel?() == true { throw CancellationError() }
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Authorization key is not found, generating a new one"])
-                }
+            } catch {
+                logOutput("❌ AppAttest authentication failed: \(error.localizedDescription)")
+                throw NSError(domain: "AppAttest", code: 1, userInfo: [NSLocalizedDescriptionKey: "Authentication failed: \(error.localizedDescription)"])
             }
 
             request.setValue("Nickel-Auth \(authValue)", forHTTPHeaderField: "Authorization")

@@ -7,9 +7,11 @@
 import Foundation
 import DeviceCheck
 import CryptoKit
+import UIKit
 
 class AppAttestClient {
     var settings: SettingsModel = SettingsModel()
+    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     var serverURL: URL {
         if !settings.customAuthServerURL.isEmpty,
@@ -22,6 +24,10 @@ class AppAttestClient {
     }
 
     func attestKey() async throws -> String {
+        // Start background task to ensure completion even if app goes to background
+        beginBackgroundTask()
+        defer { endBackgroundTask() }
+        
         let service = DCAppAttestService.shared
         guard service.isSupported else {
             logOutput("❌ App Attest not supported on this device.")
@@ -56,6 +62,7 @@ class AppAttestClient {
         
         var request = URLRequest(url: challengeURL)
         request.httpMethod = "GET"
+        request.timeoutInterval = 30 // Increase timeout for background operations
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -86,6 +93,7 @@ class AppAttestClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30 // Increase timeout for background operations
 
         let body: [String: Any] = [
             "attestation": attestation.base64EncodedString(),
@@ -111,12 +119,17 @@ class AppAttestClient {
     }
 
     func validateTempKey(_ tempKey: String) async throws -> Bool {
+        // Start background task for validation
+        beginBackgroundTask()
+        defer { endBackgroundTask() }
+        
         let validateURL = buildEndpointURL(path: "ios-validate")
         
         var request = URLRequest(url: validateURL)
         request.httpMethod = "POST"
         request.setValue("Nickel-Auth \(tempKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30 // Increase timeout for background operations
 
         logOutput("Validating TempKey via Authorization header.")
 
@@ -143,9 +156,57 @@ class AppAttestClient {
     }
 
     func regenerateTempKey() async throws -> String {
+        // Start background task for regeneration
+        beginBackgroundTask()
+        defer { endBackgroundTask() }
+        
         let newTempKey = try await attestKey()
         logOutput("Generated new TempKey")
         UserDefaults.standard.set(newTempKey, forKey: "TempKey")
         return newTempKey
+    }
+    
+    // MARK: - Background Task Management
+    
+    private func beginBackgroundTask() {
+        guard backgroundTaskID == .invalid else { return }
+        
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "AppAttestOperation") { [weak self] in
+            self?.endBackgroundTask()
+        }
+        
+        if backgroundTaskID != .invalid {
+            logOutput("🔵 Started background task for AppAttest operation")
+        }
+    }
+    
+    private func endBackgroundTask() {
+        guard backgroundTaskID != .invalid else { return }
+        
+        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+        backgroundTaskID = .invalid
+        logOutput("🔵 Ended background task for AppAttest operation")
+    }
+    
+    // MARK: - Background-Safe Operations
+    
+    /// Validates or regenerates temp key with background support and retry logic
+    func ensureValidTempKey() async throws -> String {
+        // Check if we have a stored temp key
+        if let existingTempKey = UserDefaults.standard.string(forKey: "TempKey") {
+            do {
+                let isValid = try await validateTempKey(existingTempKey)
+                if isValid {
+                    logOutput("✅ Existing TempKey is valid")
+                    return existingTempKey
+                }
+            } catch {
+                logOutput("⚠️ TempKey validation failed, will regenerate: \(error.localizedDescription)")
+            }
+        }
+        
+        // Regenerate if no key exists or validation failed
+        logOutput("🔄 Regenerating TempKey...")
+        return try await regenerateTempKey()
     }
 }
