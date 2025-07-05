@@ -105,6 +105,47 @@
 			path = Tests;
 			sourceTree = "<group>";
 		};
+		82D449E62DAC65D3005D3763 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		82D449E72DAC65D3005D3763 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FE8350752D66964400861765 /* NickelApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		82D449E82DAC65D3005D3763 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				82E007042E19701800F68C7D /* LocalProcessingManager.swift */,
+				FE8350702D66964400861765 /* DownloadManager.swift */,
+				FE8350712D66964400861765 /* FileDownloader.swift */,
+				829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */,
+				820F25A52DAAB66400289272 /* AppAttest.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		82D449E92DAC65D3005D3763 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FE83506E2D66964400861765 /* ConsoleView.swift */,
+				FE83506F2D66964400861765 /* ContentView.swift */,
+				82D449E42DAC65C3005D3763 /* LandingPageView.swift */,
+				FE8350732D66964400861765 /* MainTabView.swift */,
+				FE8350762D66964400861765 /* SettingsView.swift */,
+				826237A72DBEF0FF007F8397 /* DebugView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		FE654B1D2D53E9C500E89563 = {
 			isa = PBXGroup;
 			children = (
@@ -148,21 +189,12 @@
 				82BDA7EF2D981F0600E33E30 /* Tests */,
 				FE83506C2D66964400861765 /* Preview Content */,
 				FE83506D2D66964400861765 /* Assets.xcassets */,
-				FE83506E2D66964400861765 /* ConsoleView.swift */,
-				FE83506F2D66964400861765 /* ContentView.swift */,
-				82D449E42DAC65C3005D3763 /* LandingPageView.swift */,
-				82E007042E19701800F68C7D /* LocalProcessingManager.swift */,
-				FE8350702D66964400861765 /* DownloadManager.swift */,
-				FE8350712D66964400861765 /* FileDownloader.swift */,
-				829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */,
-				820F25A52DAAB66400289272 /* AppAttest.swift */,
+				82D449E62DAC65D3005D3763 /* Models */,
+				82D449E72DAC65D3005D3763 /* App */,
+				82D449E82DAC65D3005D3763 /* Managers */,
+				82D449E92DAC65D3005D3763 /* Views */,
 				FE8350722D66964400861765 /* Info.plist */,
-				FE8350732D66964400861765 /* MainTabView.swift */,
 				FE8350742D66964400861765 /* Nickel.entitlements */,
-				FE8350752D66964400861765 /* NickelApp.swift */,
-				FE8350762D66964400861765 /* SettingsView.swift */,
-				826237A72DBEF0FF007F8397 /* DebugView.swift */,
-				82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */,
 			);
 			path = Nickel;
 			sourceTree = "<group>";
