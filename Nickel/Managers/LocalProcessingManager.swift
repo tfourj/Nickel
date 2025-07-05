@@ -201,7 +201,7 @@ class LocalProcessingManager {
         progressHandler?("Processing mute...")
         
         // Remove audio track from video
-        return try await removeAudioFromVideo(videoURL: mainFile, progressHandler: progressHandler)
+        return try await removeAudioFromVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
     }
     
     private func handleAudio(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -227,7 +227,7 @@ class LocalProcessingManager {
         progressHandler?("Converting to GIF...")
         
         // Convert video to GIF
-        return try await convertVideoToGif(videoURL: mainFile, progressHandler: progressHandler)
+        return try await convertVideoToGif(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
     }
     
     private func handleRemux(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -235,7 +235,7 @@ class LocalProcessingManager {
         progressHandler?("Remuxing video...")
         
         // Remux video to different format
-        return try await remuxVideo(videoURL: mainFile, progressHandler: progressHandler)
+        return try await remuxVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
     }
     
     private func handleProxy(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -311,7 +311,7 @@ class LocalProcessingManager {
         return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
-    private func removeAudioFromVideo(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
+    private func removeAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         let composition = AVMutableComposition()
         
         guard let videoAsset = AVAsset(url: videoURL) as? AVURLAsset,
@@ -323,7 +323,7 @@ class LocalProcessingManager {
         let videoTimeRange = try await sourceVideoTrack.load(.timeRange)
         try videoTrack.insertTimeRange(videoTimeRange, of: sourceVideoTrack, at: .zero)
         
-        return try await exportComposition(composition, filename: "muted_video.mp4", progressHandler: progressHandler)
+        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
     private func extractAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -341,7 +341,7 @@ class LocalProcessingManager {
         return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
-    private func convertVideoToGif(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
+    private func convertVideoToGif(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         // This is a simplified GIF conversion - in a real implementation you'd want more sophisticated frame extraction
         progressHandler?("Converting video frames to GIF...")
         
@@ -370,13 +370,13 @@ class LocalProcessingManager {
         
         // Create GIF from images
         let gifData = try createGifData(from: images)
-        let gifURL = FileManager.default.temporaryDirectory.appendingPathComponent("converted.gif")
+        let gifURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         try gifData.write(to: gifURL)
         
         return gifURL
     }
     
-    private func remuxVideo(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
+    private func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         // For remuxing, we'll just copy the video to a new container format
         progressHandler?("Remuxing video...")
         
@@ -399,7 +399,7 @@ class LocalProcessingManager {
             try compositionTrack?.insertTimeRange(timeRange, of: track, at: .zero)
         }
         
-        return try await exportComposition(composition, filename: "remuxed_video.mp4", progressHandler: progressHandler)
+        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
     // MARK: - Helper Methods
