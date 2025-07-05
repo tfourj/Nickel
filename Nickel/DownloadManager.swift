@@ -26,6 +26,7 @@ class DownloadManager {
         "audioBitrate": "128",
         "downloadMode": "auto",
         "youtubeHLS": false,
+        "localProcessing": "preferred",
     ]
 
     enum CobaltDownloadResult {
