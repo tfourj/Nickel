@@ -29,6 +29,7 @@ class DownloadManager {
     enum CobaltDownloadResult {
         case success(URL, String?)
         case pickerOptions([PickerOption])
+        case localProcessing(LocalProcessingResponse)
     }
 
     func fetchCobaltURL(
@@ -208,6 +209,73 @@ class DownloadManager {
             logOutput("❌ API returned an error status")
             throw NSError(domain: "CobaltAPI", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "API returned an error."])
+            
+        case "local-processing":
+            logOutput("Handling local-processing response...")
+            logOutput("Full JSON response: \(jsonObject)")
+            
+            // Parse the local processing response
+            guard let type = jsonObject["type"] as? String,
+                  let service = jsonObject["service"] as? String,
+                  let tunnel = jsonObject["tunnel"] as? [String],
+                  let outputDict = jsonObject["output"] as? [String: Any],
+                  let outputFilename = outputDict["filename"] as? String,
+                  !tunnel.isEmpty else {
+                logOutput("❌ Failed to extract local-processing details")
+                logOutput("Available keys in JSON: \(jsonObject.keys)")
+                if let type = jsonObject["type"] { logOutput("Type value: \(type)") }
+                if let service = jsonObject["service"] { logOutput("Service value: \(service)") }
+                if let tunnel = jsonObject["tunnel"] { logOutput("Tunnel value: \(tunnel)") }
+                if let output = jsonObject["output"] { logOutput("Output value: \(output)") }
+                throw NSError(domain: "ParsingError", code: 0,
+                              userInfo: [NSLocalizedDescriptionKey: "Failed to extract local-processing details"])
+            }
+            
+            // The tunnel array contains the download URLs
+            let outputURL = tunnel[0]
+            
+            let output = OutputDetails(
+                url: outputURL,
+                filename: outputFilename,
+                size: outputDict["size"] as? Int,
+                format: outputDict["type"] as? String
+            )
+            
+            var audio: AudioDetails? = nil
+            // For merge operations, the second tunnel URL is the audio file
+            if type == "merge" && tunnel.count > 1 {
+                let audioURL = tunnel[1]
+                let audioFilename = outputFilename.replacingOccurrences(of: ".mp4", with: "_audio.m4a")
+                audio = AudioDetails(
+                    url: audioURL,
+                    filename: audioFilename,
+                    size: nil,
+                    format: "audio/m4a"
+                )
+                logOutput("✅ Audio URL found for merge: \(audioURL)")
+            } else if let audioDict = jsonObject["audio"] as? [String: Any],
+                      let audioURL = audioDict["url"] as? String,
+                      let audioFilename = audioDict["filename"] as? String {
+                audio = AudioDetails(
+                    url: audioURL,
+                    filename: audioFilename,
+                    size: audioDict["size"] as? Int,
+                    format: audioDict["format"] as? String
+                )
+            }
+            
+            let localProcessingResponse = LocalProcessingResponse(
+                status: status,
+                type: type,
+                service: service,
+                tunnel: tunnel,
+                output: output,
+                audio: audio,
+                isHLS: jsonObject["isHLS"] as? Bool
+            )
+            
+            logOutput("✅ Local processing response parsed: type=\(type), service=\(service), tunnel count=\(tunnel.count)")
+            return .localProcessing(localProcessingResponse)
             
         default:
             logOutput("❌ Unexpected API response: \(status)")

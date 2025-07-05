@@ -315,6 +315,22 @@ struct ContentView: View {
                         logOutput("Picker options: \(pickerOptions)")  // Log to verify the options are populated
                         showPicker = true
                     }
+                    
+                case .localProcessing(let localResponse):
+                    DispatchQueue.main.async {
+                        errorMessage = "Processing \(localResponse.type) locally..."
+                        isSuccessMessage = true
+                    }
+                    
+                    let progressHandler: (String) -> Void = { message in
+                        DispatchQueue.main.async {
+                            self.errorMessage = message
+                            self.isSuccessMessage = true
+                        }
+                    }
+                    
+                    let processedFileURL = try await LocalProcessingManager.shared.processLocalResponse(localResponse, progressHandler: progressHandler)
+                    handleDownloadSuccess(processedFileURL)
                 }
             } catch {
                 if shouldCancelDownload {

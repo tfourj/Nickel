@@ -35,8 +35,10 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     private var downloadType: DownloadType?
     private var targetURL: URL?
 
-    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil) async throws -> URL {
-        clearTempFolder()
+    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil, skipTempCleanup: Bool = false) async throws -> URL {
+        if !skipTempCleanup {
+            clearTempFolder()
+        }
         
         downloadType = type
         progressHandler = onProgress
