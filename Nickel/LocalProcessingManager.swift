@@ -208,8 +208,18 @@ class LocalProcessingManager {
         logOutput("Handling audio extraction")
         progressHandler?("Extracting audio...")
         
-        // Extract audio from video
-        return try await extractAudioFromVideo(videoURL: mainFile, progressHandler: progressHandler)
+        // Check if the downloaded file is already an audio file
+        let fileExtension = mainFile.pathExtension.lowercased()
+        let audioExtensions = ["mp3", "m4a", "aac", "wav", "flac", "ogg"]
+        
+        if audioExtensions.contains(fileExtension) {
+            logOutput("File is already an audio file (\(fileExtension)), returning directly")
+            progressHandler?("Audio file ready")
+            return mainFile
+        }
+        
+        // Extract audio from video using the original filename
+        return try await extractAudioFromVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
     }
     
     private func handleGif(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -316,7 +326,7 @@ class LocalProcessingManager {
         return try await exportComposition(composition, filename: "muted_video.mp4", progressHandler: progressHandler)
     }
     
-    private func extractAudioFromVideo(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
+    private func extractAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         let composition = AVMutableComposition()
         
         guard let videoAsset = AVAsset(url: videoURL) as? AVURLAsset,
@@ -328,7 +338,7 @@ class LocalProcessingManager {
         let audioTimeRange = try await sourceAudioTrack.load(.timeRange)
         try audioTrack.insertTimeRange(audioTimeRange, of: sourceAudioTrack, at: .zero)
         
-        return try await exportComposition(composition, filename: "extracted_audio.m4a", progressHandler: progressHandler)
+        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
     private func convertVideoToGif(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
@@ -409,7 +419,19 @@ class LocalProcessingManager {
         }
         
         exportSession.outputURL = outputURL
-        exportSession.outputFileType = .mp4
+        
+        // Determine output file type based on filename extension
+        let fileExtension = filename.components(separatedBy: ".").last?.lowercased() ?? "mp4"
+        switch fileExtension {
+        case "m4a", "aac":
+            exportSession.outputFileType = .m4a
+        case "mp3":
+            exportSession.outputFileType = .mp3
+        case "wav":
+            exportSession.outputFileType = .wav
+        default:
+            exportSession.outputFileType = .mp4
+        }
         
         return try await withCheckedThrowingContinuation { continuation in
             let session = exportSession // Capture in local variable to avoid Sendable issue
