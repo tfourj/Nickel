@@ -229,6 +229,11 @@ class DownloadManager {
         case "local-processing":
             logOutput("Handling local-processing response...")
             
+            // Debug: Print the full response
+            if let responseString = String(data: data, encoding: .utf8) {
+                logOutput("🔍 Full API Response: \(responseString)")
+            }
+            
             // Parse the local processing response
             guard let type = jsonObject["type"] as? String,
                   let service = jsonObject["service"] as? String,
@@ -252,26 +257,36 @@ class DownloadManager {
             )
             
             var audio: AudioDetails? = nil
-            // For merge operations, the second tunnel URL is the audio file
-            if type == "merge" && tunnel.count > 1 {
-                let audioURL = tunnel[1]
-                let audioFilename = outputFilename.replacingOccurrences(of: ".mp4", with: "_audio.m4a")
-                audio = AudioDetails(
-                    url: audioURL,
-                    filename: audioFilename,
-                    size: nil,
-                    format: "audio/m4a"
-                )
-                logOutput("✅ Audio URL found for merge")
-            } else if let audioDict = jsonObject["audio"] as? [String: Any],
-                      let audioURL = audioDict["url"] as? String,
-                      let audioFilename = audioDict["filename"] as? String {
+            // Check for audio object first (preferred method)
+            if let audioDict = jsonObject["audio"] as? [String: Any],
+               let audioURL = audioDict["url"] as? String,
+               let audioFilename = audioDict["filename"] as? String {
                 audio = AudioDetails(
                     url: audioURL,
                     filename: audioFilename,
                     size: audioDict["size"] as? Int,
                     format: audioDict["format"] as? String
                 )
+                logOutput("✅ Audio details found from audio object")
+            }
+            // For merge operations without audio object, the second tunnel URL is the audio file
+            else if type == "merge" && tunnel.count > 1 {
+                let audioURL = tunnel[1]
+                // Create a more appropriate audio filename based on the output filename
+                let audioFilename: String
+                if outputFilename.hasSuffix(".mp4") {
+                    audioFilename = outputFilename.replacingOccurrences(of: ".mp4", with: "_audio.m4a")
+                } else {
+                    // If the output filename doesn't end with .mp4, just append _audio.m4a
+                    audioFilename = outputFilename + "_audio.m4a"
+                }
+                audio = AudioDetails(
+                    url: audioURL,
+                    filename: audioFilename,
+                    size: nil,
+                    format: "audio/m4a"
+                )
+                logOutput("✅ Audio URL found for merge (fallback method) - filename: \(audioFilename)")
             }
             
             let localProcessingResponse = LocalProcessingResponse(
