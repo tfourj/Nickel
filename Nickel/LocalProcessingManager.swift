@@ -420,7 +420,43 @@ class LocalProcessingManager {
                 return
             }
             
+            // Show initial progress message
+            progressHandler?("Starting export...")
+            
+            // Start progress monitoring using DispatchSourceTimer
+            var progressTimer: DispatchSourceTimer?
+            if progressHandler != nil {
+                progressTimer = DispatchSource.makeTimerSource(queue: .main)
+                progressTimer?.schedule(deadline: .now(), repeating: .milliseconds(100))
+                progressTimer?.setEventHandler(flags: []) {
+                    let progress = session.progress
+                    let scaledProgress = min(progress * 2, 1.0)
+                    let percentage = Int(scaledProgress * 100)
+                    
+                    if progress > 0 {
+                        progressHandler?("Exporting: \(percentage)%")
+                        
+                        // Stop timer when actual progress reaches 99% or higher
+                        if progress > 0.99 {
+                            progressTimer?.cancel()
+                        }
+                    } else {
+                        progressHandler?("Preparing export...")
+                    }
+                    
+                    // Check for cancellation during progress updates
+                    if self.shouldCancel {
+                        session.cancelExport()
+                        progressTimer?.cancel()
+                    }
+                }
+                progressTimer?.resume()
+            }
+            
             session.exportAsynchronously {
+                // Stop progress timer
+                progressTimer?.cancel()
+                
                 // Check for cancellation during export
                 if self.shouldCancel {
                     continuation.resume(throwing: CancellationError())
@@ -429,6 +465,7 @@ class LocalProcessingManager {
                 
                 switch session.status {
                 case .completed:
+                    progressHandler?("Export completed")
                     continuation.resume(returning: outputURL)
                 case .failed:
                     continuation.resume(throwing: ProcessingError.processingFailed(session.error?.localizedDescription ?? "Export failed"))
