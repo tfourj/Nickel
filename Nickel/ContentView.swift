@@ -149,7 +149,11 @@ struct ContentView: View {
                             if urlInput.isEmpty {
                                 pasteURL()
                             } else {
+                                // Clear URL and reset loading state
                                 urlInput = ""
+                                if isLoading {
+                                    cancelAllOperations(clearURL: false) // URL is already cleared above
+                                }
                             }
                         }) {
                             Image(systemName: urlInput.isEmpty ? "doc.on.clipboard" : "xmark.circle.fill")
@@ -262,6 +266,13 @@ struct ContentView: View {
     }
 
     private func downloadVideo(mode: String = "auto") {
+        logOutput("🚀 downloadVideo called, mode: \(mode), isLoading: \(isLoading), urlInput: \(urlInput)")
+        // Cancel any existing operations before starting new ones
+        if isLoading {
+            logOutput("🚀 Operations already running, canceling first")
+            cancelAllOperations()
+        }
+        
         guard let url = URL(string: urlInput),
               UIApplication.shared.canOpenURL(url) else {
             errorMessage = "Invalid URL"
@@ -269,6 +280,7 @@ struct ContentView: View {
             return
         }
         
+        logOutput("🚀 Starting new download, setting isLoading = true")
         isLoading = true
         shouldCancelDownload = false
         errorMessage = ""
@@ -353,11 +365,17 @@ struct ContentView: View {
                 }
                 urlInput = ""
             }
+            logOutput("🚀 Download completed, setting isLoading = false")
             isLoading = false
         }
     }
 
     private func selectPickerOption(_ option: PickerOption) {
+        // Cancel any existing operations before starting new ones
+        if isLoading {
+            cancelAllOperations()
+        }
+        
         isLoading = true
         showPicker = false
         errorMessage = ""
@@ -456,10 +474,24 @@ struct ContentView: View {
     }
 
     private func pasteURL() {
+        logOutput("📋 pasteURL called, isLoading: \(isLoading), urlInput: \(urlInput)")
         if let clipboardText = UIPasteboard.general.string {
             urlInput = clipboardText
+            logOutput("📋 Clipboard text pasted: \(clipboardText)")
             if (!settings.disableAutoPasteRun) {
-                downloadVideo(mode: selectedDownloadMode)
+                // Cancel any existing operations before starting new ones
+                if isLoading {
+                    logOutput("📋 Operations running, canceling first")
+                    cancelAllOperations(clearURL: false) // Don't clear the URL we just pasted
+                    // Add a small delay to ensure state is properly reset
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        logOutput("📋 Starting download after delay, isLoading: \(self.isLoading)")
+                        self.downloadVideo(mode: self.selectedDownloadMode)
+                    }
+                } else {
+                    logOutput("📋 No operations running, starting download immediately")
+                    downloadVideo(mode: selectedDownloadMode)
+                }
             }
         } else {
             errorMessage = "Clipboard is empty"
@@ -473,19 +505,27 @@ struct ContentView: View {
             }
         }
 
-    private func cancelAllOperations() {
+    private func cancelAllOperations(clearURL: Bool = true) {
+        logOutput("🛑 Canceling all operations, clearURL: \(clearURL), isLoading before: \(isLoading)")
         shouldCancelDownload = true
         FileDownloader.shared.cancelDownload()
         DownloadManager.shared.cancelDownload()
         LocalProcessingManager.shared.cancelProcessing()
-        isLoading = false
-        errorMessage = "Download cancelled"
-        isSuccessMessage = false
-        urlInput = ""
-        downloadedVideoURL = nil
-        pickerOptions = []
-        showPicker = false
-        listRefreshID = UUID()
+        
+        DispatchQueue.main.async {
+            self.isLoading = false
+            self.errorMessage = "Download cancelled"
+            self.isSuccessMessage = false
+            if clearURL {
+                self.urlInput = ""
+            }
+            self.downloadedVideoURL = nil
+            self.pickerOptions = []
+            self.showPicker = false
+            self.listRefreshID = UUID()
+            logOutput("🛑 Operations canceled, isLoading after: \(self.isLoading)")
+        }
+        
         currentTask?.cancel()
     }
 }
