@@ -226,8 +226,36 @@ class LocalProcessingManager {
         logOutput("Handling GIF conversion")
         progressHandler?("Converting to GIF...")
         
-        // Convert video to GIF
-        return try await convertVideoToGif(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+        // Check if file has .gif extension but is actually a video file
+        let fileExtension = mainFile.pathExtension.lowercased()
+        
+        if fileExtension == "gif" {
+            logOutput("File has .gif extension, checking if it's actually a GIF...")
+            
+            // First try to read as GIF image
+            if let image = UIImage(contentsOfFile: mainFile.path) {
+                logOutput("✅ File is actually a GIF image - saving directly")
+                progressHandler?("GIF file ready")
+                return mainFile
+            } else {
+                logOutput("File is not a readable GIF, renaming to .mp4 and saving...")
+                
+                // Rename the file to have .mp4 extension
+                let newFilename = response.output.filename.replacingOccurrences(of: ".gif", with: ".mp4")
+                let newURL = FileManager.default.temporaryDirectory.appendingPathComponent(newFilename)
+                
+                // Move the file to the new name
+                try FileManager.default.moveItem(at: mainFile, to: newURL)
+                logOutput("✅ File renamed to: \(newFilename)")
+                
+                progressHandler?("Video file ready")
+                return newURL
+            }
+        } else {
+            logOutput("File doesn't have .gif extension - converting to GIF")
+            progressHandler?("Converting to GIF...")
+            return try await convertVideoToGif(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+        }
     }
     
     private func handleRemux(response: LocalProcessingResponse, mainFile: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
