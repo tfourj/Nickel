@@ -187,7 +187,7 @@ class LocalProcessingManager {
         
         // Merge video and audio using AVFoundation
         progressHandler?("Merging video and audio...")
-        let result = try await mergeVideoAndAudio(videoURL: videoFileCopy, audioURL: audioFile, progressHandler: progressHandler)
+        let result = try await mergeVideoAndAudio(videoURL: videoFileCopy, audioURL: audioFile, filename: response.output.filename, progressHandler: progressHandler)
         
         // Clean up the temporary video copy
         try? FileManager.default.removeItem(at: videoFileCopy)
@@ -238,7 +238,7 @@ class LocalProcessingManager {
     
     // MARK: - Processing Methods
     
-    private func mergeVideoAndAudio(videoURL: URL, audioURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
+    private func mergeVideoAndAudio(videoURL: URL, audioURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         let composition = AVMutableComposition()
         
         logOutput("Starting merge process...")
@@ -298,7 +298,7 @@ class LocalProcessingManager {
         
         // Export merged composition
         logOutput("Starting export of merged composition...")
-        return try await exportComposition(composition, filename: "merged_video.mp4", progressHandler: progressHandler)
+        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
     }
     
     private func removeAudioFromVideo(videoURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
