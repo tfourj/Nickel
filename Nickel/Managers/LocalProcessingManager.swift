@@ -292,11 +292,70 @@ class LocalProcessingManager {
             throw ProcessingError.processingFailed("Audio file does not exist at path: \(audioURL.path)")
         }
         
-        // Add video track
-        let videoAsset = AVAsset(url: videoURL)
-        logOutput("Loading video tracks...")
+        // Use LenghtExtractor for accurate video duration analysis
+        progressHandler?("Analyzing video duration...")
         
-        let videoTracks = try await videoAsset.loadTracks(withMediaType: .video)
+        // Extract accurate durations using LenghtExtractor
+        let videoDuration = try await LenghtExtractor.extractDuration(from: videoURL)
+        let audioDuration = try await LenghtExtractor.extractDuration(from: audioURL)
+        
+        // Smart duration selection logic
+        let durationDifference = abs(videoDuration - audioDuration)
+        let toleranceThreshold = 0.1 // 100ms tolerance
+        
+        let targetDuration: Double
+        let durationSource: String
+        
+        if durationDifference <= toleranceThreshold {
+            // Durations are very close, use video duration (traditional approach)
+            targetDuration = videoDuration
+            durationSource = "video (durations match within \(toleranceThreshold)s)"
+            logOutput("✅ Video and audio durations are very close (diff: \(String(format: "%.3f", durationDifference))s), using video duration")
+        } else if videoDuration > audioDuration {
+            // Video is longer - check if the difference is significant
+            if durationDifference > 2.0 {
+                // Significant difference, use shorter duration to avoid blank video
+                targetDuration = audioDuration
+                durationSource = "audio (video significantly longer by \(String(format: "%.2f", durationDifference))s)"
+                logOutput("⚠️ Video much longer than audio, using audio duration to avoid blank video")
+            } else {
+                // Moderate difference, use video duration
+                targetDuration = videoDuration
+                durationSource = "video (slightly longer than audio)"
+                logOutput("📹 Video slightly longer than audio, using video duration")
+            }
+        } else {
+            // Audio is longer - check if the difference is significant
+            if durationDifference > 2.0 {
+                // Significant difference, use shorter duration to avoid silent audio
+                targetDuration = videoDuration
+                durationSource = "video (audio significantly longer by \(String(format: "%.2f", durationDifference))s)"
+                logOutput("⚠️ Audio much longer than video, using video duration to avoid silent audio")
+            } else {
+                // Moderate difference, use longer duration to preserve content
+                targetDuration = audioDuration
+                durationSource = "audio (slightly longer than video, preserving content)"
+                logOutput("🎵 Audio slightly longer than video, using audio duration to preserve content")
+            }
+        }
+        
+        let targetCMTime = CMTime(seconds: targetDuration, preferredTimescale: 600)
+        
+        logOutput("=== Duration Analysis ===")
+        logOutput("Video duration: \(String(format: "%.3f", videoDuration))s")
+        logOutput("Audio duration: \(String(format: "%.3f", audioDuration))s")
+        logOutput("Difference: \(String(format: "%.3f", durationDifference))s")
+        logOutput("Selected: \(String(format: "%.3f", targetDuration))s from \(durationSource)")
+        
+        // Load tracks for composition
+        let videoAsset = AVAsset(url: videoURL)
+        let audioAsset = AVAsset(url: audioURL)
+        async let videoTracksTask = videoAsset.loadTracks(withMediaType: .video)
+        async let audioTracksTask = audioAsset.loadTracks(withMediaType: .audio)
+        
+        let videoTracks = try await videoTracksTask
+        let audioTracks = try await audioTracksTask
+        
         logOutput("Found \(videoTracks.count) video tracks")
         
         guard let sourceVideoTrack = videoTracks.first else {
@@ -307,19 +366,14 @@ class LocalProcessingManager {
             throw ProcessingError.processingFailed("Failed to create video composition track")
         }
         
-        let videoTimeRange = try await sourceVideoTrack.load(.timeRange)
+        // Use the target duration instead of full video duration
+        let videoTimeRange = CMTimeRange(start: .zero, duration: targetCMTime)
         logOutput("Video time range: \(videoTimeRange)")
         
         try videoTrack.insertTimeRange(videoTimeRange, of: sourceVideoTrack, at: .zero)
         logOutput("Video track added successfully")
         
         // Add audio track
-        let audioAsset = AVAsset(url: audioURL)
-        logOutput("Loading audio tracks...")
-        
-        let audioTracks = try await audioAsset.loadTracks(withMediaType: .audio)
-        logOutput("Found \(audioTracks.count) audio tracks")
-        
         guard let sourceAudioTrack = audioTracks.first else {
             throw ProcessingError.processingFailed("No audio tracks found in audio file")
         }
@@ -328,7 +382,8 @@ class LocalProcessingManager {
             throw ProcessingError.processingFailed("Failed to create audio composition track")
         }
         
-        let audioTimeRange = try await sourceAudioTrack.load(.timeRange)
+        // Use the target duration instead of full audio duration
+        let audioTimeRange = CMTimeRange(start: .zero, duration: targetCMTime)
         logOutput("Audio time range: \(audioTimeRange)")
         
         try audioTrack.insertTimeRange(audioTimeRange, of: sourceAudioTrack, at: .zero)
@@ -374,8 +429,8 @@ class LocalProcessingManager {
         progressHandler?("Converting video frames to GIF...")
         
         let asset = AVAsset(url: videoURL)
-        let duration = try await asset.load(.duration)
-        let frameCount = Int(CMTimeGetSeconds(duration) * 10) // 10 fps
+        let duration = try await LenghtExtractor.extractDuration(from: videoURL)
+        let frameCount = Int(duration * 10) // 10 fps
         
         let imageGenerator = AVAssetImageGenerator(asset: asset)
         imageGenerator.appliesPreferredTrackTransform = true
@@ -551,4 +606,5 @@ class LocalProcessingManager {
         
         return gifData as Data
     }
+
 }
