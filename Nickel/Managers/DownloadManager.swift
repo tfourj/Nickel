@@ -120,6 +120,11 @@ class DownloadManager {
                 throw CancellationError()
             }
             
+            // Send initial progress update
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Starting authentication process..."])
+            }
+            
             // Use the new background-safe method
             do {
                 authValue = try await appAttestClient.ensureValidTempKey()

@@ -35,13 +35,33 @@ class AppAttestClient {
         }
         logOutput("✅ App Attest is supported on this device.")
 
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Fetching authentication challenge..."])
+        }
+
         let challenge = try await fetchChallenge()
 
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Generating device key..."])
+        }
+
         let keyId = try await service.generateKey()
+
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Creating device attestation..."])
+        }
 
         let clientDataHash = Data(SHA256.hash(data: challenge.data(using: .utf8)!))
 
         let attestation = try await service.attestKey(keyId, clientDataHash: clientDataHash)
+
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Validating with authentication server..."])
+        }
 
         let tempKey = try await sendAttestationToServer(attestation: attestation, challenge: challenge, keyId: keyId)
 
@@ -123,6 +143,11 @@ class AppAttestClient {
         beginBackgroundTask()
         defer { endBackgroundTask() }
         
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Validating authentication token..."])
+        }
+        
         let validateURL = buildEndpointURL(path: "ios-validate")
         
         var request = URLRequest(url: validateURL)
@@ -160,6 +185,11 @@ class AppAttestClient {
         beginBackgroundTask()
         defer { endBackgroundTask() }
         
+        // Send progress update
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Generating new authentication key..."])
+        }
+        
         let newTempKey = try await attestKey()
         logOutput("Generated new TempKey")
         UserDefaults.standard.set(newTempKey, forKey: "TempKey")
@@ -194,6 +224,11 @@ class AppAttestClient {
     func ensureValidTempKey() async throws -> String {
         // Check if we have a stored temp key
         if let existingTempKey = UserDefaults.standard.string(forKey: "TempKey") {
+            // Send progress update
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("ShowMessageUI"), object: nil, userInfo: ["text": "Checking existing authentication..."])
+            }
+            
             do {
                 let isValid = try await validateTempKey(existingTempKey)
                 if isValid {
