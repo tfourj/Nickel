@@ -11,6 +11,14 @@ struct InstanceSettingsView: View {
     @EnvironmentObject var settings: SettingsModel
     @State private var showAPIKey = false
     @State private var showCredentialsAlert = false
+    @State private var showSaveAlert = false
+    @State private var hasUnsavedChanges = false
+    
+    // Store original values to detect changes
+    @State private var originalAPIURL = ""
+    @State private var originalAuthMethod = ""
+    @State private var originalAPIKey = ""
+    @State private var originalAuthServerURL = ""
     
     let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth", "Nickel-Auth (Custom)"]
     
@@ -20,11 +28,15 @@ struct InstanceSettingsView: View {
                 TextField("API URL", text: $settings.customAPIURL)
                     .autocapitalization(.none)
                     .keyboardType(.URL)
+                    .onChange(of: settings.customAPIURL) { _, _ in
+                        checkForChanges()
+                    }
                 
                 Menu {
                     ForEach(authMethods, id: \.self) { method in
                         Button(action: {
                             settings.authMethod = method
+                            checkForChanges()
                         }) {
                             HStack {
                                 Text(method)
@@ -48,12 +60,16 @@ struct InstanceSettingsView: View {
                     if newValue != "Api-Key" && newValue != "Bearer" {
                         showAPIKey = false
                     }
+                    checkForChanges()
                 }
                 
                 if showAPIKey {
                     TextField("Auth Key", text: $settings.customAPIKey)
                         .autocapitalization(.none)
                         .transition(.opacity)
+                        .onChange(of: settings.customAPIKey) { _, _ in
+                            checkForChanges()
+                        }
                 }
                 
                 if settings.authMethod == "Api-Key" || settings.authMethod == "Bearer" {
@@ -79,6 +95,9 @@ struct InstanceSettingsView: View {
                         TextField("Custom Auth Server URL", text: $settings.customAuthServerURL)
                             .autocapitalization(.none)
                             .keyboardType(.URL)
+                            .onChange(of: settings.customAuthServerURL) { _, _ in
+                                checkForChanges()
+                            }
                     }
                 }
             }
@@ -104,6 +123,38 @@ struct InstanceSettingsView: View {
                 }
                 .foregroundColor(.blue)
             }
+            
+            // Save Button Section - only show when there are unsaved changes
+            if hasUnsavedChanges {
+                Section {
+                    Button(action: {
+                        showSaveAlert = true
+                    }) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.blue)
+                            Text("Save Changes")
+                                .foregroundColor(.blue)
+                                .fontWeight(.medium)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .cornerRadius(8)
+                }
+            }
+        }
+        .onAppear {
+            // Store original values when view appears
+            storeOriginalValues()
+        }
+        .alert("Save Changes", isPresented: $showSaveAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Save & Restart") {
+                saveChangesAndRestart()
+            }
+        } message: {
+            Text("Your instance settings have changed. The app will restart to apply the new configuration.")
         }
         .alert("Nickel", isPresented: $showCredentialsAlert) {
             Button("OK", role: .cancel) {
@@ -235,6 +286,35 @@ struct InstanceSettingsView: View {
                let window = windowScene.windows.first {
                 window.rootViewController?.present(alert, animated: true)
             }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func storeOriginalValues() {
+        originalAPIURL = settings.customAPIURL
+        originalAuthMethod = settings.authMethod
+        originalAPIKey = settings.customAPIKey
+        originalAuthServerURL = settings.customAuthServerURL
+        hasUnsavedChanges = false
+    }
+    
+    private func checkForChanges() {
+        hasUnsavedChanges = (
+            settings.customAPIURL != originalAPIURL ||
+            settings.authMethod != originalAuthMethod ||
+            settings.customAPIKey != originalAPIKey ||
+            settings.customAuthServerURL != originalAuthServerURL
+        )
+    }
+    
+    private func saveChangesAndRestart() {
+        // Force save to UserDefaults
+        UserDefaults.standard.synchronize()
+        
+        // Show restart message and exit app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            exit(0)
         }
     }
 }
