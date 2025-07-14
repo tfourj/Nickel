@@ -140,7 +140,6 @@ struct InstanceSettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green.opacity(0.1))
                     .cornerRadius(8)
                 }
             }
@@ -310,9 +309,6 @@ struct InstanceSettingsView: View {
     }
     
     private func saveChangesAndRestart() {
-        // Update the stored original values
-        storeOriginalValues()
-        
         // Force save to UserDefaults
         UserDefaults.standard.synchronize()
         
