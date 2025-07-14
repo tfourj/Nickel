@@ -32,12 +32,20 @@ struct AppSettingsView: View {
                     Text("Disable Auto-Download on Paste")
                 }
                 
+                Toggle(isOn: $settings.copyDownloadedVideoURL) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Copy Downloaded Video URL")
+                        Text("Copy video URL to clipboard after download")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                    }
+                }
+                
                 Toggle(isOn: $settings.disableBGDownloads) {
                     Text("Disable Background Downloads")
                     Text("Enable if using on device IPA signers")
                         .font(.footnote)
                         .foregroundColor(.gray)
-                        .padding(.top, 5)
                 }
             }
             

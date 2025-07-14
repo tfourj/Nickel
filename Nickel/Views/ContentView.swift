@@ -284,7 +284,13 @@ struct ContentView: View {
         isLoading = true
         shouldCancelDownload = false
         errorMessage = ""
-        
+
+        // Copy video URL to clipboard if setting is enabled
+        if settings.copyDownloadedVideoURL {
+            UIPasteboard.general.string = url.absoluteString
+            logOutput("📋 Copied video URL to clipboard: \(url.absoluteString)")
+        }
+
         // Start background task to ensure completion even if app goes to background
         let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "VideoDownload") {
             // This will be called if the background task expires
