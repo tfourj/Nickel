@@ -44,14 +44,16 @@ class DownloadManager {
         self.shouldCancel = false
         
         // Start background task to ensure completion even if app goes to background
-        let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "CobaltDownload") {
+        let backgroundTaskID = await UIApplication.shared.beginBackgroundTask(withName: "CobaltDownload") {
             // This will be called if the background task expires
             logOutput("⚠️ Background task expired for Cobalt download")
         }
         defer {
             if backgroundTaskID != .invalid {
-                UIApplication.shared.endBackgroundTask(backgroundTaskID)
-                logOutput("🔵 Ended background task for Cobalt download")
+                Task { @MainActor in
+                    UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                    logOutput("🔵 Ended background task for Cobalt download")
+                }
             }
         }
         
