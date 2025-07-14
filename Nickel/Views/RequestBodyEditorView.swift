@@ -19,7 +19,7 @@ struct RequestBodyEditorView: View {
         NavigationView {
             Form {
                 ForEach(requestBodyItems.sorted { $0.order < $1.order }) { item in
-                    if let index = requestBodyItems.firstIndex(where: { $0.id == item.id }) {
+                    if requestBodyItems.firstIndex(where: { $0.id == item.id }) != nil {
                         GeometryReader { geometry in
                             HStack(spacing: 0) {
                                 TextField("Key", text: Binding(
