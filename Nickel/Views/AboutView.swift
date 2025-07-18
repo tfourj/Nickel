@@ -103,6 +103,18 @@ struct AboutView: View {
                             .foregroundColor(.blue)
                     }
                 }
+                                Button(action: {
+                    if let url = URL(string: "https://getnickel.site/discord") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack {
+                        Text("Discord")
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundColor(.blue)
+                    }
+                }
             }
             
             Section(header: Text("Legal")) {
