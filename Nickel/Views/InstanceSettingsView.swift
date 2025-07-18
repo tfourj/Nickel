@@ -20,6 +20,12 @@ struct InstanceSettingsView: View {
     @State private var originalAPIKey = ""
     @State private var originalAuthServerURL = ""
     
+    // Supported services state
+    @State private var supportedServices: [String] = []
+    @State private var showSupportedServices = false
+    @State private var isLoadingServices = false
+    @State private var servicesError: String? = nil
+    
     let authMethods = ["None", "Bearer", "Api-Key", "Nickel-Auth", "Nickel-Auth (Custom)"]
     
     var body: some View {
@@ -99,6 +105,53 @@ struct InstanceSettingsView: View {
                                 checkForChanges()
                             }
                     }
+                }
+            }
+            
+            Section(header: Text("Instance Information")) {
+                Button(action: {
+                    fetchSupportedServices()
+                }) {
+                    HStack {
+                        if isLoadingServices {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "info.circle")
+                        }
+                        Text("Check Supported Services")
+                    }
+                }
+                .foregroundColor(.blue)
+                .disabled(settings.customAPIURL.isEmpty || isLoadingServices)
+                
+                if !supportedServices.isEmpty {
+                    Menu {
+                        ForEach(supportedServices.sorted(), id: \.self) { service in
+                            Button(action: {}) {
+                                HStack {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                    Text(service.capitalized)
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Supported Services")
+                            Spacer()
+                            Text("\(supportedServices.count) services")
+                                .foregroundColor(.gray)
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
+                if let error = servicesError {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
             }
             
@@ -287,6 +340,81 @@ struct InstanceSettingsView: View {
                 window.rootViewController?.present(alert, animated: true)
             }
         }
+    }
+    
+    // MARK: - Supported Services
+    
+    private func fetchSupportedServices() {
+        guard !settings.customAPIURL.isEmpty else {
+            servicesError = "Please enter an API URL first"
+            return
+        }
+        
+        isLoadingServices = true
+        servicesError = nil
+        supportedServices = []
+        
+        // Clean up the URL
+        var apiURL = settings.customAPIURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !apiURL.hasPrefix("http://") && !apiURL.hasPrefix("https://") {
+            apiURL = "https://" + apiURL
+        }
+        
+        guard let url = URL(string: apiURL) else {
+            isLoadingServices = false
+            servicesError = "Invalid API URL"
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Add authentication headers if needed
+        if settings.authMethod == "Bearer" && !settings.customAPIKey.isEmpty {
+            request.setValue("Bearer \(settings.customAPIKey)", forHTTPHeaderField: "Authorization")
+        } else if settings.authMethod == "Api-Key" && !settings.customAPIKey.isEmpty {
+            request.setValue(settings.customAPIKey, forHTTPHeaderField: "Api-Key")
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                isLoadingServices = false
+                
+                if let error = error {
+                    servicesError = "Network error: \(error.localizedDescription)"
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    servicesError = "Invalid response"
+                    return
+                }
+                
+                guard httpResponse.statusCode == 200 else {
+                    servicesError = "Server error: \(httpResponse.statusCode)"
+                    return
+                }
+                
+                guard let data = data else {
+                    servicesError = "No data received"
+                    return
+                }
+                
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let cobalt = json["cobalt"] as? [String: Any],
+                       let services = cobalt["services"] as? [String] {
+                        supportedServices = services
+                        servicesError = nil
+                    } else {
+                        servicesError = "Invalid response format"
+                    }
+                } catch {
+                    servicesError = "Failed to parse response: \(error.localizedDescription)"
+                }
+            }
+        }.resume()
     }
     
     // MARK: - Helper Functions
