@@ -25,7 +25,6 @@ class DownloadManager {
         "audioFormat": "mp3",
         "audioBitrate": "128",
         "downloadMode": "auto",
-        "youtubeHLS": false,
         "localProcessing": "preferred",
     ]
 
