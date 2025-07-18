@@ -233,7 +233,7 @@ class LocalProcessingManager {
             logOutput("File has .gif extension, checking if it's actually a GIF...")
             
             // First try to read as GIF image
-            if let image = UIImage(contentsOfFile: mainFile.path) {
+            if UIImage(contentsOfFile: mainFile.path) != nil {
                 logOutput("✅ File is actually a GIF image - saving directly")
                 progressHandler?("GIF file ready")
                 return mainFile
