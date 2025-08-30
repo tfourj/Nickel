@@ -47,6 +47,15 @@ struct AppSettingsView: View {
                         .font(.footnote)
                         .foregroundColor(.gray)
                 }
+
+                Toggle(isOn: $settings.askDownloadOptionOnShareSheet) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ask Download Option on Share Sheet")
+                        Text("Prompt for download mode when opening links via share sheet")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                    }
+                }
             }
             
             Section(header: Text("User Interface")) {

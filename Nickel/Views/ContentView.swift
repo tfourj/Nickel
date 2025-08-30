@@ -31,6 +31,8 @@ struct ContentView: View {
     @State private var selectedDownloadMode: String = "auto"
     @State private var shouldCancelDownload = false
     @State private var currentTask: Task<Void, Never>?
+    @State private var showShareSheetDownloadPicker = false
+    @State private var shareSheetURL: String = ""
     
     @EnvironmentObject var settings: SettingsModel
 
@@ -208,8 +210,16 @@ struct ContentView: View {
                let linkItem = queryItems.first(where: { $0.name == "url" }),
                let sharedLink = linkItem.value {
                 logOutput("App opened using url scheme. link: \(sharedLink)")
-                urlInput = sharedLink
-                downloadVideo(mode: selectedDownloadMode)
+
+                if settings.askDownloadOptionOnShareSheet {
+                    // Show download mode picker for share sheet
+                    shareSheetURL = sharedLink
+                    showShareSheetDownloadPicker = true
+                } else {
+                    // Normal behavior - use current selected mode
+                    urlInput = sharedLink
+                    downloadVideo(mode: selectedDownloadMode)
+                }
             }
         }
         
@@ -252,6 +262,105 @@ struct ContentView: View {
                         logOutput("Picker appeared with \(pickerOptions.count) options")
                         listRefreshID = UUID() // Trigger a refresh
                     }
+        }
+        .sheet(isPresented: $showShareSheetDownloadPicker) {
+            VStack(spacing: 20) {
+                Text("Choose Download Mode")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .padding(.top)
+
+                Text("How would you like to download this content?")
+                    .font(.body)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                VStack(spacing: 15) {
+                    Button(action: {
+                        showShareSheetDownloadPicker = false
+                        urlInput = shareSheetURL
+                        downloadVideo(mode: "auto")
+                        shareSheetURL = ""
+                    }) {
+                        HStack {
+                            Image(systemName: "wand.and.stars")
+                                .font(.title3)
+                            Text("Auto")
+                                .font(.headline)
+                            Spacer()
+                            Text("Best quality available")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+
+                    Button(action: {
+                        showShareSheetDownloadPicker = false
+                        urlInput = shareSheetURL
+                        downloadVideo(mode: "audio")
+                        shareSheetURL = ""
+                    }) {
+                        HStack {
+                            Image(systemName: "music.note")
+                                .font(.title3)
+                            Text("Audio Only")
+                                .font(.headline)
+                            Spacer()
+                            Text("Extract audio track")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+
+                    Button(action: {
+                        showShareSheetDownloadPicker = false
+                        urlInput = shareSheetURL
+                        downloadVideo(mode: "mute")
+                        shareSheetURL = ""
+                    }) {
+                        HStack {
+                            Image(systemName: "speaker.slash")
+                                .font(.title3)
+                            Text("Video (Muted)")
+                                .font(.headline)
+                            Spacer()
+                            Text("Video without audio")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+                }
+                .padding(.horizontal)
+
+                Button(action: {
+                    showShareSheetDownloadPicker = false
+                    shareSheetURL = ""
+                }) {
+                    Text("Cancel")
+                        .font(.headline)
+                        .foregroundColor(.red)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .padding()
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowMessageUI"))) { notification in
             if let text = notification.userInfo?["text"] as? String {
