@@ -172,14 +172,39 @@ class DownloadManager {
         }
 
         if httpResponse.statusCode != 200 {
-            let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
-            logOutput("❌ API Error Response: \(errorDetails)")
-            throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: errorDetails])
+            // Check if response is JSON (API error) or HTML (Cloudflare/other errors)
+            let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
+            let isJSONResponse = contentType.contains("application/json")
+
+            if isJSONResponse {
+                // Parse JSON error response
+                let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
+                logOutput("❌ API Error Response (JSON): \(errorDetails)")
+                throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
+                              userInfo: [NSLocalizedDescriptionKey: errorDetails])
+            } else {
+                // HTML response (likely Cloudflare or server error)
+                logOutput("❌ HTML Error Response (likely Cloudflare): Status \(httpResponse.statusCode)")
+                let genericError = "Server temporarily unavailable. Please try again later."
+                throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
+                              userInfo: [NSLocalizedDescriptionKey: genericError])
+            }
         }
 
         // Parse the JSON response
         logOutput("Parsing JSON response...")
+
+        // First check if the response is actually JSON
+        let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
+        let isJSONResponse = contentType.contains("application/json")
+
+        if !isJSONResponse {
+            logOutput("❌ Expected JSON response but got: \(contentType)")
+            let genericError = "Server returned unexpected response format. Please try again later."
+            throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: genericError])
+        }
+
         guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let status = jsonObject["status"] as? String else {
             logOutput("❌ Failed to extract status from JSON")
