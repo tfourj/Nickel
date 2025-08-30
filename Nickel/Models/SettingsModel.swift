@@ -44,6 +44,9 @@ class SettingsModel: ObservableObject {
     @Published var copyDownloadedVideoURL: Bool {
         didSet { UserDefaults.standard.set(copyDownloadedVideoURL, forKey: "copyDownloadedVideoURL") }
     }
+    @Published var askDownloadOptionOnShareSheet: Bool {
+        didSet { UserDefaults.standard.set(askDownloadOptionOnShareSheet, forKey: "askDownloadOptionOnShareSheet") }
+    }
 
     static func checkSettings() {
         let defaultValues: [(String, Any)] = [
@@ -60,7 +63,8 @@ class SettingsModel: ObservableObject {
             ("customAuthServerURL", ""),
             ("rememberPickerDownloadOption", true),
             ("enableDebugTab", false),
-            ("copyDownloadedVideoURL", false)
+            ("copyDownloadedVideoURL", false),
+            ("askDownloadOptionOnShareSheet", false)
         ]
         for (key, value) in defaultValues {
             if UserDefaults.standard.object(forKey: key) == nil {
@@ -87,5 +91,6 @@ class SettingsModel: ObservableObject {
         self.rememberPickerDownloadOption = UserDefaults.standard.object(forKey: "rememberPickerDownloadOption") as? Bool ?? true
         self.enableDebugTab = UserDefaults.standard.object(forKey: "enableDebugTab") as? Bool ?? false
         self.copyDownloadedVideoURL = UserDefaults.standard.object(forKey: "copyDownloadedVideoURL") as? Bool ?? false
+        self.askDownloadOptionOnShareSheet = UserDefaults.standard.object(forKey: "askDownloadOptionOnShareSheet") as? Bool ?? false
     }
 }
