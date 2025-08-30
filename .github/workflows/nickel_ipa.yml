@@ -17,10 +17,17 @@ jobs:
       uses: actions/checkout@v4
 
     - name: List available Xcode versions
-      run: ls -la /Applications/ | grep Xcode
+      run: ls -1 /Applications/ | grep Xcode
 
-    - name: Set up Xcode
-      run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+    - name: Auto-select latest Xcode 16.x
+      run: |
+        LATEST_XCODE=$(ls -1 /Applications/ | grep "Xcode_16" | grep -v "beta" | sort -V | tail -n 1)
+        if [ -z "$LATEST_XCODE" ]; then
+          echo "❌ No Xcode 16.x found!"
+          exit 1
+        fi
+        echo "✅ Using $LATEST_XCODE"
+        sudo xcode-select -s "/Applications/$LATEST_XCODE/Contents/Developer"
 
     - name: Show Xcode Version
       run: xcodebuild -version
