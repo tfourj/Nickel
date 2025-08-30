@@ -15,7 +15,7 @@ struct MainTabView: View {
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
     @State private var showURLSetAlert = false
-    private let currentLandingPageVersion = 1
+    private let currentLandingPageVersion = 2
     @State private var completedLandingPageVersion = UserDefaults.standard.integer(forKey: "landingPageVersion")
 
     var body: some View {
