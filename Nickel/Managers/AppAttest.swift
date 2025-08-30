@@ -174,9 +174,21 @@ class AppAttestClient {
             logOutput("❌ TempKey validation failed with 403 Forbidden.")
             return false
         } else {
-            let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
-            logOutput("❌ TempKey validation failed with status code: \(httpResponse.statusCode). Details: \(errorDetails)")
-            throw NSError(domain: "ValidationError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorDetails])
+            // Check if response is JSON (API error) or HTML (Cloudflare/other errors)
+            let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
+            let isJSONResponse = contentType.contains("application/json")
+
+            if isJSONResponse {
+                // Parse JSON error response
+                let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
+                logOutput("❌ TempKey validation failed with JSON error: \(errorDetails)")
+                throw NSError(domain: "ValidationError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorDetails])
+            } else {
+                // HTML response (likely Cloudflare or server error)
+                logOutput("❌ TempKey validation failed with HTML error (likely Cloudflare): Status \(httpResponse.statusCode)")
+                let genericError = "Authentication server temporarily unavailable. Please try again later."
+                throw NSError(domain: "ValidationError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: genericError])
+            }
         }
     }
 
