@@ -145,7 +145,26 @@ struct LandingPageView: View {
                             }
                         }
                         .padding(.bottom, 20)
-                        
+
+                        Button(action: {
+                            if let url = URL(string: "https://getnickel.site/discord") {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "message.circle.fill")
+                                    .foregroundColor(.white)
+                                Text("Join Discord Community")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.purple)
+                            .cornerRadius(10)
+                            .padding(.horizontal, 40)
+                        }
+
                         Button {
                             completedVersion = currentVersion
                             UserDefaults.standard.set(currentVersion, forKey: "landingPageVersion")
@@ -179,4 +198,20 @@ struct LandingPageView: View {
         .background(Color.black.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }
+}
+
+#Preview {
+    struct PreviewWrapper: View {
+        @State private var completedVersion: Int = 0
+        let currentVersion: Int = 1
+
+        var body: some View {
+            LandingPageView(
+                completedVersion: $completedVersion,
+                currentVersion: currentVersion
+            )
+        }
+    }
+
+    return PreviewWrapper()
 }
