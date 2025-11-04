@@ -71,6 +71,10 @@ struct AppSettingsView: View {
                     Text("Enable Developer Console")
                 }
                 
+                Toggle(isOn: $settings.enableLinkHistory) {
+                    Text("Enable Link History")
+                }
+                
                 #if DEBUG
                 Toggle(isOn: $settings.enableDebugTab) {
                     Text("Show Debug Tab")

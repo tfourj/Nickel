@@ -33,6 +33,7 @@ struct ContentView: View {
     @State private var currentTask: Task<Void, Never>?
     @State private var showShareSheetDownloadPicker = false
     @State private var shareSheetURL: String = ""
+    @State private var showLinkHistory = false
     
     @EnvironmentObject var settings: SettingsModel
 
@@ -57,7 +58,23 @@ struct ContentView: View {
                     Text("Nickel")
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    if settings.enableLinkHistory {
+                        Button(action: {
+                            showLinkHistory = true
+                        }) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                    }
                 }
+                .padding(.horizontal, 24)
 
                 Spacer()
                 
@@ -370,6 +387,24 @@ struct ContentView: View {
                 }
             }
         }
+        .sheet(isPresented: $showLinkHistory) {
+            LinkHistoryView(
+                onCopyLink: { url in
+                    // Optional callback for copy action
+                },
+                onInputWithoutDownload: { url in
+                    urlInput = url
+                    // Switch to Home tab if needed (handled by MainTabView)
+                },
+                onDownload: { url, mode in
+                    urlInput = url
+                    downloadVideo(mode: mode)
+                },
+                onDismiss: {
+                    showLinkHistory = false
+                }
+            )
+        }
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
     }
@@ -387,6 +422,11 @@ struct ContentView: View {
             errorMessage = "Invalid URL"
             isSuccessMessage = false
             return
+        }
+        
+        // Save to link history if enabled
+        if settings.enableLinkHistory {
+            LinkHistoryManager.shared.addEntry(url: urlInput, downloadMode: mode)
         }
         
         logOutput("🚀 Starting new download, setting isLoading = true")
