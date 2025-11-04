@@ -29,9 +29,9 @@ class DownloadManager {
     ]
 
     enum CobaltDownloadResult {
-        case success(URL, String?)
-        case pickerOptions([PickerOption])
-        case localProcessing(LocalProcessingResponse)
+        case success(URL, String?, String?) // URL, filename, title
+        case pickerOptions([PickerOption], String?) // options, title
+        case localProcessing(LocalProcessingResponse, String?) // response, title
     }
 
     func fetchCobaltURL(
@@ -222,10 +222,11 @@ class DownloadManager {
                 throw NSError(domain: "ParsingError", code: 0,
                               userInfo: [NSLocalizedDescriptionKey: "Failed to extract URL from JSON"])
             }
-            // Extract filename from response if available
+            // Extract filename and title from response if available
             let filename = jsonObject["filename"] as? String
-            logOutput("✅ Download URL received: \(mediaURL.absoluteString), filename: \(filename ?? "nil")")
-            return .success(mediaURL, filename)
+            let title = jsonObject["text"] as? String ?? jsonObject["title"] as? String
+            logOutput("✅ Download URL received: \(mediaURL.absoluteString), filename: \(filename ?? "nil"), title: \(title ?? "nil")")
+            return .success(mediaURL, filename, title)
             
         case "picker":
             logOutput("Handling picker response...")
@@ -249,8 +250,11 @@ class DownloadManager {
 
             logOutput("✅ Picker options found: \(options.count) options")
             logOutput("Picker details: \(options)")
+            
+            // Extract title if available
+            let title = jsonObject["text"] as? String ?? jsonObject["title"] as? String
 
-            return .pickerOptions(options)
+            return .pickerOptions(options, title)
             
         case "error":
             logOutput("❌ API returned an error status")
@@ -331,7 +335,11 @@ class DownloadManager {
             )
             
             logOutput("✅ Local processing response parsed: type=\(type), service=\(service)")
-            return .localProcessing(localProcessingResponse)
+            
+            // Extract title if available
+            let title = jsonObject["text"] as? String ?? jsonObject["title"] as? String
+            
+            return .localProcessing(localProcessingResponse, title)
             
         default:
             logOutput("❌ Unexpected API response: \(status)")

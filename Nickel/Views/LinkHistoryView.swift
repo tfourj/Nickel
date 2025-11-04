@@ -139,10 +139,20 @@ struct LinkHistoryRow: View {
         Button(action: onTap) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
+                    // Title or URL
+                    if let title = entry.title, !title.isEmpty {
+                        Text(title)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+                    
                     Text(entry.url)
-                        .font(.subheadline)
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(entry.title != nil ? 1 : 2)
                         .multilineTextAlignment(.leading)
                     
                     HStack(spacing: 8) {
@@ -165,47 +175,28 @@ struct LinkHistoryRow: View {
                 
                 Spacer()
                 
-                // Action buttons
-                HStack(spacing: 8) {
-                    // Copy button
-                    Button(action: {
-                        onCopy()
-                    }) {
-                        Image(systemName: "doc.on.clipboard")
-                            .font(.system(size: 16))
-                            .foregroundColor(.blue)
-                            .padding(8)
-                            .background(Color.blue.opacity(0.1))
-                            .clipShape(Circle())
+                // Dropdown menu button
+                Menu {
+                    Button(action: onCopy) {
+                        Label("Copy Link", systemImage: "doc.on.clipboard")
                     }
-                    .buttonStyle(PlainButtonStyle())
                     
-                    // Input without download button
-                    Button(action: {
-                        onInput()
-                    }) {
-                        Image(systemName: "text.cursor")
-                            .font(.system(size: 16))
-                            .foregroundColor(.green)
-                            .padding(8)
-                            .background(Color.green.opacity(0.1))
-                            .clipShape(Circle())
+                    Button(action: onInput) {
+                        Label("Input Without Download", systemImage: "text.cursor")
                     }
-                    .buttonStyle(PlainButtonStyle())
                     
-                    // Remove button
-                    Button(action: {
-                        onRemove()
-                    }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 16))
-                            .foregroundColor(.red)
-                            .padding(8)
-                            .background(Color.red.opacity(0.1))
-                            .clipShape(Circle())
+                    Divider()
+                    
+                    Button(role: .destructive, action: onRemove) {
+                        Label("Remove", systemImage: "trash")
                     }
-                    .buttonStyle(PlainButtonStyle())
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(.gray)
+                        .padding(8)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.vertical, 8)
         }

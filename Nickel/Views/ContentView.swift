@@ -48,33 +48,29 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 10) {
-                HStack {
-                    
+                ZStack {
                     Image("Nickel")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 80, height: 80)
+                        .frame(width: 120, height: 120)
                     
-                    Text("Nickel")
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    if settings.enableLinkHistory {
-                        Button(action: {
-                            showLinkHistory = true
-                        }) {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Color.white.opacity(0.1))
-                                .clipShape(Circle())
+                    HStack {
+                        Spacer()
+                        if settings.enableLinkHistory {
+                            Button(action: {
+                                showLinkHistory = true
+                            }) {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.white.opacity(0.1))
+                                    .clipShape(Circle())
+                            }
                         }
                     }
+                    .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
 
                 Spacer()
                 
@@ -424,10 +420,7 @@ struct ContentView: View {
             return
         }
         
-        // Save to link history if enabled
-        if settings.enableLinkHistory {
-            LinkHistoryManager.shared.addEntry(url: urlInput, downloadMode: mode)
-        }
+        // Note: Title will be saved after we get the API response
         
         logOutput("🚀 Starting new download, setting isLoading = true")
         isLoading = true
@@ -471,7 +464,12 @@ struct ContentView: View {
                 }
                 
                 switch result {
-                case .success(let videoURL, let filename):
+                case .success(let videoURL, let filename, let title):
+                    // Save to link history if enabled
+                    if settings.enableLinkHistory {
+                        LinkHistoryManager.shared.addEntry(url: urlInput, downloadMode: mode, title: title ?? filename)
+                    }
+                    
                     let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
                         DispatchQueue.main.async {
                             self.errorMessage = total <= 0 
@@ -483,7 +481,12 @@ struct ContentView: View {
                     let downloadURL = try await FileDownloader.shared.downloadFile(from: videoURL, type: .video, onProgress: progressHandler, filename: filename)
                     handleDownloadSuccess(downloadURL)
                     
-                case .pickerOptions(let options):
+                case .pickerOptions(let options, let title):
+                    // Save to link history if enabled
+                    if settings.enableLinkHistory {
+                        LinkHistoryManager.shared.addEntry(url: urlInput, downloadMode: mode, title: title)
+                    }
+                    
                     DispatchQueue.main.async {
                         errorMessage = "Please select option from menu"
                         NotificationManager.sendDownloadCompleteNotification(text: "Please open app to download file from picker options")
@@ -494,7 +497,12 @@ struct ContentView: View {
                         showPicker = true
                     }
                     
-                case .localProcessing(let localResponse):
+                case .localProcessing(let localResponse, let title):
+                    // Save to link history if enabled
+                    if settings.enableLinkHistory {
+                        LinkHistoryManager.shared.addEntry(url: urlInput, downloadMode: mode, title: title ?? localResponse.output.filename)
+                    }
+                    
                     DispatchQueue.main.async {
                         errorMessage = "Processing \(localResponse.type) locally..."
                         isSuccessMessage = true

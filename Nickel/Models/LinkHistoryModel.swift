@@ -12,12 +12,14 @@ struct LinkHistoryEntry: Codable, Identifiable {
     let url: String
     let downloadMode: String // "audio", "auto", or "mute"
     let timestamp: Date
+    let title: String? // Optional title from API response
     
-    init(id: UUID = UUID(), url: String, downloadMode: String, timestamp: Date = Date()) {
+    init(id: UUID = UUID(), url: String, downloadMode: String, timestamp: Date = Date(), title: String? = nil) {
         self.id = id
         self.url = url
         self.downloadMode = downloadMode
         self.timestamp = timestamp
+        self.title = title
     }
 }
 
@@ -31,8 +33,12 @@ class LinkHistoryManager {
     func saveEntry(_ entry: LinkHistoryEntry) {
         var entries = getAllEntries()
         
-        // Remove entry if it already exists (to avoid duplicates)
+        // Remove entry if it already exists (to avoid duplicates by ID)
         entries.removeAll { $0.id == entry.id }
+        
+        // Remove duplicate entries with same URL AND same download mode (keep most recent)
+        // Allow duplicates with different download methods
+        entries.removeAll { $0.url == entry.url && $0.downloadMode == entry.downloadMode }
         
         // Add new entry at the beginning (most recent first)
         entries.insert(entry, at: 0)
@@ -73,8 +79,8 @@ class LinkHistoryManager {
         logOutput("Cleared all link history entries")
     }
     
-    func addEntry(url: String, downloadMode: String) {
-        let entry = LinkHistoryEntry(url: url, downloadMode: downloadMode)
+    func addEntry(url: String, downloadMode: String, title: String? = nil) {
+        let entry = LinkHistoryEntry(url: url, downloadMode: downloadMode, title: title)
         saveEntry(entry)
     }
 }
