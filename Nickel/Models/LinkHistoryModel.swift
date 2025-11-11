@@ -25,13 +25,17 @@ struct LinkHistoryEntry: Codable, Identifiable {
 
 class LinkHistoryManager {
     static let shared = LinkHistoryManager()
-    private let maxEntries = 10
     private let userDefaultsKey = "linkHistoryEntries"
     
     private init() {}
     
+    private var maxEntries: Int {
+        return UserDefaults.standard.object(forKey: "maxLinkHistoryEntries") as? Int ?? 10
+    }
+    
     func saveEntry(_ entry: LinkHistoryEntry) {
         var entries = getAllEntries()
+        let maxEntries = self.maxEntries
         
         // Remove entry if it already exists (to avoid duplicates by ID)
         entries.removeAll { $0.id == entry.id }
@@ -77,6 +81,19 @@ class LinkHistoryManager {
     func clearAll() {
         UserDefaults.standard.removeObject(forKey: userDefaultsKey)
         logOutput("Cleared all link history entries")
+    }
+    
+    func trimToMaxEntries() {
+        let maxEntries = self.maxEntries
+        var entries = getAllEntries()
+        
+        if entries.count > maxEntries {
+            entries = Array(entries.prefix(maxEntries))
+            if let encoded = try? JSONEncoder().encode(entries) {
+                UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
+                logOutput("Trimmed link history to \(maxEntries) entries")
+            }
+        }
     }
     
     func addEntry(url: String, downloadMode: String, title: String? = nil) {
