@@ -47,6 +47,12 @@ class SettingsModel: ObservableObject {
     @Published var askDownloadOptionOnShareSheet: Bool {
         didSet { UserDefaults.standard.set(askDownloadOptionOnShareSheet, forKey: "askDownloadOptionOnShareSheet") }
     }
+    @Published var enableLinkHistory: Bool {
+        didSet { UserDefaults.standard.set(enableLinkHistory, forKey: "enableLinkHistory") }
+    }
+    @Published var maxLinkHistoryEntries: Int {
+        didSet { UserDefaults.standard.set(maxLinkHistoryEntries, forKey: "maxLinkHistoryEntries") }
+    }
 
     static func checkSettings() {
         let defaultValues: [(String, Any)] = [
@@ -64,7 +70,9 @@ class SettingsModel: ObservableObject {
             ("rememberPickerDownloadOption", true),
             ("enableDebugTab", false),
             ("copyDownloadedVideoURL", false),
-            ("askDownloadOptionOnShareSheet", false)
+            ("askDownloadOptionOnShareSheet", false),
+            ("enableLinkHistory", true),
+            ("maxLinkHistoryEntries", 10)
         ]
         for (key, value) in defaultValues {
             if UserDefaults.standard.object(forKey: key) == nil {
@@ -92,5 +100,7 @@ class SettingsModel: ObservableObject {
         self.enableDebugTab = UserDefaults.standard.object(forKey: "enableDebugTab") as? Bool ?? false
         self.copyDownloadedVideoURL = UserDefaults.standard.object(forKey: "copyDownloadedVideoURL") as? Bool ?? false
         self.askDownloadOptionOnShareSheet = UserDefaults.standard.object(forKey: "askDownloadOptionOnShareSheet") as? Bool ?? false
+        self.enableLinkHistory = UserDefaults.standard.object(forKey: "enableLinkHistory") as? Bool ?? true
+        self.maxLinkHistoryEntries = UserDefaults.standard.object(forKey: "maxLinkHistoryEntries") as? Int ?? 10
     }
 }

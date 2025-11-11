@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */; };
 		820F25A62DAAB68400289272 /* AppAttest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820F25A52DAAB66400289272 /* AppAttest.swift */; };
+		821651EF2EBA91D900D75A67 /* LinkHistoryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821651EE2EBA91D900D75A67 /* LinkHistoryModel.swift */; };
+		821651F12EBA920400D75A67 /* LinkHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821651F02EBA920400D75A67 /* LinkHistoryView.swift */; };
 		826237A82DBEF101007F8397 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826237A72DBEF0FF007F8397 /* DebugView.swift */; };
 		826D22D22E1ABDA700E01ED1 /* LenghtExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826D22D12E1ABDA700E01ED1 /* LenghtExtractor.swift */; };
 		829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A62E19C13600658375 /* AppSettingsView.swift */; };
@@ -61,6 +63,8 @@
 /* Begin PBXFileReference section */
 		82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
+		821651EE2EBA91D900D75A67 /* LinkHistoryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkHistoryModel.swift; sourceTree = "<group>"; };
+		821651F02EBA920400D75A67 /* LinkHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkHistoryView.swift; sourceTree = "<group>"; };
 		826237A72DBEF0FF007F8397 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		826D22D12E1ABDA700E01ED1 /* LenghtExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LenghtExtractor.swift; sourceTree = "<group>"; };
 		829523A52E19C13600658375 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -120,6 +124,7 @@
 		82D449E62DAC65D3005D3763 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				821651EE2EBA91D900D75A67 /* LinkHistoryModel.swift */,
 				82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */,
 			);
 			path = Models;
@@ -149,6 +154,7 @@
 		82D449E92DAC65D3005D3763 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				821651F02EBA920400D75A67 /* LinkHistoryView.swift */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
 				FE83506F2D66964400861765 /* ContentView.swift */,
 				82D449E42DAC65C3005D3763 /* LandingPageView.swift */,
@@ -334,12 +340,14 @@
 				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,
 				FE83507F2D66964400861765 /* MainTabView.swift in Sources */,
 				82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */,
+				821651F12EBA920400D75A67 /* LinkHistoryView.swift in Sources */,
 				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
 				826237A82DBEF101007F8397 /* DebugView.swift in Sources */,
 				829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */,
 				829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */,
 				829523AB2E19C13600658375 /* TabButton.swift in Sources */,
 				829523AC2E19C13600658375 /* InstanceSettingsView.swift in Sources */,
+				821651EF2EBA91D900D75A67 /* LinkHistoryModel.swift in Sources */,
 				829523AD2E19C13600658375 /* AboutView.swift in Sources */,
 				829523AE2E19C13600658375 /* RequestBodyEditorView.swift in Sources */,
 				FE8350812D66964400861765 /* SettingsView.swift in Sources */,
@@ -435,7 +443,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 006;
+				SHARED_BUILD_NUMBER = 007;
 				SHARED_VERSION_NUMBER = 2.1.0;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -494,7 +502,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 006;
+				SHARED_BUILD_NUMBER = 007;
 				SHARED_VERSION_NUMBER = 2.1.0;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;

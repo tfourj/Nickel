@@ -71,6 +71,24 @@ struct AppSettingsView: View {
                     Text("Enable Developer Console")
                 }
                 
+                Toggle(isOn: $settings.enableLinkHistory) {
+                    Text("Enable Link History")
+                }
+                
+                if settings.enableLinkHistory {
+                    Stepper(value: $settings.maxLinkHistoryEntries, in: 1...100) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Max History Entries")
+                            Text("\(settings.maxLinkHistoryEntries) entries")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .onChange(of: settings.maxLinkHistoryEntries) { oldValue, newValue in
+                        LinkHistoryManager.shared.trimToMaxEntries()
+                    }
+                }
+                
                 #if DEBUG
                 Toggle(isOn: $settings.enableDebugTab) {
                     Text("Show Debug Tab")
