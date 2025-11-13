@@ -10,7 +10,6 @@ import AVFoundation
 import UIKit
 import ImageIO
 import UniformTypeIdentifiers
-import ffmpegkit
 
 // Data structures for local processing response
 struct LocalProcessingResponse {
@@ -193,9 +192,21 @@ class LocalProcessingManager {
         progressHandler?("Merging video and audio...")
         let result: URL
         if useFFmpeg {
-            result = try await mergeVideoAndAudioFFmpeg(videoURL: videoFileCopy, audioURL: audioFile, filename: response.output.filename, progressHandler: progressHandler)
+            result = try await FFmpegProcessingManager.shared.mergeVideoAndAudio(
+                videoURL: videoFileCopy,
+                audioURL: audioFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         } else {
-            result = try await mergeVideoAndAudio(videoURL: videoFileCopy, audioURL: audioFile, filename: response.output.filename, progressHandler: progressHandler)
+            result = try await AVExportProcessingManager.shared.mergeVideoAndAudio(
+                videoURL: videoFileCopy,
+                audioURL: audioFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         }
         
         // Clean up the temporary video copy
@@ -214,9 +225,19 @@ class LocalProcessingManager {
         
         // Remove audio track from video using FFmpeg or AVFoundation
         if useFFmpeg {
-            return try await removeAudioFromVideoFFmpeg(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await FFmpegProcessingManager.shared.removeAudioFromVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         } else {
-            return try await removeAudioFromVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await AVExportProcessingManager.shared.removeAudioFromVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         }
     }
     
@@ -239,9 +260,19 @@ class LocalProcessingManager {
         
         // Extract audio from video using FFmpeg or AVFoundation
         if useFFmpeg {
-            return try await extractAudioFromVideoFFmpeg(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await FFmpegProcessingManager.shared.extractAudioFromVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         } else {
-            return try await extractAudioFromVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await AVExportProcessingManager.shared.extractAudioFromVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         }
     }
     
@@ -290,9 +321,19 @@ class LocalProcessingManager {
         
         // Remux video using FFmpeg or AVFoundation
         if useFFmpeg {
-            return try await remuxVideoFFmpeg(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await FFmpegProcessingManager.shared.remuxVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         } else {
-            return try await remuxVideo(videoURL: mainFile, filename: response.output.filename, progressHandler: progressHandler)
+            return try await AVExportProcessingManager.shared.remuxVideo(
+                videoURL: mainFile,
+                filename: response.output.filename,
+                progressHandler: progressHandler,
+                shouldCancel: { self.shouldCancel }
+            )
         }
     }
     
@@ -304,155 +345,7 @@ class LocalProcessingManager {
         return mainFile
     }
     
-    // MARK: - Processing Methods
-    
-    private func mergeVideoAndAudio(videoURL: URL, audioURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        let composition = AVMutableComposition()
-        
-        logOutput("Starting merge process...")
-        logOutput("Video URL: \(videoURL)")
-        logOutput("Audio URL: \(audioURL)")
-        
-        // Check if files exist
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
-        }
-        
-        guard FileManager.default.fileExists(atPath: audioURL.path) else {
-            throw ProcessingError.processingFailed("Audio file does not exist at path: \(audioURL.path)")
-        }
-        
-        // Use LenghtExtractor for accurate video duration analysis
-        progressHandler?("Analyzing video duration...")
-        
-        // Extract accurate durations using LenghtExtractor
-        let videoDuration = try await LenghtExtractor.extractDuration(from: videoURL)
-        let audioDuration = try await LenghtExtractor.extractDuration(from: audioURL)
-        
-        // Smart duration selection logic
-        let durationDifference = abs(videoDuration - audioDuration)
-        let toleranceThreshold = 0.1 // 100ms tolerance
-        
-        let targetDuration: Double
-        let durationSource: String
-        
-        if durationDifference <= toleranceThreshold {
-            // Durations are very close, use video duration (traditional approach)
-            targetDuration = videoDuration
-            durationSource = "video (durations match within \(toleranceThreshold)s)"
-            logOutput("✅ Video and audio durations are very close (diff: \(String(format: "%.3f", durationDifference))s), using video duration")
-        } else if videoDuration > audioDuration {
-            // Video is longer - check if the difference is significant
-            if durationDifference > 2.0 {
-                // Significant difference, use shorter duration to avoid blank video
-                targetDuration = audioDuration
-                durationSource = "audio (video significantly longer by \(String(format: "%.2f", durationDifference))s)"
-                logOutput("⚠️ Video much longer than audio, using audio duration to avoid blank video")
-            } else {
-                // Moderate difference, use video duration
-                targetDuration = videoDuration
-                durationSource = "video (slightly longer than audio)"
-                logOutput("📹 Video slightly longer than audio, using video duration")
-            }
-        } else {
-            // Audio is longer - check if the difference is significant
-            if durationDifference > 2.0 {
-                // Significant difference, use shorter duration to avoid silent audio
-                targetDuration = videoDuration
-                durationSource = "video (audio significantly longer by \(String(format: "%.2f", durationDifference))s)"
-                logOutput("⚠️ Audio much longer than video, using video duration to avoid silent audio")
-            } else {
-                // Moderate difference, use longer duration to preserve content
-                targetDuration = audioDuration
-                durationSource = "audio (slightly longer than video, preserving content)"
-                logOutput("🎵 Audio slightly longer than video, using audio duration to preserve content")
-            }
-        }
-        
-        let targetCMTime = CMTime(seconds: targetDuration, preferredTimescale: 600)
-        
-        logOutput("=== Duration Analysis ===")
-        logOutput("Video duration: \(String(format: "%.3f", videoDuration))s")
-        logOutput("Audio duration: \(String(format: "%.3f", audioDuration))s")
-        logOutput("Difference: \(String(format: "%.3f", durationDifference))s")
-        logOutput("Selected: \(String(format: "%.3f", targetDuration))s from \(durationSource)")
-        
-        // Load tracks for composition
-        let videoAsset = AVAsset(url: videoURL)
-        let audioAsset = AVAsset(url: audioURL)
-        async let videoTracksTask = videoAsset.loadTracks(withMediaType: .video)
-        async let audioTracksTask = audioAsset.loadTracks(withMediaType: .audio)
-        
-        let videoTracks = try await videoTracksTask
-        let audioTracks = try await audioTracksTask
-        
-        logOutput("Found \(videoTracks.count) video tracks")
-        
-        guard let sourceVideoTrack = videoTracks.first else {
-            throw ProcessingError.processingFailed("No video tracks found in video file")
-        }
-        
-        guard let videoTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw ProcessingError.processingFailed("Failed to create video composition track")
-        }
-        
-        // Use the target duration instead of full video duration
-        let videoTimeRange = CMTimeRange(start: .zero, duration: targetCMTime)
-        logOutput("Video time range: \(videoTimeRange)")
-        
-        try videoTrack.insertTimeRange(videoTimeRange, of: sourceVideoTrack, at: .zero)
-        logOutput("Video track added successfully")
-        
-        // Add audio track
-        guard let sourceAudioTrack = audioTracks.first else {
-            throw ProcessingError.processingFailed("No audio tracks found in audio file")
-        }
-        
-        guard let audioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw ProcessingError.processingFailed("Failed to create audio composition track")
-        }
-        
-        // Use the target duration instead of full audio duration
-        let audioTimeRange = CMTimeRange(start: .zero, duration: targetCMTime)
-        logOutput("Audio time range: \(audioTimeRange)")
-        
-        try audioTrack.insertTimeRange(audioTimeRange, of: sourceAudioTrack, at: .zero)
-        logOutput("Audio track added successfully")
-        
-        // Export merged composition
-        logOutput("Starting export of merged composition...")
-        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
-    }
-    
-    private func removeAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        let composition = AVMutableComposition()
-        
-        guard let videoAsset = AVAsset(url: videoURL) as? AVURLAsset,
-              let videoTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
-              let sourceVideoTrack = try? await videoAsset.loadTracks(withMediaType: .video).first else {
-            throw ProcessingError.processingFailed("Failed to load video track")
-        }
-        
-        let videoTimeRange = try await sourceVideoTrack.load(.timeRange)
-        try videoTrack.insertTimeRange(videoTimeRange, of: sourceVideoTrack, at: .zero)
-        
-        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
-    }
-    
-    private func extractAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        let composition = AVMutableComposition()
-        
-        guard let videoAsset = AVAsset(url: videoURL) as? AVURLAsset,
-              let audioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid),
-              let sourceAudioTrack = try? await videoAsset.loadTracks(withMediaType: .audio).first else {
-            throw ProcessingError.processingFailed("Failed to load audio track")
-        }
-        
-        let audioTimeRange = try await sourceAudioTrack.load(.timeRange)
-        try audioTrack.insertTimeRange(audioTimeRange, of: sourceAudioTrack, at: .zero)
-        
-        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
-    }
+    // MARK: - GIF Processing (kept here as it doesn't use FFmpeg or AVExport)
     
     private func convertVideoToGif(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
         // This is a simplified GIF conversion - in a real implementation you'd want more sophisticated frame extraction
@@ -489,353 +382,7 @@ class LocalProcessingManager {
         return gifURL
     }
     
-    private func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        // For remuxing, we'll just copy the video to a new container format
-        progressHandler?("Remuxing video...")
-        
-        let composition = AVMutableComposition()
-        
-        guard let videoAsset = AVAsset(url: videoURL) as? AVURLAsset else {
-            throw ProcessingError.processingFailed("Failed to load video asset")
-        }
-        
-        // Copy all tracks
-        for track in try await videoAsset.loadTracks(withMediaType: .video) {
-            let compositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
-            let timeRange = try await track.load(.timeRange)
-            try compositionTrack?.insertTimeRange(timeRange, of: track, at: .zero)
-        }
-        
-        for track in try await videoAsset.loadTracks(withMediaType: .audio) {
-            let compositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
-            let timeRange = try await track.load(.timeRange)
-            try compositionTrack?.insertTimeRange(timeRange, of: track, at: .zero)
-        }
-        
-        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler)
-    }
-    
-    // MARK: - FFmpeg Processing Methods
-    
-    private func mergeVideoAndAudioFFmpeg(videoURL: URL, audioURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        logOutput("Starting FFmpeg merge process...")
-        logOutput("Video URL: \(videoURL)")
-        logOutput("Audio URL: \(audioURL)")
-        
-        // Check if files exist
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
-        }
-        
-        guard FileManager.default.fileExists(atPath: audioURL.path) else {
-            throw ProcessingError.processingFailed("Audio file does not exist at path: \(audioURL.path)")
-        }
-        
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
-        
-        // Quote file paths for FFmpeg to handle spaces
-        let videoPath = "\"\(videoURL.path)\""
-        let audioPath = "\"\(audioURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
-        
-        // Build FFmpeg command: merge video and audio, copy video codec, encode audio as AAC, use shortest duration
-        let command = "-i \(videoPath) -i \(audioPath) -c:v copy -c:a aac -shortest -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
-        progressHandler?("Merging video and audio with FFmpeg...")
-        
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler)
-    }
-    
-    private func removeAudioFromVideoFFmpeg(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        logOutput("Starting FFmpeg mute process...")
-        
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
-        }
-        
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
-        
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
-        
-        // Build FFmpeg command: copy video, remove audio (-an)
-        let command = "-i \(inputPath) -c:v copy -an -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
-        progressHandler?("Removing audio with FFmpeg...")
-        
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler)
-    }
-    
-    private func extractAudioFromVideoFFmpeg(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        logOutput("Starting FFmpeg audio extraction...")
-        
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
-        }
-        
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
-        
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
-        
-        // Determine audio codec based on output file extension
-        let fileExtension = filename.components(separatedBy: ".").last?.lowercased() ?? "m4a"
-        let audioCodec: String
-        switch fileExtension {
-        case "mp3":
-            audioCodec = "libmp3lame"
-        case "aac":
-            audioCodec = "aac"
-        case "wav":
-            audioCodec = "pcm_s16le"
-        default:
-            audioCodec = "copy" // Use copy for m4a and other formats
-        }
-        
-        // Build FFmpeg command: remove video (-vn), copy or encode audio
-        let command: String
-        if audioCodec == "copy" {
-            command = "-i \(inputPath) -vn -c:a copy -y \(outputPath)"
-        } else {
-            command = "-i \(inputPath) -vn -c:a \(audioCodec) -y \(outputPath)"
-        }
-        
-        logOutput("FFmpeg command: \(command)")
-        progressHandler?("Extracting audio with FFmpeg...")
-        
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler)
-    }
-    
-    private func remuxVideoFFmpeg(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        logOutput("Starting FFmpeg remux process...")
-        
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
-        }
-        
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
-        
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
-        
-        // Build FFmpeg command: copy all streams (remux)
-        let command = "-i \(inputPath) -c copy -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
-        progressHandler?("Remuxing video with FFmpeg...")
-        
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler)
-    }
-    
-    // MARK: - FFmpeg Helper Methods
-    
-    private func executeFFmpegCommand(command: String, outputURL: URL, progressHandler: ((String) -> Void)?) async throws -> URL {
-        return try await withCheckedThrowingContinuation { continuation in
-            // Check for cancellation before starting
-            if shouldCancel {
-                continuation.resume(throwing: CancellationError())
-                return
-            }
-            
-            // Store session reference for cancellation
-            var currentSession: Session?
-            
-            // Execute FFmpeg command asynchronously
-            FFmpegKit.executeAsync(command) { sessionResult in
-                guard let session = sessionResult else {
-                    continuation.resume(throwing: ProcessingError.processingFailed("FFmpeg session creation failed"))
-                    return
-                }
-                
-                currentSession = session
-                
-                // Check for cancellation during execution
-                if self.shouldCancel {
-                    session.cancel()
-                    continuation.resume(throwing: CancellationError())
-                    return
-                }
-                
-                let returnCode = session.getReturnCode()
-                
-                if ReturnCode.isSuccess(returnCode) {
-                    // Check if output file exists
-                    if FileManager.default.fileExists(atPath: outputURL.path) {
-                        progressHandler?("Processing completed")
-                        continuation.resume(returning: outputURL)
-                    } else {
-                        let errorMessage = session.getOutput() ?? "Output file not found"
-                        logOutput("FFmpeg error: \(errorMessage)")
-                        continuation.resume(throwing: ProcessingError.processingFailed("FFmpeg processing failed: Output file not created"))
-                    }
-                } else {
-                    // Get error message from session output or logs
-                    let errorMessage = session.getOutput() ?? session.getAllLogsAsString() ?? "Unknown FFmpeg error"
-                    logOutput("FFmpeg error: \(errorMessage)")
-                    continuation.resume(throwing: ProcessingError.processingFailed("FFmpeg processing failed: \(errorMessage)"))
-                }
-            } withLogCallback: { log in
-                // Check for cancellation during log callbacks
-                if self.shouldCancel {
-                    currentSession?.cancel()
-                }
-                
-                // Parse progress from FFmpeg output
-                if let logMessage = log?.getMessage() {
-                    // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x
-                    if logMessage.contains("time=") {
-                        // Extract time information for progress
-                        if let timeRange = logMessage.range(of: "time=") {
-                            let timeString = String(logMessage[timeRange.upperBound...])
-                            if let timeEndRange = timeString.range(of: " ") {
-                                let time = String(timeString[..<timeEndRange.lowerBound])
-                                progressHandler?("Processing: \(time)")
-                            }
-                        }
-                    }
-                }
-            } withStatisticsCallback: { statistics in
-                // Check for cancellation during statistics callbacks
-                if self.shouldCancel {
-                    currentSession?.cancel()
-                }
-                
-                // Use statistics for more accurate progress
-                if let stats = statistics {
-                    let time = stats.getTime()
-                    if time > 0 {
-                        let seconds = Double(time) / 1000.0
-                        let minutes = Int(seconds) / 60
-                        let secs = Int(seconds) % 60
-                        progressHandler?("Processing: \(String(format: "%02d:%02d", minutes, secs))")
-                    }
-                }
-            }
-        }
-    }
-    
     // MARK: - Helper Methods
-    
-    private func exportComposition(_ composition: AVComposition, filename: String, progressHandler: ((String) -> Void)?) async throws -> URL {
-        let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality)
-        
-        guard let exportSession = exportSession else {
-            throw ProcessingError.processingFailed("Failed to create export session")
-        }
-        
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try FileManager.default.removeItem(at: outputURL)
-        }
-        
-        exportSession.outputURL = outputURL
-        
-        // Determine output file type based on filename extension
-        let fileExtension = filename.components(separatedBy: ".").last?.lowercased() ?? "mp4"
-        switch fileExtension {
-        case "m4a", "aac":
-            exportSession.outputFileType = .m4a
-        case "mp3":
-            exportSession.outputFileType = .mp3
-        case "wav":
-            exportSession.outputFileType = .wav
-        default:
-            exportSession.outputFileType = .mp4
-        }
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            let session = exportSession // Capture in local variable to avoid Sendable issue
-            
-            // Check for cancellation before starting export
-            if shouldCancel {
-                continuation.resume(throwing: CancellationError())
-                return
-            }
-            
-            // Show initial progress message
-            progressHandler?("Starting export...")
-            
-            // Start progress monitoring using DispatchSourceTimer
-            var progressTimer: DispatchSourceTimer?
-            if progressHandler != nil {
-                progressTimer = DispatchSource.makeTimerSource(queue: .main)
-                progressTimer?.schedule(deadline: .now(), repeating: .milliseconds(100))
-                progressTimer?.setEventHandler(flags: []) {
-                    let progress = session.progress
-                    let scaledProgress = min(progress * 2, 1.0)
-                    let percentage = Int(scaledProgress * 100)
-                    
-                    if progress > 0 {
-                        progressHandler?("Exporting: \(percentage)%")
-                        
-                        // Stop timer when actual progress reaches 99% or higher
-                        if progress > 0.99 {
-                            progressTimer?.cancel()
-                        }
-                    } else {
-                        progressHandler?("Preparing export...")
-                    }
-                    
-                    // Check for cancellation during progress updates
-                    if self.shouldCancel {
-                        session.cancelExport()
-                        progressTimer?.cancel()
-                    }
-                }
-                progressTimer?.resume()
-            }
-            
-            session.exportAsynchronously {
-                // Stop progress timer
-                progressTimer?.cancel()
-                
-                // Check for cancellation during export
-                if self.shouldCancel {
-                    continuation.resume(throwing: CancellationError())
-                    return
-                }
-                
-                switch session.status {
-                case .completed:
-                    progressHandler?("Export completed")
-                    continuation.resume(returning: outputURL)
-                case .failed:
-                    continuation.resume(throwing: ProcessingError.processingFailed(session.error?.localizedDescription ?? "Export failed"))
-                case .cancelled:
-                    continuation.resume(throwing: CancellationError())
-                default:
-                    continuation.resume(throwing: ProcessingError.processingFailed("Export failed with status: \(session.status.rawValue)"))
-                }
-            }
-        }
-    }
     
     private func createGifData(from images: [UIImage]) throws -> Data {
         let gifData = NSMutableData()

@@ -20,6 +20,8 @@
 		829523AE2E19C13600658375 /* RequestBodyEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A82E19C13600658375 /* RequestBodyEditorView.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
+		82D39CD22EC653E8008CAB64 /* AVExportProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */; };
+		82D39CD32EC653E8008CAB64 /* FFmpegProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		82E007052E19702000F68C7D /* LocalProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E007042E19701800F68C7D /* LocalProcessingManager.swift */; };
 		D5A4AD89ECE99269ECAE3093 /* libPods-Nickel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 34501776E7830D3D99DB1D18 /* libPods-Nickel.a */; };
@@ -77,6 +79,8 @@
 		829523A92E19C13600658375 /* TabButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabButton.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
+		82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVExportProcessingManager.swift; sourceTree = "<group>"; };
+		82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessingManager.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		82E007042E19701800F68C7D /* LocalProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProcessingManager.swift; sourceTree = "<group>"; };
 		F270A4BB3E88F81A6A9BA7CB /* Pods-Nickel.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nickel.release.xcconfig"; path = "Target Support Files/Pods-Nickel/Pods-Nickel.release.xcconfig"; sourceTree = "<group>"; };
@@ -163,6 +167,8 @@
 		82D449E82DAC65D3005D3763 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */,
+				82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */,
 				82E007042E19701800F68C7D /* LocalProcessingManager.swift */,
 				FE8350702D66964400861765 /* DownloadManager.swift */,
 				826D22D12E1ABDA700E01ED1 /* LenghtExtractor.swift */,
@@ -411,6 +417,8 @@
 				821651F12EBA920400D75A67 /* LinkHistoryView.swift in Sources */,
 				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
 				826237A82DBEF101007F8397 /* DebugView.swift in Sources */,
+				82D39CD22EC653E8008CAB64 /* AVExportProcessingManager.swift in Sources */,
+				82D39CD32EC653E8008CAB64 /* FFmpegProcessingManager.swift in Sources */,
 				829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */,
 				829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */,
 				829523AB2E19C13600658375 /* TabButton.swift in Sources */,
