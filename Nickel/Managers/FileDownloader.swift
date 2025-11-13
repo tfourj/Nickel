@@ -45,27 +45,52 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
 
         let tempDir = FileManager.default.temporaryDirectory
 
+        // Fetch Content-Type from header first
+        var contentType: String? = nil
+        if let httpResponse = try? await fetchContentType(from: url) {
+            contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+            logOutput("Content-Type from header: \(contentType ?? "nil")")
+        }
+
         if let filename = filename, !filename.isEmpty {
             logOutput("Using provided filename: \(filename)")
-            targetURL = tempDir.appendingPathComponent(filename)
-        } else {
-            // Fallback to generating a filename
-            let extractedExtension = url.pathExtension
-            let fileExtension: String
-
-            if extractedExtension.isEmpty {
-                logOutput("⚠️ No file extension found in URL, using fallback method")
-                switch type {
-                case .video:
-                    fileExtension = "mp4"
-                case .image:
-                    fileExtension = "jpg"
-                case .audio:
-                    fileExtension = "mp3"
+            var finalFilename = filename
+            
+            // Check Content-Type and correct extension if needed
+            if let contentType = contentType, let correctExt = extractExtensionFromContentType(contentType) {
+                let currentExt = (filename as NSString).pathExtension.lowercased()
+                if currentExt != correctExt.lowercased() {
+                    logOutput("⚠️ Correcting filename extension: \(currentExt) -> \(correctExt) based on Content-Type")
+                    let filenameWithoutExt = (filename as NSString).deletingPathExtension
+                    finalFilename = "\(filenameWithoutExt).\(correctExt)"
+                    logOutput("✅ Updated filename to: \(finalFilename)")
                 }
+            }
+            
+            targetURL = tempDir.appendingPathComponent(finalFilename)
+        } else {
+            // Use Content-Type to determine file extension
+            let fileExtension: String
+            if let contentType = contentType, let ext = extractExtensionFromContentType(contentType) {
+                fileExtension = ext
+                logOutput("Using file extension from Content-Type: \(ext)")
             } else {
-                fileExtension = extractedExtension
-                logOutput("Automatically fetched file extension: \(extractedExtension)")
+                // Fallback to URL extension or type-based default
+                let extractedExtension = url.pathExtension
+                if extractedExtension.isEmpty {
+                    logOutput("⚠️ No file extension found, using fallback method")
+                    switch type {
+                    case .video:
+                        fileExtension = "mp4"
+                    case .image:
+                        fileExtension = "jpg"
+                    case .audio:
+                        fileExtension = "mp3"
+                    }
+                } else {
+                    fileExtension = extractedExtension
+                    logOutput("Using file extension from URL: \(extractedExtension)")
+                }
             }
             targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
         }
@@ -76,6 +101,20 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         return try await withCheckedThrowingContinuation { continuation in
             self.downloadContinuation = continuation
         }.0
+    }
+    
+    /// Fetch Content-Type header using HEAD request
+    private func fetchContentType(from url: URL) async throws -> HTTPURLResponse {
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return httpResponse
     }
 
     func cancelDownload() {
@@ -90,12 +129,36 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
                     didFinishDownloadingTo location: URL) {
-        guard let targetURL = self.targetURL, let type = self.downloadType else {
+        guard var targetURL = self.targetURL, let type = self.downloadType else {
             downloadContinuation?.resume(throwing: NSError(domain: "FileDownloader", code: -3, userInfo: [NSLocalizedDescriptionKey: "Missing target URL or download type"]))
             return
         }
         
         printTempFolderContents(context: "Before moving file")
+        
+        // Check Content-Type header and correct file extension if needed
+        if let httpResponse = downloadTask.response as? HTTPURLResponse,
+           let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") {
+            logOutput("Content-Type header: \(contentType)")
+            
+            // Extract extension from Content-Type (e.g., "audio/mpeg" -> "mp3", "video/mp4" -> "mp4")
+            if let correctExtension = extractExtensionFromContentType(contentType) {
+                let currentExtension = targetURL.pathExtension.lowercased()
+                
+                if currentExtension != correctExtension.lowercased() {
+                    logOutput("⚠️ Correcting file extension: \(currentExtension) -> \(correctExtension) based on Content-Type")
+                    
+                    // Create new filename with correct extension
+                    let filenameWithoutExt = targetURL.deletingPathExtension().lastPathComponent
+                    let newFilename = "\(filenameWithoutExt).\(correctExtension)"
+                    let tempDir = FileManager.default.temporaryDirectory
+                    targetURL = tempDir.appendingPathComponent(newFilename)
+                    self.targetURL = targetURL
+                    
+                    logOutput("✅ Updated filename to: \(newFilename)")
+                }
+            }
+        }
         
         do {
             if FileManager.default.fileExists(atPath: targetURL.path) {
@@ -224,5 +287,47 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         } catch {
             logOutput("❌ Error accessing temp folder: \(error.localizedDescription)")
         }
+    }
+    
+    /// Extract file extension directly from Content-Type header
+    private func extractExtensionFromContentType(_ contentType: String) -> String? {
+        // Remove parameters (e.g., "audio/mpeg; charset=utf-8" -> "audio/mpeg")
+        let mimeType = contentType.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespaces).lowercased() ?? contentType.lowercased()
+        
+        // Simple mapping: extract extension from common Content-Type patterns
+        // audio/mpeg -> mp3, audio/mp4 -> m4a, video/mp4 -> mp4, etc.
+        if mimeType.contains("audio/mpeg") || mimeType == "audio/mp3" {
+            return "mp3"
+        } else if mimeType.contains("audio/mp4") || mimeType.contains("audio/x-m4a") {
+            return "m4a"
+        } else if mimeType.contains("audio/aac") {
+            return "aac"
+        } else if mimeType.contains("audio/wav") || mimeType.contains("audio/x-wav") {
+            return "wav"
+        } else if mimeType.contains("audio/ogg") {
+            return "ogg"
+        } else if mimeType.contains("audio/flac") {
+            return "flac"
+        } else if mimeType.contains("audio/webm") {
+            return "webm"
+        } else if mimeType.contains("video/mp4") {
+            return "mp4"
+        } else if mimeType.contains("video/quicktime") {
+            return "mov"
+        } else if mimeType.contains("video/webm") {
+            return "webm"
+        } else if mimeType.contains("video/x-matroska") {
+            return "mkv"
+        } else if mimeType.contains("image/jpeg") || mimeType.contains("image/jpg") {
+            return "jpg"
+        } else if mimeType.contains("image/png") {
+            return "png"
+        } else if mimeType.contains("image/gif") {
+            return "gif"
+        } else if mimeType.contains("image/webp") {
+            return "webp"
+        }
+        
+        return nil
     }
 }
