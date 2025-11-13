@@ -22,6 +22,7 @@
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		82E007052E19702000F68C7D /* LocalProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E007042E19701800F68C7D /* LocalProcessingManager.swift */; };
+		D5A4AD89ECE99269ECAE3093 /* libPods-Nickel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 34501776E7830D3D99DB1D18 /* libPods-Nickel.a */; };
 		FE8350682D66964000861765 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350662D66964000861765 /* ShareViewController.swift */; };
 		FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FE8350642D66964000861765 /* MainInterface.storyboard */; };
 		FE8350782D66964400861765 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE83506B2D66964400861765 /* Preview Assets.xcassets */; };
@@ -61,6 +62,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		34501776E7830D3D99DB1D18 /* libPods-Nickel.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nickel.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C15BD4054D52F7F67244D1D /* Pods-Nickel.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nickel.debug.xcconfig"; path = "Target Support Files/Pods-Nickel/Pods-Nickel.debug.xcconfig"; sourceTree = "<group>"; };
 		82024C5B2DB181E9005FFEF4 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
 		820F25A52DAAB66400289272 /* AppAttest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttest.swift; sourceTree = "<group>"; };
 		821651EE2EBA91D900D75A67 /* LinkHistoryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkHistoryModel.swift; sourceTree = "<group>"; };
@@ -76,6 +79,7 @@
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		82E007042E19701800F68C7D /* LocalProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProcessingManager.swift; sourceTree = "<group>"; };
+		F270A4BB3E88F81A6A9BA7CB /* Pods-Nickel.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nickel.release.xcconfig"; path = "Target Support Files/Pods-Nickel/Pods-Nickel.release.xcconfig"; sourceTree = "<group>"; };
 		FE654B262D53E9C500E89563 /* Nickel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nickel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE8350622D66964000861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FE8350632D66964000861765 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
@@ -100,6 +104,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5A4AD89ECE99269ECAE3093 /* libPods-Nickel.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +118,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4040CA28A9EAD26398264BA4 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				6C15BD4054D52F7F67244D1D /* Pods-Nickel.debug.xcconfig */,
+				F270A4BB3E88F81A6A9BA7CB /* Pods-Nickel.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		42D3E924421E1C9578C0B9F8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				34501776E7830D3D99DB1D18 /* libPods-Nickel.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		82BDA7EF2D981F0600E33E30 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -176,6 +198,8 @@
 				FE8350772D66964400861765 /* Nickel */,
 				FE8350672D66964000861765 /* Nickel Share Extension */,
 				FE654B272D53E9C500E89563 /* Products */,
+				4040CA28A9EAD26398264BA4 /* Pods */,
+				42D3E924421E1C9578C0B9F8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -230,10 +254,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FE654B4A2D53E9C700E89563 /* Build configuration list for PBXNativeTarget "Nickel" */;
 			buildPhases = (
+				A802FF56D5B928115F815C7C /* [CP] Check Pods Manifest.lock */,
 				FE654B222D53E9C500E89563 /* Sources */,
 				FE654B232D53E9C500E89563 /* Frameworks */,
 				FE654B242D53E9C500E89563 /* Resources */,
 				FEFFCCF72D580350005463B5 /* Embed Foundation Extensions */,
+				EB40430B32479734B8141C02 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -241,8 +267,6 @@
 				FEFFCCF52D580350005463B5 /* PBXTargetDependency */,
 			);
 			name = Nickel;
-			packageProductDependencies = (
-			);
 			productName = Nickel;
 			productReference = FE654B262D53E9C500E89563 /* Nickel.app */;
 			productType = "com.apple.product-type.application";
@@ -260,8 +284,6 @@
 			dependencies = (
 			);
 			name = "Nickel Share Extension";
-			packageProductDependencies = (
-			);
 			productName = "Nickel Share Extension";
 			productReference = FEFFCCEC2D580350005463B5 /* Nickel Share Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -323,6 +345,52 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A802FF56D5B928115F815C7C /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Nickel-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EB40430B32479734B8141C02 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Nickel/Pods-Nickel-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Nickel/Pods-Nickel-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nickel/Pods-Nickel-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		FE654B222D53E9C500E89563 /* Sources */ = {
@@ -422,7 +490,7 @@
 				DEVELOPMENT_TEAM = 83KL373Z2M;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -488,7 +556,7 @@
 				DEVELOPMENT_TEAM = 83KL373Z2M;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -511,6 +579,7 @@
 		};
 		FE654B4B2D53E9C700E89563 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6C15BD4054D52F7F67244D1D /* Pods-Nickel.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -554,6 +623,7 @@
 		};
 		FE654B4C2D53E9C700E89563 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F270A4BB3E88F81A6A9BA7CB /* Pods-Nickel.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

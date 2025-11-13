@@ -56,6 +56,15 @@ struct AppSettingsView: View {
                             .foregroundColor(.gray)
                     }
                 }
+                
+                Toggle(isOn: $settings.useFFmpegForProcessing) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Use FFmpeg for Processing")
+                        Text("Use FFmpeg instead of AVExport for video processing (better format support)")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                    }
+                }
             }
             
             Section(header: Text("User Interface")) {

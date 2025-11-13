@@ -1,0 +1,16 @@
+PODS:
+  - ffmpeg-kit-ios-full (6.0)
+
+DEPENDENCIES:
+  - ffmpeg-kit-ios-full (from `https://raw.githubusercontent.com/luthviar/ffmpeg-kit-ios-full/main/ffmpeg-kit-ios-full.podspec`)
+
+EXTERNAL SOURCES:
+  ffmpeg-kit-ios-full:
+    :podspec: https://raw.githubusercontent.com/luthviar/ffmpeg-kit-ios-full/main/ffmpeg-kit-ios-full.podspec
+
+SPEC CHECKSUMS:
+  ffmpeg-kit-ios-full: 2da77324b0e9fb007195ab6661f64be4cf31dc12
+
+PODFILE CHECKSUM: 52cf5ba877b0b1e56f77f9e81f8bee1ee9e43997
+
+COCOAPODS: 1.16.2

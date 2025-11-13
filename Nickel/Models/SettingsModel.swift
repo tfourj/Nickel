@@ -53,6 +53,9 @@ class SettingsModel: ObservableObject {
     @Published var maxLinkHistoryEntries: Int {
         didSet { UserDefaults.standard.set(maxLinkHistoryEntries, forKey: "maxLinkHistoryEntries") }
     }
+    @Published var useFFmpegForProcessing: Bool {
+        didSet { UserDefaults.standard.set(useFFmpegForProcessing, forKey: "useFFmpegForProcessing") }
+    }
 
     static func checkSettings() {
         let defaultValues: [(String, Any)] = [
@@ -72,7 +75,8 @@ class SettingsModel: ObservableObject {
             ("copyDownloadedVideoURL", false),
             ("askDownloadOptionOnShareSheet", false),
             ("enableLinkHistory", true),
-            ("maxLinkHistoryEntries", 10)
+            ("maxLinkHistoryEntries", 10),
+            ("useFFmpegForProcessing", true)
         ]
         for (key, value) in defaultValues {
             if UserDefaults.standard.object(forKey: key) == nil {
@@ -102,5 +106,6 @@ class SettingsModel: ObservableObject {
         self.askDownloadOptionOnShareSheet = UserDefaults.standard.object(forKey: "askDownloadOptionOnShareSheet") as? Bool ?? false
         self.enableLinkHistory = UserDefaults.standard.object(forKey: "enableLinkHistory") as? Bool ?? true
         self.maxLinkHistoryEntries = UserDefaults.standard.object(forKey: "maxLinkHistoryEntries") as? Int ?? 10
+        self.useFFmpegForProcessing = UserDefaults.standard.object(forKey: "useFFmpegForProcessing") as? Bool ?? true
     }
 }
