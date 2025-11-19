@@ -22,6 +22,57 @@ class FFmpegProcessingManager {
         }
     }
     
+    /// Helper function to create a temporary output file and move it to final location after FFmpeg completes
+    private func executeFFmpegWithTempFile(
+        arguments: [String],
+        finalOutputURL: URL,
+        progressHandler: ((String) -> Void)?,
+        shouldCancel: @escaping () -> Bool
+    ) async throws -> URL {
+        // Create a unique temporary filename
+        let fileExtension = (finalOutputURL.lastPathComponent as NSString).pathExtension
+        let fileNameWithoutExtension = (finalOutputURL.lastPathComponent as NSString).deletingPathExtension
+        let tempFilename = "\(fileNameWithoutExtension)_\(UUID().uuidString).\(fileExtension)"
+        let tempOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(tempFilename)
+        
+        // Remove temp file if it exists (shouldn't happen with UUID, but be safe)
+        if FileManager.default.fileExists(atPath: tempOutputURL.path) {
+            try? FileManager.default.removeItem(at: tempOutputURL)
+        }
+        
+        // Replace the output path in arguments with temp path
+        var tempArguments = arguments
+        if let lastIndex = tempArguments.indices.last {
+            tempArguments[lastIndex] = tempOutputURL.path
+        }
+        
+        do {
+            // Execute FFmpeg with temp file
+            let resultURL = try await executeFFmpegCommand(
+                arguments: tempArguments,
+                outputURL: tempOutputURL,
+                progressHandler: progressHandler,
+                shouldCancel: shouldCancel
+            )
+            
+            // Remove final file if it exists
+            if FileManager.default.fileExists(atPath: finalOutputURL.path) {
+                try? FileManager.default.removeItem(at: finalOutputURL)
+            }
+            
+            // Move temp file to final location
+            try FileManager.default.moveItem(at: resultURL, to: finalOutputURL)
+            
+            return finalOutputURL
+        } catch {
+            // Clean up temp file on error
+            if FileManager.default.fileExists(atPath: tempOutputURL.path) {
+                try? FileManager.default.removeItem(at: tempOutputURL)
+            }
+            throw error
+        }
+    }
+    
     func mergeVideoAndAudio(videoURL: URL, audioURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
         logOutput("Starting FFmpeg merge process...")
         logOutput("Video URL: \(videoURL)")
@@ -36,12 +87,7 @@ class FFmpegProcessingManager {
             throw ProcessingError.processingFailed("Audio file does not exist at path: \(audioURL.path)")
         }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
+        let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
         // Build FFmpeg arguments array: merge video and audio, copy video codec, encode audio as AAC, use shortest duration
         let arguments = [
@@ -51,13 +97,18 @@ class FFmpegProcessingManager {
             "-c:a", "aac",
             "-shortest",
             "-y",
-            outputURL.path
+            finalOutputURL.path  // Will be replaced with temp path in helper
         ]
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Merging video and audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegWithTempFile(
+            arguments: arguments,
+            finalOutputURL: finalOutputURL,
+            progressHandler: progressHandler,
+            shouldCancel: shouldCancel
+        )
     }
     
     func removeAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -67,12 +118,7 @@ class FFmpegProcessingManager {
             throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
         }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
+        let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
         // Build FFmpeg arguments array: copy video, remove audio (-an)
         let arguments = [
@@ -80,13 +126,18 @@ class FFmpegProcessingManager {
             "-c:v", "copy",
             "-an",
             "-y",
-            outputURL.path
+            finalOutputURL.path  // Will be replaced with temp path in helper
         ]
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Removing audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegWithTempFile(
+            arguments: arguments,
+            finalOutputURL: finalOutputURL,
+            progressHandler: progressHandler,
+            shouldCancel: shouldCancel
+        )
     }
     
     func extractAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -96,12 +147,7 @@ class FFmpegProcessingManager {
             throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
         }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
+        let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
         // Determine audio codec based on output file extension
         let fileExtension = filename.components(separatedBy: ".").last?.lowercased() ?? "m4a"
@@ -125,7 +171,7 @@ class FFmpegProcessingManager {
                 "-vn",
                 "-c:a", "copy",
                 "-y",
-                outputURL.path
+                finalOutputURL.path  // Will be replaced with temp path in helper
             ]
         } else {
             arguments = [
@@ -133,14 +179,19 @@ class FFmpegProcessingManager {
                 "-vn",
                 "-c:a", audioCodec,
                 "-y",
-                outputURL.path
+                finalOutputURL.path  // Will be replaced with temp path in helper
             ]
         }
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Extracting audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegWithTempFile(
+            arguments: arguments,
+            finalOutputURL: finalOutputURL,
+            progressHandler: progressHandler,
+            shouldCancel: shouldCancel
+        )
     }
     
     func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -150,25 +201,25 @@ class FFmpegProcessingManager {
             throw ProcessingError.processingFailed("Video file does not exist at path: \(videoURL.path)")
         }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: outputURL.path) {
-            try? FileManager.default.removeItem(at: outputURL)
-        }
+        let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
         // Build FFmpeg arguments array: copy all streams (remux)
         let arguments = [
             "-i", videoURL.path,
             "-c", "copy",
             "-y",
-            outputURL.path
+            finalOutputURL.path  // Will be replaced with temp path in helper
         ]
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Remuxing video with FFmpeg...")
         
-        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegWithTempFile(
+            arguments: arguments,
+            finalOutputURL: finalOutputURL,
+            progressHandler: progressHandler,
+            shouldCancel: shouldCancel
+        )
     }
     
     // MARK: - FFmpeg Helper Methods
@@ -250,6 +301,33 @@ class FFmpegProcessingManager {
             defer {
                 // Clean up log handler
                 SwiftFFmpeg.setLogHandler(nil)
+            }
+            
+            // Verify all input files exist and are accessible before executing FFmpeg
+            // Find all "-i" arguments and validate their corresponding input files
+            var inputIndex = 0
+            while inputIndex < arguments.count {
+                if arguments[inputIndex] == "-i" && inputIndex + 1 < arguments.count {
+                    let inputPath = arguments[inputIndex + 1]
+                    
+                    // Check if file exists
+                    guard FileManager.default.fileExists(atPath: inputPath) else {
+                        throw ProcessingError.processingFailed("Input file does not exist: \(inputPath)")
+                    }
+                    
+                    // Verify file is readable
+                    guard FileManager.default.isReadableFile(atPath: inputPath) else {
+                        throw ProcessingError.processingFailed("Input file is not readable: \(inputPath)")
+                    }
+                    
+                    // Get file attributes to verify it's a regular file
+                    if let attributes = try? FileManager.default.attributesOfItem(atPath: inputPath),
+                       let fileType = attributes[.type] as? FileAttributeType,
+                       fileType != .typeRegular {
+                        throw ProcessingError.processingFailed("Input path is not a regular file: \(inputPath)")
+                    }
+                }
+                inputIndex += 1
             }
             
             do {
