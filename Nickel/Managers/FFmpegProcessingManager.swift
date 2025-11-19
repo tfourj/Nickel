@@ -191,15 +191,41 @@ class FFmpegProcessingManager {
             var logMessages: [String] = []
             
             // Set up log handler for progress updates (inside the task)
-            SwiftFFmpeg.setLogLevel(.info)
+            // Only enable FFmpeg logging if explicitly enabled in settings (disabled by default for performance)
+            let enableFFmpegLogs = UserDefaults.standard.bool(forKey: "enableFFmpegLogs")
+            
+            if enableFFmpegLogs {
+                // Set FFmpeg log level to debug to capture all logs
+                SwiftFFmpeg.setLogLevel(.debug)
+            } else {
+                // Disable FFmpeg logging completely for better performance
+                SwiftFFmpeg.setLogLevel(.quiet)
+            }
+            
             SwiftFFmpeg.setLogHandler { level, message in
-                // Thread-safe append
+                // Thread-safe append (always collect for error reporting)
                 logQueue.sync {
                     logMessages.append(message)
                 }
                 
-                // Log all messages for debugging
-                //logOutput("[FFmpeg \(level)] \(message)")
+                // Only log to console if FFmpeg logs are enabled
+                if enableFFmpegLogs {
+                    // Format message with FFmpeg level prefix
+                    let levelPrefix: String
+                    switch level {
+                    case .error, .fatal:
+                        levelPrefix = "❌ [FFmpeg ERROR]"
+                    case .warning:
+                        levelPrefix = "⚠️ [FFmpeg WARNING]"
+                    default:
+                        levelPrefix = "[FFmpeg \(level)]"
+                    }
+                    let formattedMessage = "\(levelPrefix) \(message)"
+                    // Always print to Xcode console
+                    print(formattedMessage)
+                    // Add to ConsoleLogger if console is enabled
+                    logOutput(formattedMessage)
+                }
                 
                 // Parse progress from FFmpeg output
                 // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x

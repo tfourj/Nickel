@@ -23,6 +23,19 @@ struct ProcessingSettingsView: View {
                 }
             }
             
+            if settings.useFFmpegForProcessing {
+                Section(header: Text("FFmpeg Debugging")) {
+                    Toggle(isOn: $settings.enableFFmpegLogs) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Enable FFmpeg Logs")
+                            Text("⚠️ Warning: Enabling FFmpeg logs significantly slows down processing performance")
+                                .font(.footnote)
+                                .foregroundColor(.orange)
+                        }
+                    }
+                }
+            }
+            
             Section(footer: Text("FFmpeg provides better format support and more control over video processing. AVExport is the default iOS framework and may have limitations with certain formats.")) {
                 EmptyView()
             }

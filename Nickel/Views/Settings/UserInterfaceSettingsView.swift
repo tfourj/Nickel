@@ -29,6 +29,17 @@ struct UserInterfaceSettingsView: View {
                     Text("Enable Developer Console")
                 }
                 
+                if settings.enableConsole {
+                    Stepper(value: $settings.consoleMaxLines, in: 1000...100000, step: 1000) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Max Log Lines")
+                            Text("\(settings.consoleMaxLines) lines (prevents crashes)")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
                 #if DEBUG
                 Toggle(isOn: $settings.enableDebugTab) {
                     Text("Show Debug Tab")
