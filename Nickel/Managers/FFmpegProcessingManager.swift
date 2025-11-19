@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import ffmpegkit
+import SwiftFFmpeg
 
 class FFmpegProcessingManager {
     static let shared = FFmpegProcessingManager()
@@ -43,18 +43,21 @@ class FFmpegProcessingManager {
             try? FileManager.default.removeItem(at: outputURL)
         }
         
-        // Quote file paths for FFmpeg to handle spaces
-        let videoPath = "\"\(videoURL.path)\""
-        let audioPath = "\"\(audioURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
+        // Build FFmpeg arguments array: merge video and audio, copy video codec, encode audio as AAC, use shortest duration
+        let arguments = [
+            "-i", videoURL.path,
+            "-i", audioURL.path,
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-shortest",
+            "-y",
+            outputURL.path
+        ]
         
-        // Build FFmpeg command: merge video and audio, copy video codec, encode audio as AAC, use shortest duration
-        let command = "-i \(videoPath) -i \(audioPath) -c:v copy -c:a aac -shortest -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
+        logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Merging video and audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
     }
     
     func removeAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -71,17 +74,19 @@ class FFmpegProcessingManager {
             try? FileManager.default.removeItem(at: outputURL)
         }
         
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
+        // Build FFmpeg arguments array: copy video, remove audio (-an)
+        let arguments = [
+            "-i", videoURL.path,
+            "-c:v", "copy",
+            "-an",
+            "-y",
+            outputURL.path
+        ]
         
-        // Build FFmpeg command: copy video, remove audio (-an)
-        let command = "-i \(inputPath) -c:v copy -an -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
+        logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Removing audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
     }
     
     func extractAudioFromVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -98,10 +103,6 @@ class FFmpegProcessingManager {
             try? FileManager.default.removeItem(at: outputURL)
         }
         
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
-        
         // Determine audio codec based on output file extension
         let fileExtension = filename.components(separatedBy: ".").last?.lowercased() ?? "m4a"
         let audioCodec: String
@@ -116,18 +117,30 @@ class FFmpegProcessingManager {
             audioCodec = "copy" // Use copy for m4a and other formats
         }
         
-        // Build FFmpeg command: remove video (-vn), copy or encode audio
-        let command: String
+        // Build FFmpeg arguments array: remove video (-vn), copy or encode audio
+        let arguments: [String]
         if audioCodec == "copy" {
-            command = "-i \(inputPath) -vn -c:a copy -y \(outputPath)"
+            arguments = [
+                "-i", videoURL.path,
+                "-vn",
+                "-c:a", "copy",
+                "-y",
+                outputURL.path
+            ]
         } else {
-            command = "-i \(inputPath) -vn -c:a \(audioCodec) -y \(outputPath)"
+            arguments = [
+                "-i", videoURL.path,
+                "-vn",
+                "-c:a", audioCodec,
+                "-y",
+                outputURL.path
+            ]
         }
         
-        logOutput("FFmpeg command: \(command)")
+        logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Extracting audio with FFmpeg...")
         
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
     }
     
     func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
@@ -144,104 +157,115 @@ class FFmpegProcessingManager {
             try? FileManager.default.removeItem(at: outputURL)
         }
         
-        // Quote file paths for FFmpeg to handle spaces
-        let inputPath = "\"\(videoURL.path)\""
-        let outputPath = "\"\(outputURL.path)\""
+        // Build FFmpeg arguments array: copy all streams (remux)
+        let arguments = [
+            "-i", videoURL.path,
+            "-c", "copy",
+            "-y",
+            outputURL.path
+        ]
         
-        // Build FFmpeg command: copy all streams (remux)
-        let command = "-i \(inputPath) -c copy -y \(outputPath)"
-        
-        logOutput("FFmpeg command: \(command)")
+        logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Remuxing video with FFmpeg...")
         
-        return try await executeFFmpegCommand(command: command, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
+        return try await executeFFmpegCommand(arguments: arguments, outputURL: outputURL, progressHandler: progressHandler, shouldCancel: shouldCancel)
     }
     
     // MARK: - FFmpeg Helper Methods
     
-    private func executeFFmpegCommand(command: String, outputURL: URL, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
-        return try await withCheckedThrowingContinuation { continuation in
-            // Check for cancellation before starting
-            if shouldCancel() {
-                continuation.resume(throwing: CancellationError())
-                return
+    private func executeFFmpegCommand(arguments: [String], outputURL: URL, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
+        // Check for cancellation before starting
+        if shouldCancel() {
+            throw CancellationError()
+        }
+        
+        // Execute FFmpeg on background thread
+        return try await Task.detached {
+            // Check cancellation again before execution
+            if Task.isCancelled || shouldCancel() {
+                throw CancellationError()
             }
             
-            // Store session reference for cancellation
-            var currentSession: Session?
+            // Set up thread-safe log message collection
+            let logQueue = DispatchQueue(label: "com.ffmpeg.logs")
+            var logMessages: [String] = []
             
-            // Execute FFmpeg command asynchronously
-            FFmpegKit.executeAsync(command) { sessionResult in
-                guard let session = sessionResult else {
-                    continuation.resume(throwing: ProcessingError.processingFailed("FFmpeg session creation failed"))
-                    return
+            // Set up log handler for progress updates (inside the task)
+            SwiftFFmpeg.setLogLevel(.info)
+            SwiftFFmpeg.setLogHandler { level, message in
+                // Thread-safe append
+                logQueue.sync {
+                    logMessages.append(message)
                 }
                 
-                currentSession = session
-                
-                // Check for cancellation during execution
-                if shouldCancel() {
-                    session.cancel()
-                    continuation.resume(throwing: CancellationError())
-                    return
-                }
-                
-                let returnCode = session.getReturnCode()
-                
-                if ReturnCode.isSuccess(returnCode) {
-                    // Check if output file exists
-                    if FileManager.default.fileExists(atPath: outputURL.path) {
-                        progressHandler?("Processing completed")
-                        continuation.resume(returning: outputURL)
-                    } else {
-                        let errorMessage = session.getOutput() ?? "Output file not found"
-                        logOutput("FFmpeg error: \(errorMessage)")
-                        continuation.resume(throwing: ProcessingError.processingFailed("Output file not created"))
-                    }
-                } else {
-                    // Get error message from session output or logs
-                    let errorMessage = session.getOutput() ?? session.getAllLogsAsString() ?? "Unknown FFmpeg error"
-                    logOutput("FFmpeg error: \(errorMessage)")
-                    continuation.resume(throwing: ProcessingError.processingFailed(errorMessage))
-                }
-            } withLogCallback: { log in
-                // Check for cancellation during log callbacks
-                if shouldCancel() {
-                    currentSession?.cancel()
-                }
+                // Log all messages for debugging
+                //logOutput("[FFmpeg \(level)] \(message)")
                 
                 // Parse progress from FFmpeg output
-                if let logMessage = log?.getMessage() {
-                    // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x
-                    if logMessage.contains("time=") {
-                        // Extract time information for progress
-                        if let timeRange = logMessage.range(of: "time=") {
-                            let timeString = String(logMessage[timeRange.upperBound...])
-                            if let timeEndRange = timeString.range(of: " ") {
-                                let time = String(timeString[..<timeEndRange.lowerBound])
+                // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x
+                if message.contains("time=") {
+                    // Extract time information for progress
+                    if let timeRange = message.range(of: "time=") {
+                        let timeString = String(message[timeRange.upperBound...])
+                        if let timeEndRange = timeString.range(of: " ") {
+                            let time = String(timeString[..<timeEndRange.lowerBound])
+                            progressHandler?("Processing: \(time)")
+                        } else {
+                            // Sometimes time is at the end of the line
+                            let time = timeString.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !time.isEmpty {
                                 progressHandler?("Processing: \(time)")
                             }
                         }
                     }
                 }
-            } withStatisticsCallback: { statistics in
-                // Check for cancellation during statistics callbacks
-                if shouldCancel() {
-                    currentSession?.cancel()
+            }
+            
+            defer {
+                // Clean up log handler
+                SwiftFFmpeg.setLogHandler(nil)
+            }
+            
+            do {
+                // Execute FFmpeg command
+                // Try executeWithOutput first to capture any error messages
+                let (exitCode, output) = try SwiftFFmpeg.executeWithOutput(arguments)
+                
+                // Get log messages thread-safely
+                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                
+                // Combine output and logs
+                let fullOutput = output.isEmpty ? allLogs : (allLogs.isEmpty ? output : "\(output)\n\(allLogs)")
+                
+                // Check if output file exists
+                if FileManager.default.fileExists(atPath: outputURL.path) {
+                    progressHandler?("Processing completed")
+                    return outputURL
+                } else {
+                    logOutput("FFmpeg error: Output file not created. Exit code: \(exitCode). Output: \(fullOutput)")
+                    throw ProcessingError.processingFailed("Output file not created. FFmpeg output: \(fullOutput)")
+                }
+            } catch SwiftFFmpegError.executionFailed(let code) {
+                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                logOutput("FFmpeg error (exit code \(code)): \(allLogs)")
+                
+                // Provide more helpful error message
+                let errorMsg: String
+                if code == -1 {
+                    errorMsg = "FFmpeg crashed or returned invalid exit code. Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
+                } else if code == 512 {
+                    errorMsg = "FFmpeg returned unusual exit code 512 (possible crash). Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
+                } else {
+                    errorMsg = "FFmpeg failed with exit code \(code). Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
                 }
                 
-                // Use statistics for more accurate progress
-                if let stats = statistics {
-                    let time = stats.getTime()
-                    if time > 0 {
-                        let seconds = Double(time) / 1000.0
-                        let minutes = Int(seconds) / 60
-                        let secs = Int(seconds) % 60
-                        progressHandler?("Processing: \(String(format: "%02d:%02d", minutes, secs))")
-                    }
-                }
+                throw ProcessingError.processingFailed(errorMsg)
+            } catch {
+                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                logOutput("FFmpeg error: \(error.localizedDescription). Logs: \(allLogs)")
+                throw ProcessingError.processingFailed("\(error.localizedDescription)")
             }
-        }
+        }.value
     }
 }
 
