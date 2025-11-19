@@ -11,6 +11,12 @@ import SwiftFFmpeg
 class FFmpegProcessingManager {
     static let shared = FFmpegProcessingManager()
     
+    // Thread-safe log message collection
+    private let logQueue = DispatchQueue(label: "com.ffmpeg.logs")
+    private var logMessages: [String] = []
+    private var isLogHandlerSet = false
+    private let logHandlerLock = NSLock()
+    
     enum ProcessingError: Error, LocalizedError {
         case processingFailed(String)
         
@@ -19,6 +25,15 @@ class FFmpegProcessingManager {
             case .processingFailed(let reason):
                 return "FFmpeg processing failed: \(reason)"
             }
+        }
+    }
+    
+    private init() {
+        // Initialize FFmpeg logging system early on main thread
+        // This prevents crashes from uninitialized logging
+        DispatchQueue.main.async {
+            // Set quiet level by default (will be adjusted per-operation)
+            SwiftFFmpeg.setLogLevel(.quiet)
         }
     }
     
@@ -230,77 +245,87 @@ class FFmpegProcessingManager {
             throw CancellationError()
         }
         
+        // Clear previous log messages for this operation
+        logQueue.sync {
+            logMessages.removeAll()
+        }
+        
+        // Set up log handler BEFORE executing FFmpeg (on main thread to ensure initialization)
+        let enableFFmpegLogs = UserDefaults.standard.bool(forKey: "enableFFmpegLogs")
+        
+        // Set log level and handler synchronously before detached task
+        if enableFFmpegLogs {
+            SwiftFFmpeg.setLogLevel(.debug)
+        } else {
+            SwiftFFmpeg.setLogLevel(.quiet)
+        }
+        
+        // Set log handler thread-safely
+        logHandlerLock.lock()
+        SwiftFFmpeg.setLogHandler { [weak self] level, message in
+            guard let self = self else { return }
+            
+            // Thread-safe append (always collect for error reporting)
+            self.logQueue.sync {
+                self.logMessages.append(message)
+            }
+            
+            // Only log to console if FFmpeg logs are enabled
+            if enableFFmpegLogs {
+                // Format message with FFmpeg level prefix
+                let levelPrefix: String
+                switch level {
+                case .error, .fatal:
+                    levelPrefix = "❌ [FFmpeg ERROR]"
+                case .warning:
+                    levelPrefix = "⚠️ [FFmpeg WARNING]"
+                default:
+                    levelPrefix = "[FFmpeg \(level)]"
+                }
+                let formattedMessage = "\(levelPrefix) \(message)"
+                // Always print to Xcode console
+                print(formattedMessage)
+                // Add to ConsoleLogger if console is enabled
+                logOutput(formattedMessage)
+            }
+            
+            // Parse progress from FFmpeg output
+            // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x
+            if message.contains("time=") {
+                // Extract time information for progress
+                if let timeRange = message.range(of: "time=") {
+                    let timeString = String(message[timeRange.upperBound...])
+                    if let timeEndRange = timeString.range(of: " ") {
+                        let time = String(timeString[..<timeEndRange.lowerBound])
+                        progressHandler?("Processing: \(time)")
+                    } else {
+                        // Sometimes time is at the end of the line
+                        let time = timeString.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !time.isEmpty {
+                            progressHandler?("Processing: \(time)")
+                        }
+                    }
+                }
+            }
+        }
+        isLogHandlerSet = true
+        logHandlerLock.unlock()
+        
+        defer {
+            // Clean up log handler thread-safely
+            logHandlerLock.lock()
+            if isLogHandlerSet {
+                SwiftFFmpeg.setLogHandler(nil)
+                isLogHandlerSet = false
+            }
+            logHandlerLock.unlock()
+        }
+        
         // Execute FFmpeg on background thread
         return try await Task.detached {
             // Check cancellation again before execution
             if Task.isCancelled || shouldCancel() {
                 throw CancellationError()
-            }
-            
-            // Set up thread-safe log message collection
-            let logQueue = DispatchQueue(label: "com.ffmpeg.logs")
-            var logMessages: [String] = []
-            
-            // Set up log handler for progress updates (inside the task)
-            // Only enable FFmpeg logging if explicitly enabled in settings (disabled by default for performance)
-            let enableFFmpegLogs = UserDefaults.standard.bool(forKey: "enableFFmpegLogs")
-            
-            if enableFFmpegLogs {
-                // Set FFmpeg log level to debug to capture all logs
-                SwiftFFmpeg.setLogLevel(.debug)
-            } else {
-                // Disable FFmpeg logging completely for better performance
-                SwiftFFmpeg.setLogLevel(.quiet)
-            }
-            
-            SwiftFFmpeg.setLogHandler { level, message in
-                // Thread-safe append (always collect for error reporting)
-                logQueue.sync {
-                    logMessages.append(message)
-                }
-                
-                // Only log to console if FFmpeg logs are enabled
-                if enableFFmpegLogs {
-                    // Format message with FFmpeg level prefix
-                    let levelPrefix: String
-                    switch level {
-                    case .error, .fatal:
-                        levelPrefix = "❌ [FFmpeg ERROR]"
-                    case .warning:
-                        levelPrefix = "⚠️ [FFmpeg WARNING]"
-                    default:
-                        levelPrefix = "[FFmpeg \(level)]"
-                    }
-                    let formattedMessage = "\(levelPrefix) \(message)"
-                    // Always print to Xcode console
-                    print(formattedMessage)
-                    // Add to ConsoleLogger if console is enabled
-                    logOutput(formattedMessage)
-                }
-                
-                // Parse progress from FFmpeg output
-                // FFmpeg progress format: frame=  123 fps= 25 q=28.0 size=    1024kB time=00:00:05.00 bitrate=1677.7kbits/s speed=1.0x
-                if message.contains("time=") {
-                    // Extract time information for progress
-                    if let timeRange = message.range(of: "time=") {
-                        let timeString = String(message[timeRange.upperBound...])
-                        if let timeEndRange = timeString.range(of: " ") {
-                            let time = String(timeString[..<timeEndRange.lowerBound])
-                            progressHandler?("Processing: \(time)")
-                        } else {
-                            // Sometimes time is at the end of the line
-                            let time = timeString.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !time.isEmpty {
-                                progressHandler?("Processing: \(time)")
-                            }
-                        }
-                    }
-                }
-            }
-            
-            defer {
-                // Clean up log handler
-                SwiftFFmpeg.setLogHandler(nil)
             }
             
             // Verify all input files exist and are accessible before executing FFmpeg
@@ -336,7 +361,7 @@ class FFmpegProcessingManager {
                 let (exitCode, output) = try SwiftFFmpeg.executeWithOutput(arguments)
                 
                 // Get log messages thread-safely
-                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                let allLogs = self.logQueue.sync { self.logMessages.joined(separator: "\n") }
                 
                 // Combine output and logs
                 let fullOutput = output.isEmpty ? allLogs : (allLogs.isEmpty ? output : "\(output)\n\(allLogs)")
@@ -350,7 +375,7 @@ class FFmpegProcessingManager {
                     throw ProcessingError.processingFailed("Output file not created. FFmpeg output: \(fullOutput)")
                 }
             } catch SwiftFFmpegError.executionFailed(let code) {
-                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                let allLogs = self.logQueue.sync { self.logMessages.joined(separator: "\n") }
                 logOutput("FFmpeg error (exit code \(code)): \(allLogs)")
                 
                 // Provide more helpful error message
@@ -365,7 +390,7 @@ class FFmpegProcessingManager {
                 
                 throw ProcessingError.processingFailed(errorMsg)
             } catch {
-                let allLogs = logQueue.sync { logMessages.joined(separator: "\n") }
+                let allLogs = self.logQueue.sync { self.logMessages.joined(separator: "\n") }
                 logOutput("FFmpeg error: \(error.localizedDescription). Logs: \(allLogs)")
                 throw ProcessingError.processingFailed("\(error.localizedDescription)")
             }
