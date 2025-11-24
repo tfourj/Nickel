@@ -343,7 +343,39 @@ class LocalProcessingManager {
         logOutput("Handling proxy download")
         progressHandler?("Downloading file...")
         
-        // For proxy, we just return the main file URL
+        // Check if this is a muted video by checking if there's no audio object in the response
+        // Muted videos from YouTube often have double length issues and need FFmpeg remuxing
+        // If response.audio is nil, it means the video is muted (no audio track)
+        let isMutedVideo = response.audio == nil
+        
+        if isMutedVideo {
+            logOutput("Detected muted video in proxy download (no audio object) - running FFmpeg remux to fix potential double length issue")
+            progressHandler?("Processing muted video...")
+            
+            // Check if FFmpeg should be used
+            let useFFmpeg = UserDefaults.standard.object(forKey: "useFFmpegForProcessing") as? Bool ?? true
+            
+            // Remux video using FFmpeg or AVFoundation to fix double length issue
+            // Pass hasAudio: false since muted videos don't have audio streams
+            if useFFmpeg {
+                return try await FFmpegProcessingManager.shared.remuxVideo(
+                    videoURL: mainFile,
+                    filename: response.output.filename,
+                    hasAudio: false,
+                    progressHandler: progressHandler,
+                    shouldCancel: { self.shouldCancel }
+                )
+            } else {
+                return try await AVExportProcessingManager.shared.remuxVideo(
+                    videoURL: mainFile,
+                    filename: response.output.filename,
+                    progressHandler: progressHandler,
+                    shouldCancel: { self.shouldCancel }
+                )
+            }
+        }
+        
+        // For non-muted proxy downloads, just return the main file URL
         return mainFile
     }
     

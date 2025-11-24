@@ -251,7 +251,7 @@ class FFmpegProcessingManager {
         )
     }
     
-    func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
+    func remuxVideo(videoURL: URL, filename: String, hasAudio: Bool = true, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
         logOutput("Starting FFmpeg remux process...")
         
         guard FileManager.default.fileExists(atPath: videoURL.path) else {
@@ -266,11 +266,17 @@ class FFmpegProcessingManager {
         // Build FFmpeg arguments array: copy all streams (remux) - same as cobalt.tools for single URL
         var arguments = [
             "-i", videoURL.path,
-            "-map", "0:v:0",
-            "-map", "0:a:0",
-            "-c:v", "copy",
-            "-c:a", "copy"
+            "-map", "0:v:0"
         ]
+        
+        // Only map audio if the video has audio streams
+        if hasAudio {
+            arguments.append(contentsOf: ["-map", "0:a:0"])
+            arguments.append(contentsOf: ["-c:v", "copy", "-c:a", "copy"])
+        } else {
+            // For videos without audio, only copy video
+            arguments.append(contentsOf: ["-c:v", "copy"])
+        }
         
         // Add format-specific flags (same as cobalt.tools)
         if format == "mp4" {
