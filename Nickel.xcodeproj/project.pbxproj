@@ -322,7 +322,7 @@
 			mainGroup = FE654B1D2D53E9C500E89563;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				829FEA432ECE5587006E2FAB /* XCLocalSwiftPackageReference "../ios-ffmpeg" */,
+				827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */,
 			);
 			productRefGroup = FE654B272D53E9C500E89563 /* Products */;
 			projectDirPath = "";
@@ -717,9 +717,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		829FEA432ECE5587006E2FAB /* XCLocalSwiftPackageReference "../ios-ffmpeg" */ = {
+		827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../ios-ffmpeg";
+			relativePath = "../SwiftFFmpeg-iOS";
 		};
 /* End XCLocalSwiftPackageReference section */
 
