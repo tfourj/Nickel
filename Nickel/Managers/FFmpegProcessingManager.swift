@@ -107,16 +107,35 @@ class FFmpegProcessingManager {
         
         let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
-        // Build FFmpeg arguments array: merge video and audio, copy video codec, encode audio as AAC, use shortest duration
-        let arguments = [
+        // Determine format from filename extension (same as cobalt.tools)
+        let format = (filename as NSString).pathExtension.lowercased()
+        
+        // Build FFmpeg arguments array: merge video and audio (same as cobalt.tools remux for merge type)
+        var arguments = [
             "-i", videoURL.path,
             "-i", audioURL.path,
+            "-map", "0:v",
+            "-map", "1:a",
             "-c:v", "copy",
-            "-c:a", "aac",
-            "-shortest",
-            "-y",
-            finalOutputURL.path  // Will be replaced with temp path in helper
+            "-c:a", "copy"
         ]
+        
+        // Add format-specific flags (same as cobalt.tools)
+        if format == "mp4" {
+            arguments.append(contentsOf: ["-movflags", "faststart+frag_keyframe+empty_moov"])
+        }
+        
+        // Set output format (same as cobalt.tools)
+        let outputFormat: String
+        if format == "mkv" {
+            outputFormat = "matroska"
+        } else {
+            outputFormat = format
+        }
+        arguments.append(contentsOf: ["-f", outputFormat])
+        
+        arguments.append("-y")
+        arguments.append(finalOutputURL.path)  // Will be replaced with temp path in helper
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Merging video and audio with FFmpeg...")
@@ -138,14 +157,34 @@ class FFmpegProcessingManager {
         
         let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
-        // Build FFmpeg arguments array: copy video, remove audio (-an)
-        let arguments = [
+        // Determine format from filename extension (same as cobalt.tools)
+        let format = (filename as NSString).pathExtension.lowercased()
+        
+        // Build FFmpeg arguments array: copy video, remove audio (-an) (same as cobalt.tools remux for mute type)
+        var arguments = [
             "-i", videoURL.path,
+            "-map", "0:v:0",
+            "-map", "0:a:0",
             "-c:v", "copy",
-            "-an",
-            "-y",
-            finalOutputURL.path  // Will be replaced with temp path in helper
+            "-an"
         ]
+        
+        // Add format-specific flags (same as cobalt.tools)
+        if format == "mp4" {
+            arguments.append(contentsOf: ["-movflags", "faststart+frag_keyframe+empty_moov"])
+        }
+        
+        // Set output format (same as cobalt.tools)
+        let outputFormat: String
+        if format == "mkv" {
+            outputFormat = "matroska"
+        } else {
+            outputFormat = format
+        }
+        arguments.append(contentsOf: ["-f", outputFormat])
+        
+        arguments.append("-y")
+        arguments.append(finalOutputURL.path)  // Will be replaced with temp path in helper
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Removing audio with FFmpeg...")
@@ -221,13 +260,34 @@ class FFmpegProcessingManager {
         
         let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
         
-        // Build FFmpeg arguments array: copy all streams (remux)
-        let arguments = [
+        // Determine format from filename extension (same as cobalt.tools)
+        let format = (filename as NSString).pathExtension.lowercased()
+        
+        // Build FFmpeg arguments array: copy all streams (remux) - same as cobalt.tools for single URL
+        var arguments = [
             "-i", videoURL.path,
-            "-c", "copy",
-            "-y",
-            finalOutputURL.path  // Will be replaced with temp path in helper
+            "-map", "0:v:0",
+            "-map", "0:a:0",
+            "-c:v", "copy",
+            "-c:a", "copy"
         ]
+        
+        // Add format-specific flags (same as cobalt.tools)
+        if format == "mp4" {
+            arguments.append(contentsOf: ["-movflags", "faststart+frag_keyframe+empty_moov"])
+        }
+        
+        // Set output format (same as cobalt.tools)
+        let outputFormat: String
+        if format == "mkv" {
+            outputFormat = "matroska"
+        } else {
+            outputFormat = format
+        }
+        arguments.append(contentsOf: ["-f", outputFormat])
+        
+        arguments.append("-y")
+        arguments.append(finalOutputURL.path)  // Will be replaced with temp path in helper
         
         logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
         progressHandler?("Remuxing video with FFmpeg...")

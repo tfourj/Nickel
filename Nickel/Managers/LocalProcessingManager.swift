@@ -110,7 +110,8 @@ class LocalProcessingManager {
             from: outputURL, 
             type: .video, 
             onProgress: downloadProgressHandler,
-            filename: response.output.filename
+            filename: response.output.filename,
+            mediaType: response.output.format
         )
         
         // Check for cancellation after download
@@ -174,6 +175,7 @@ class LocalProcessingManager {
             type: .audio,
             onProgress: nil,
             filename: audio.filename,
+            mediaType: audio.format,
             skipTempCleanup: true
         )
         

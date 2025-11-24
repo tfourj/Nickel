@@ -34,30 +34,37 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     private var downloadTask: URLSessionDownloadTask?
     private var downloadType: DownloadType?
     private var targetURL: URL?
+    private var providedMediaType: String?
 
-    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil, skipTempCleanup: Bool = false) async throws -> URL {
+    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil, mediaType: String? = nil, skipTempCleanup: Bool = false) async throws -> URL {
         if !skipTempCleanup {
             clearTempFolder()
         }
         
         downloadType = type
         progressHandler = onProgress
+        providedMediaType = mediaType
 
         let tempDir = FileManager.default.temporaryDirectory
 
-        // Fetch Content-Type from header first
-        var contentType: String? = nil
-        if let httpResponse = try? await fetchContentType(from: url) {
-            contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
-            logOutput("Content-Type from header: \(contentType ?? "nil")")
+        // Use provided mediaType if available, otherwise fetch Content-Type from header
+        var contentType: String? = mediaType
+        if mediaType == nil {
+            if let httpResponse = try? await fetchContentType(from: url) {
+                contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+                logOutput("Content-Type from header: \(contentType ?? "nil")")
+            }
+        } else {
+            logOutput("Using provided mediaType from API: \(mediaType ?? "nil")")
         }
 
         if let filename = filename, !filename.isEmpty {
             logOutput("Using provided filename: \(filename)")
             var finalFilename = filename
             
-            // Check Content-Type and correct extension if needed
-            if let contentType = contentType, let correctExt = extractExtensionFromContentType(contentType) {
+            // Only check Content-Type and correct extension if mediaType was NOT provided
+            // When mediaType is provided, use filename directly without correction
+            if mediaType == nil, let contentType = contentType, let correctExt = extractExtensionFromContentType(contentType) {
                 let currentExt = (filename as NSString).pathExtension.lowercased()
                 if currentExt != correctExt.lowercased() {
                     logOutput("⚠️ Correcting filename extension: \(currentExt) -> \(correctExt) based on Content-Type")
@@ -69,11 +76,11 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             
             targetURL = tempDir.appendingPathComponent(finalFilename)
         } else {
-            // Use Content-Type to determine file extension
+            // Use Content-Type or mediaType to determine file extension
             let fileExtension: String
             if let contentType = contentType, let ext = extractExtensionFromContentType(contentType) {
                 fileExtension = ext
-                logOutput("Using file extension from Content-Type: \(ext)")
+                logOutput("Using file extension from \(mediaType != nil ? "provided mediaType" : "Content-Type"): \(ext)")
             } else {
                 // Fallback to URL extension or type-based default
                 let extractedExtension = url.pathExtension
@@ -125,6 +132,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         targetURL = nil
         downloadType = nil
         progressHandler = nil
+        providedMediaType = nil
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
@@ -136,8 +144,10 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         
         printTempFolderContents(context: "Before moving file")
         
-        // Check Content-Type header and correct file extension if needed
-        if let httpResponse = downloadTask.response as? HTTPURLResponse,
+        // Only check Content-Type header and correct extension if mediaType was NOT provided
+        // When mediaType is provided, skip Content-Type correction (use API values directly)
+        if providedMediaType == nil,
+           let httpResponse = downloadTask.response as? HTTPURLResponse,
            let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") {
             logOutput("Content-Type header: \(contentType)")
             
@@ -158,6 +168,8 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
                     logOutput("✅ Updated filename to: \(newFilename)")
                 }
             }
+        } else if providedMediaType != nil {
+            logOutput("Skipping Content-Type correction - using API-provided mediaType and filename directly")
         }
         
         do {
@@ -202,6 +214,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         downloadContinuation = nil
         self.targetURL = nil
         self.downloadType = nil
+        self.providedMediaType = nil
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
@@ -241,6 +254,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             targetURL = nil
             downloadType = nil
             progressHandler = nil
+            providedMediaType = nil
         }
     }
     
