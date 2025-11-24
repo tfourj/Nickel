@@ -15,6 +15,7 @@ The app does not interface directly with social media platforms - it relies on y
 This project is designed to work with:
 - [Cobalt API](https://github.com/imputnet/cobalt)
 - [Nickel-Auth](https://github.com/tfourj/Nickel-Auth) *(optional, but recommended)*
+- [SwiftFFmpeg-iOS](https://github.com/tfourj/SwiftFFmpeg-iOS)
 
 ## Features
 
