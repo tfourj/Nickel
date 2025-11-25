@@ -573,11 +573,21 @@ struct ContentView: View {
                     }
                 }
 
-                if ["mp4", "mov", "webm", "mkv"].contains(fileExtension) || label.contains("video") {
+                // Determine download type based on label first (most reliable), then extension
+                if label.contains("audio") || label.contains("sound") {
+                    downloadType = .audio
+                } else if label.contains("video") {
                     downloadType = .video
-                } else if ["jpg", "png", "jpeg", "gif", "bmp", "webp"].contains(fileExtension) || label.contains("photo") || label.contains("image") {
+                } else if label.contains("photo") || label.contains("image") {
                     downloadType = .image
-                } else if ["mp3", "aac", "wav", "m4a", "ogg"].contains(fileExtension) || label.contains("audio") || label.contains("sound") {
+                } else if ["mp4", "mov", "mkv"].contains(fileExtension) {
+                    downloadType = .video
+                } else if ["webm", "webp"].contains(fileExtension) {
+                    // webm/webp can be audio or video, default to video but will be corrected by Content-Type
+                    downloadType = .video
+                } else if ["jpg", "png", "jpeg", "gif", "bmp"].contains(fileExtension) {
+                    downloadType = .image
+                } else if ["mp3", "aac", "wav", "m4a", "ogg", "flac"].contains(fileExtension) {
                     downloadType = .audio
                 } else {
                     throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)

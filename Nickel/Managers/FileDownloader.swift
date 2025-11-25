@@ -155,8 +155,25 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             if let correctExtension = extractExtensionFromContentType(contentType) {
                 let currentExtension = targetURL.pathExtension.lowercased()
                 
-                if currentExtension != correctExtension.lowercased() {
-                    logOutput("⚠️ Correcting file extension: \(currentExtension) -> \(correctExtension) based on Content-Type")
+                // Verify Content-Type matches download type
+                let contentTypeLower = contentType.lowercased()
+                let isAudioContentType = contentTypeLower.contains("audio/")
+                let isVideoContentType = contentTypeLower.contains("video/")
+                let isImageContentType = contentTypeLower.contains("image/")
+                
+                // Ensure Content-Type matches download type
+                let shouldCorrect: Bool
+                switch type {
+                case .audio:
+                    shouldCorrect = isAudioContentType || (!isVideoContentType && !isImageContentType)
+                case .video:
+                    shouldCorrect = isVideoContentType || (!isAudioContentType && !isImageContentType)
+                case .image:
+                    shouldCorrect = isImageContentType || (!isVideoContentType && !isAudioContentType)
+                }
+                
+                if shouldCorrect && currentExtension != correctExtension.lowercased() {
+                    logOutput("⚠️ Correcting file extension: \(currentExtension) -> \(correctExtension) based on Content-Type (\(contentType))")
                     
                     // Create new filename with correct extension
                     let filenameWithoutExt = targetURL.deletingPathExtension().lastPathComponent
@@ -166,6 +183,8 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
                     self.targetURL = targetURL
                     
                     logOutput("✅ Updated filename to: \(newFilename)")
+                } else if !shouldCorrect {
+                    logOutput("⚠️ Content-Type (\(contentType)) doesn't match download type (\(type)), skipping extension correction")
                 }
             }
         } else if providedMediaType != nil {
@@ -323,6 +342,9 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         } else if mimeType.contains("audio/flac") {
             return "flac"
         } else if mimeType.contains("audio/webm") {
+            return "webm"
+        } else if mimeType.contains("audio/webp") {
+            // audio/webp is typically WebM audio, map to webm extension
             return "webm"
         } else if mimeType.contains("video/mp4") {
             return "mp4"
