@@ -38,6 +38,7 @@ func runAppTests() {
     logOutput("Running in simulator - executing tests")
     
     TestNotification()
+    TestFFmpegVersions()
     
     #else
     
