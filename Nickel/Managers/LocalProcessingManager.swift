@@ -349,9 +349,19 @@ class LocalProcessingManager {
         let isAudioFile = audioExtensions.contains(fileExtension) || 
                          (response.output.format?.lowercased().contains("audio/") ?? false)
         
-        // Only remux if it's a video file (not audio) and has no audio object (muted video)
-        if !isAudioFile && response.audio == nil {
-            logOutput("Detected muted video in proxy download (no audio object) - running FFmpeg remux to fix potential double length issue")
+        // If it's an audio file, return directly
+        if isAudioFile {
+            logOutput("Detected audio file in proxy download - returning directly without remux")
+            return mainFile
+        }
+        
+        // For video files, check if they actually have audio tracks embedded
+        // Note: response.audio == nil doesn't mean muted - it just means audio/video aren't separate
+        let hasAudioTrack = await checkVideoHasAudioTrack(fileURL: mainFile)
+        
+        // Only remux if it's a video file without audio tracks (truly muted)
+        if !hasAudioTrack {
+            logOutput("Detected muted video in proxy download (no audio track) - running FFmpeg remux to fix potential double length issue")
             progressHandler?("Processing muted video...")
             
             // Check if FFmpeg should be used
@@ -377,11 +387,14 @@ class LocalProcessingManager {
             }
         }
         
-        // For audio files or non-muted proxy downloads, just return the main file URL
-        if isAudioFile {
-            logOutput("Detected audio file in proxy download - returning directly without remux")
-        }
+        // For videos with audio tracks, just return the main file URL
+        logOutput("Detected video with audio track - returning directly without remux")
         return mainFile
+    }
+    
+    private func checkVideoHasAudioTrack(fileURL: URL) async -> Bool {
+        // Use ffprobe to check for audio tracks (more reliable than AVFoundation for all codecs)
+        return await FFmpegProcessingManager.shared.checkVideoHasAudioTrack(fileURL: fileURL)
     }
     
     // MARK: - GIF Processing (kept here as it doesn't use FFmpeg or AVExport)

@@ -308,6 +308,51 @@ class FFmpegProcessingManager {
     
     // MARK: - FFmpeg Helper Methods
     
+    /// Check if a video file has audio tracks using ffprobe
+    /// This works even if AVFoundation doesn't support the codec
+    func checkVideoHasAudioTrack(fileURL: URL) async -> Bool {
+        logOutput("Checking for audio tracks using ffprobe: \(fileURL.path)")
+        
+        // Use ffprobe to check for audio streams
+        // -select_streams a: Select only audio streams
+        // -show_entries stream=codec_type: Show codec type for selected streams
+        // -of default=noprint_wrappers=1:nokey=1: Simple output format (just "audio" if found)
+        let arguments = [
+            "-v", "error",
+            "-select_streams", "a",
+            "-show_entries", "stream=codec_type",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            fileURL.path
+        ]
+        
+        return await withCheckedContinuation { continuation in
+            ffmpegExecutionQueue.async {
+                do {
+                    // Use ffprobe directly with the new API
+                    let (exitCode, output) = try SwiftFFmpeg.execute(arguments, tool: .ffprobe)
+                    
+                    // ffprobe returns 0 on success
+                    // If audio streams exist, output will contain "audio" (one per stream)
+                    // If no audio streams, output will be empty
+                    let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let hasAudio = exitCode == 0 && trimmedOutput.contains("audio")
+                    
+                    logOutput("ffprobe result: exitCode=\(exitCode), hasAudio=\(hasAudio), output=\(trimmedOutput.isEmpty ? "(empty)" : trimmedOutput)")
+                    
+                    continuation.resume(returning: hasAudio)
+                } catch SwiftFFmpegError.executionFailed(let code) {
+                    logOutput("ffprobe failed with exit code \(code)")
+                    // If ffprobe fails, assume it has audio to avoid unnecessary remuxing
+                    continuation.resume(returning: true)
+                } catch {
+                    logOutput("Error checking for audio tracks: \(error.localizedDescription)")
+                    // If we can't check, assume it has audio to avoid unnecessary remuxing
+                    continuation.resume(returning: true)
+                }
+            }
+        }
+    }
+    
     private func executeFFmpegCommand(arguments: [String], outputURL: URL, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
         // Check for cancellation before starting
         if shouldCancel() {
@@ -481,7 +526,7 @@ class FFmpegProcessingManager {
                 
                 do {
                     // Execute FFmpeg command
-                    let (exitCode, output) = try SwiftFFmpeg.executeWithOutput(arguments)
+                    let (exitCode, output) = try SwiftFFmpeg.execute(arguments, tool: .ffmpeg)
                     
                     // Get log messages thread-safely
                     let allLogs = self.logQueue.sync { self.logMessages.joined(separator: "\n") }
