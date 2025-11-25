@@ -60,21 +60,8 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
 
         if let filename = filename, !filename.isEmpty {
             logOutput("Using provided filename: \(filename)")
-            var finalFilename = filename
-            
-            // Only check Content-Type and correct extension if mediaType was NOT provided
-            // When mediaType is provided, use filename directly without correction
-            if mediaType == nil, let contentType = contentType, let correctExt = extractExtensionFromContentType(contentType) {
-                let currentExt = (filename as NSString).pathExtension.lowercased()
-                if currentExt != correctExt.lowercased() {
-                    logOutput("⚠️ Correcting filename extension: \(currentExt) -> \(correctExt) based on Content-Type")
-                    let filenameWithoutExt = (filename as NSString).deletingPathExtension
-                    finalFilename = "\(filenameWithoutExt).\(correctExt)"
-                    logOutput("✅ Updated filename to: \(finalFilename)")
-                }
-            }
-            
-            targetURL = tempDir.appendingPathComponent(finalFilename)
+            // Use filename exactly as provided by API, no corrections
+            targetURL = tempDir.appendingPathComponent(filename)
         } else {
             // Use Content-Type or mediaType to determine file extension
             let fileExtension: String
@@ -144,52 +131,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         
         printTempFolderContents(context: "Before moving file")
         
-        // Only check Content-Type header and correct extension if mediaType was NOT provided
-        // When mediaType is provided, skip Content-Type correction (use API values directly)
-        if providedMediaType == nil,
-           let httpResponse = downloadTask.response as? HTTPURLResponse,
-           let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") {
-            logOutput("Content-Type header: \(contentType)")
-            
-            // Extract extension from Content-Type (e.g., "audio/mpeg" -> "mp3", "video/mp4" -> "mp4")
-            if let correctExtension = extractExtensionFromContentType(contentType) {
-                let currentExtension = targetURL.pathExtension.lowercased()
-                
-                // Verify Content-Type matches download type
-                let contentTypeLower = contentType.lowercased()
-                let isAudioContentType = contentTypeLower.contains("audio/")
-                let isVideoContentType = contentTypeLower.contains("video/")
-                let isImageContentType = contentTypeLower.contains("image/")
-                
-                // Ensure Content-Type matches download type
-                let shouldCorrect: Bool
-                switch type {
-                case .audio:
-                    shouldCorrect = isAudioContentType || (!isVideoContentType && !isImageContentType)
-                case .video:
-                    shouldCorrect = isVideoContentType || (!isAudioContentType && !isImageContentType)
-                case .image:
-                    shouldCorrect = isImageContentType || (!isVideoContentType && !isAudioContentType)
-                }
-                
-                if shouldCorrect && currentExtension != correctExtension.lowercased() {
-                    logOutput("⚠️ Correcting file extension: \(currentExtension) -> \(correctExtension) based on Content-Type (\(contentType))")
-                    
-                    // Create new filename with correct extension
-                    let filenameWithoutExt = targetURL.deletingPathExtension().lastPathComponent
-                    let newFilename = "\(filenameWithoutExt).\(correctExtension)"
-                    let tempDir = FileManager.default.temporaryDirectory
-                    targetURL = tempDir.appendingPathComponent(newFilename)
-                    self.targetURL = targetURL
-                    
-                    logOutput("✅ Updated filename to: \(newFilename)")
-                } else if !shouldCorrect {
-                    logOutput("⚠️ Content-Type (\(contentType)) doesn't match download type (\(type)), skipping extension correction")
-                }
-            }
-        } else if providedMediaType != nil {
-            logOutput("Skipping Content-Type correction - using API-provided mediaType and filename directly")
-        }
+        // Use filename exactly as provided by API, no corrections or repairs
         
         do {
             if FileManager.default.fileExists(atPath: targetURL.path) {

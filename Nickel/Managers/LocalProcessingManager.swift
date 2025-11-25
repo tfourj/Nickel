@@ -343,12 +343,14 @@ class LocalProcessingManager {
         logOutput("Handling proxy download")
         progressHandler?("Downloading file...")
         
-        // Check if this is a muted video by checking if there's no audio object in the response
-        // Muted videos from YouTube often have double length issues and need FFmpeg remuxing
-        // If response.audio is nil, it means the video is muted (no audio track)
-        let isMutedVideo = response.audio == nil
+        // Check if this is an audio file (based on file extension or format)
+        let fileExtension = mainFile.pathExtension.lowercased()
+        let audioExtensions = ["mp3", "m4a", "aac", "wav", "flac", "ogg", "opus", "webm"]
+        let isAudioFile = audioExtensions.contains(fileExtension) || 
+                         (response.output.format?.lowercased().contains("audio/") ?? false)
         
-        if isMutedVideo {
+        // Only remux if it's a video file (not audio) and has no audio object (muted video)
+        if !isAudioFile && response.audio == nil {
             logOutput("Detected muted video in proxy download (no audio object) - running FFmpeg remux to fix potential double length issue")
             progressHandler?("Processing muted video...")
             
@@ -375,7 +377,10 @@ class LocalProcessingManager {
             }
         }
         
-        // For non-muted proxy downloads, just return the main file URL
+        // For audio files or non-muted proxy downloads, just return the main file URL
+        if isAudioFile {
+            logOutput("Detected audio file in proxy download - returning directly without remux")
+        }
         return mainFile
     }
     
