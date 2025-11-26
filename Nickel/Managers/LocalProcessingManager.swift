@@ -359,21 +359,33 @@ class LocalProcessingManager {
         // Note: response.audio == nil doesn't mean muted - it just means audio/video aren't separate
         let hasAudioTrack = await checkVideoHasAudioTrack(fileURL: mainFile)
         
-        // Only remux if it's a video file without audio tracks (truly muted)
-        if !hasAudioTrack {
-            logOutput("Detected muted video in proxy download (no audio track) - running FFmpeg remux to fix potential double length issue")
+        // Force remux if:
+        // 1. No audio track detected by ffprobe (truly muted), OR
+        // 2. API response has no separate audio object (response.audio == nil) - force remux to fix double length issues
+        //    This ensures muted videos always go through remuxing even if ffprobe check is uncertain
+        let shouldRemux = !hasAudioTrack || response.audio == nil
+        
+        if shouldRemux {
+            if !hasAudioTrack {
+                logOutput("Detected muted video in proxy download (no audio track) - running FFmpeg remux to fix potential double length issue")
+            } else if response.audio == nil {
+                logOutput("Detected proxy video without separate audio object - forcing FFmpeg remux to fix potential double length issue")
+            }
+            
             progressHandler?("Processing muted video...")
             
             // Check if FFmpeg should be used
             let useFFmpeg = UserDefaults.standard.object(forKey: "useFFmpegForProcessing") as? Bool ?? true
             
             // Remux video using FFmpeg or AVFoundation to fix double length issue
-            // Pass hasAudio: false since muted videos don't have audio streams
+            // Pass hasAudio: false if no audio track detected, true if detected but forcing remux due to response.audio == nil
+            let remuxHasAudio = hasAudioTrack && response.audio == nil // Only pass true if we detected audio but are forcing remux anyway
+            
             if useFFmpeg {
                 return try await FFmpegProcessingManager.shared.remuxVideo(
                     videoURL: mainFile,
                     filename: response.output.filename,
-                    hasAudio: false,
+                    hasAudio: remuxHasAudio,
                     progressHandler: progressHandler,
                     shouldCancel: { self.shouldCancel }
                 )
@@ -387,8 +399,8 @@ class LocalProcessingManager {
             }
         }
         
-        // For videos with audio tracks, just return the main file URL
-        logOutput("Detected video with audio track - returning directly without remux")
+        // For videos with audio tracks AND separate audio object, just return the main file URL
+        logOutput("Detected video with audio track and separate audio object - returning directly without remux")
         return mainFile
     }
     
