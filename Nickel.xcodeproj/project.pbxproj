@@ -566,6 +566,7 @@
 				INFOPLIST_FILE = Nickel/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nickel;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses AVFoundation for video and audio processing. The camera is not accessed by this app.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "\"This app requires access to save downloaded videos to your photo library.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -609,6 +610,7 @@
 				INFOPLIST_FILE = Nickel/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nickel;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses AVFoundation for video and audio processing. The camera is not accessed by this app.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "\"This app requires access to save downloaded videos to your photo library.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
