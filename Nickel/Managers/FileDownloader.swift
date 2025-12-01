@@ -251,6 +251,52 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         }
     }
     
+    /// Public method to clear all cache (temp, caches directories, and network cache)
+    static func clearAllCache() -> (tempCount: Int, cacheCount: Int, networkCacheCleared: Bool, error: String?) {
+        var tempCount = 0
+        var cacheCount = 0
+        var networkCacheCleared = false
+        var errorMessage: String? = nil
+        
+        // Clear temporary directory
+        let tempDir = FileManager.default.temporaryDirectory
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+            for file in files {
+                try FileManager.default.removeItem(at: file)
+                tempCount += 1
+            }
+            logOutput("🧹 Temp folder cleared. Removed \(tempCount) files.")
+        } catch {
+            let errorMsg = "Error clearing temp folder: \(error.localizedDescription)"
+            logOutput("❌ \(errorMsg)")
+            errorMessage = errorMessage == nil ? errorMsg : "\(errorMessage!); \(errorMsg)"
+        }
+        
+        // Clear caches directory
+        if let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            do {
+                let files = try FileManager.default.contentsOfDirectory(at: cachesDir, includingPropertiesForKeys: nil)
+                for file in files {
+                    try FileManager.default.removeItem(at: file)
+                    cacheCount += 1
+                }
+                logOutput("🧹 Caches folder cleared. Removed \(cacheCount) files.")
+            } catch {
+                let errorMsg = "Error clearing caches folder: \(error.localizedDescription)"
+                logOutput("❌ \(errorMsg)")
+                errorMessage = errorMessage == nil ? errorMsg : "\(errorMessage!); \(errorMsg)"
+            }
+        }
+        
+        // Clear network cache (URLCache)
+        URLCache.shared.removeAllCachedResponses()
+        networkCacheCleared = true
+        logOutput("🧹 Network cache (URLCache) cleared.")
+        
+        return (tempCount, cacheCount, networkCacheCleared, errorMessage)
+    }
+    
     private func printTempFolderContents(context: String) {
         let tempDir = FileManager.default.temporaryDirectory
         do {
