@@ -19,9 +19,18 @@
 		829523AD2E19C13600658375 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A52E19C13600658375 /* AboutView.swift */; };
 		829523AE2E19C13600658375 /* RequestBodyEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829523A82E19C13600658375 /* RequestBodyEditorView.swift */; };
 		829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */; };
+		829FEA452ECE55C6006E2FAB /* SwiftFFmpeg in Frameworks */ = {isa = PBXBuildFile; productRef = 829FEA442ECE55C6006E2FAB /* SwiftFFmpeg */; };
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
+		82D39CD22EC653E8008CAB64 /* AVExportProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */; };
+		82D39CD32EC653E8008CAB64 /* FFmpegProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */; };
+		82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */; };
+		82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */; };
+		82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */; };
+		82D39CDC2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */; };
+		82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		82E007052E19702000F68C7D /* LocalProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E007042E19701800F68C7D /* LocalProcessingManager.swift */; };
+		82E1A07D2ED64A170097A764 /* FFmpegTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E1A07C2ED64A170097A764 /* FFmpegTest.swift */; };
 		FE8350682D66964000861765 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE8350662D66964000861765 /* ShareViewController.swift */; };
 		FE83506A2D66964000861765 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FE8350642D66964000861765 /* MainInterface.storyboard */; };
 		FE8350782D66964400861765 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE83506B2D66964400861765 /* Preview Assets.xcassets */; };
@@ -74,8 +83,16 @@
 		829523A92E19C13600658375 /* TabButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabButton.swift; sourceTree = "<group>"; };
 		829F63722D6BFA2B00F1DD66 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
+		82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVExportProcessingManager.swift; sourceTree = "<group>"; };
+		82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessingManager.swift; sourceTree = "<group>"; };
+		82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadBehaviorSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestConfigurationSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInterfaceSettingsView.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		82E007042E19701800F68C7D /* LocalProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProcessingManager.swift; sourceTree = "<group>"; };
+		82E1A07C2ED64A170097A764 /* FFmpegTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegTest.swift; sourceTree = "<group>"; };
 		FE654B262D53E9C500E89563 /* Nickel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nickel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE8350622D66964000861765 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FE8350632D66964000861765 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
@@ -100,6 +117,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				829FEA452ECE55C6006E2FAB /* SwiftFFmpeg in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,9 +131,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		42D3E924421E1C9578C0B9F8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		82BDA7EF2D981F0600E33E30 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				82E1A07C2ED64A170097A764 /* FFmpegTest.swift */,
 				82BDA7F02D981F9900E33E30 /* NotificationTest.swift */,
 			);
 			path = Tests;
@@ -141,6 +167,8 @@
 		82D449E82DAC65D3005D3763 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */,
+				82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */,
 				82E007042E19701800F68C7D /* LocalProcessingManager.swift */,
 				FE8350702D66964400861765 /* DownloadManager.swift */,
 				826D22D12E1ABDA700E01ED1 /* LenghtExtractor.swift */,
@@ -154,6 +182,11 @@
 		82D449E92DAC65D3005D3763 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */,
+				82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */,
+				82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */,
+				82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */,
+				82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */,
 				821651F02EBA920400D75A67 /* LinkHistoryView.swift */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
 				FE83506F2D66964400861765 /* ContentView.swift */,
@@ -176,6 +209,7 @@
 				FE8350772D66964400861765 /* Nickel */,
 				FE8350672D66964000861765 /* Nickel Share Extension */,
 				FE654B272D53E9C500E89563 /* Products */,
+				42D3E924421E1C9578C0B9F8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -241,8 +275,6 @@
 				FEFFCCF52D580350005463B5 /* PBXTargetDependency */,
 			);
 			name = Nickel;
-			packageProductDependencies = (
-			);
 			productName = Nickel;
 			productReference = FE654B262D53E9C500E89563 /* Nickel.app */;
 			productType = "com.apple.product-type.application";
@@ -260,8 +292,6 @@
 			dependencies = (
 			);
 			name = "Nickel Share Extension";
-			packageProductDependencies = (
-			);
 			productName = "Nickel Share Extension";
 			productReference = FEFFCCEC2D580350005463B5 /* Nickel Share Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -294,6 +324,9 @@
 			);
 			mainGroup = FE654B1D2D53E9C500E89563;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */,
+			);
 			productRefGroup = FE654B272D53E9C500E89563 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -330,6 +363,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */,
+				82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */,
+				82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */,
+				82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */,
+				82D39CDC2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */,
+				82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */,
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
 				820F25A62DAAB68400289272 /* AppAttest.swift in Sources */,
@@ -338,11 +376,14 @@
 				826D22D22E1ABDA700E01ED1 /* LenghtExtractor.swift in Sources */,
 				FE83507D2D66964400861765 /* DownloadManager.swift in Sources */,
 				FE83507E2D66964400861765 /* FileDownloader.swift in Sources */,
+				82E1A07D2ED64A170097A764 /* FFmpegTest.swift in Sources */,
 				FE83507F2D66964400861765 /* MainTabView.swift in Sources */,
 				82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */,
 				821651F12EBA920400D75A67 /* LinkHistoryView.swift in Sources */,
 				FE8350802D66964400861765 /* NickelApp.swift in Sources */,
 				826237A82DBEF101007F8397 /* DebugView.swift in Sources */,
+				82D39CD22EC653E8008CAB64 /* AVExportProcessingManager.swift in Sources */,
+				82D39CD32EC653E8008CAB64 /* FFmpegProcessingManager.swift in Sources */,
 				829F63732D6BFA2B00F1DD66 /* NotificationManager.swift in Sources */,
 				829523AA2E19C13600658375 /* AppSettingsView.swift in Sources */,
 				829523AB2E19C13600658375 /* TabButton.swift in Sources */,
@@ -422,7 +463,7 @@
 				DEVELOPMENT_TEAM = 83KL373Z2M;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -443,8 +484,8 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 007;
-				SHARED_VERSION_NUMBER = 2.1.0;
+				SHARED_BUILD_NUMBER = 001;
+				SHARED_VERSION_NUMBER = 2.2.0;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -488,7 +529,7 @@
 				DEVELOPMENT_TEAM = 83KL373Z2M;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -502,8 +543,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
-				SHARED_BUILD_NUMBER = 007;
-				SHARED_VERSION_NUMBER = 2.1.0;
+				SHARED_BUILD_NUMBER = 001;
+				SHARED_VERSION_NUMBER = 2.2.0;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -678,6 +719,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../SwiftFFmpeg-iOS";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		829FEA442ECE55C6006E2FAB /* SwiftFFmpeg */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftFFmpeg;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FE654B1E2D53E9C500E89563 /* Project object */;
 }

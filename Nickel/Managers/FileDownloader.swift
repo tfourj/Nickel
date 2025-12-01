@@ -34,38 +34,57 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
     private var downloadTask: URLSessionDownloadTask?
     private var downloadType: DownloadType?
     private var targetURL: URL?
+    private var providedMediaType: String?
 
-    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil, skipTempCleanup: Bool = false) async throws -> URL {
+    func downloadFile(from url: URL, type: DownloadType, onProgress: ProgressHandler? = nil, filename: String? = nil, mediaType: String? = nil, skipTempCleanup: Bool = false) async throws -> URL {
         if !skipTempCleanup {
             clearTempFolder()
         }
         
         downloadType = type
         progressHandler = onProgress
+        providedMediaType = mediaType
 
         let tempDir = FileManager.default.temporaryDirectory
 
+        // Use provided mediaType if available, otherwise fetch Content-Type from header
+        var contentType: String? = mediaType
+        if mediaType == nil {
+            if let httpResponse = try? await fetchContentType(from: url) {
+                contentType = httpResponse.value(forHTTPHeaderField: "Content-Type")
+                logOutput("Content-Type from header: \(contentType ?? "nil")")
+            }
+        } else {
+            logOutput("Using provided mediaType from API: \(mediaType ?? "nil")")
+        }
+
         if let filename = filename, !filename.isEmpty {
             logOutput("Using provided filename: \(filename)")
+            // Use filename exactly as provided by API, no corrections
             targetURL = tempDir.appendingPathComponent(filename)
         } else {
-            // Fallback to generating a filename
-            let extractedExtension = url.pathExtension
+            // Use Content-Type or mediaType to determine file extension
             let fileExtension: String
-
-            if extractedExtension.isEmpty {
-                logOutput("⚠️ No file extension found in URL, using fallback method")
-                switch type {
-                case .video:
-                    fileExtension = "mp4"
-                case .image:
-                    fileExtension = "jpg"
-                case .audio:
-                    fileExtension = "mp3"
-                }
+            if let contentType = contentType, let ext = extractExtensionFromContentType(contentType) {
+                fileExtension = ext
+                logOutput("Using file extension from \(mediaType != nil ? "provided mediaType" : "Content-Type"): \(ext)")
             } else {
-                fileExtension = extractedExtension
-                logOutput("Automatically fetched file extension: \(extractedExtension)")
+                // Fallback to URL extension or type-based default
+                let extractedExtension = url.pathExtension
+                if extractedExtension.isEmpty {
+                    logOutput("⚠️ No file extension found, using fallback method")
+                    switch type {
+                    case .video:
+                        fileExtension = "mp4"
+                    case .image:
+                        fileExtension = "jpg"
+                    case .audio:
+                        fileExtension = "mp3"
+                    }
+                } else {
+                    fileExtension = extractedExtension
+                    logOutput("Using file extension from URL: \(extractedExtension)")
+                }
             }
             targetURL = tempDir.appendingPathComponent(UUID().uuidString + ".\(fileExtension)")
         }
@@ -77,6 +96,20 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             self.downloadContinuation = continuation
         }.0
     }
+    
+    /// Fetch Content-Type header using HEAD request
+    private func fetchContentType(from url: URL) async throws -> HTTPURLResponse {
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return httpResponse
+    }
 
     func cancelDownload() {
         downloadTask?.cancel()
@@ -86,16 +119,19 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         targetURL = nil
         downloadType = nil
         progressHandler = nil
+        providedMediaType = nil
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
                     didFinishDownloadingTo location: URL) {
-        guard let targetURL = self.targetURL, let type = self.downloadType else {
+        guard var targetURL = self.targetURL, let type = self.downloadType else {
             downloadContinuation?.resume(throwing: NSError(domain: "FileDownloader", code: -3, userInfo: [NSLocalizedDescriptionKey: "Missing target URL or download type"]))
             return
         }
         
         printTempFolderContents(context: "Before moving file")
+        
+        // Use filename exactly as provided by API, no corrections or repairs
         
         do {
             if FileManager.default.fileExists(atPath: targetURL.path) {
@@ -139,6 +175,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         downloadContinuation = nil
         self.targetURL = nil
         self.downloadType = nil
+        self.providedMediaType = nil
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
@@ -178,6 +215,7 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
             targetURL = nil
             downloadType = nil
             progressHandler = nil
+            providedMediaType = nil
         }
     }
     
@@ -213,6 +251,52 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         }
     }
     
+    /// Public method to clear all cache (temp, caches directories, and network cache)
+    static func clearAllCache() -> (tempCount: Int, cacheCount: Int, networkCacheCleared: Bool, error: String?) {
+        var tempCount = 0
+        var cacheCount = 0
+        var networkCacheCleared = false
+        var errorMessage: String? = nil
+        
+        // Clear temporary directory
+        let tempDir = FileManager.default.temporaryDirectory
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+            for file in files {
+                try FileManager.default.removeItem(at: file)
+                tempCount += 1
+            }
+            logOutput("🧹 Temp folder cleared. Removed \(tempCount) files.")
+        } catch {
+            let errorMsg = "Error clearing temp folder: \(error.localizedDescription)"
+            logOutput("❌ \(errorMsg)")
+            errorMessage = errorMessage == nil ? errorMsg : "\(errorMessage!); \(errorMsg)"
+        }
+        
+        // Clear caches directory
+        if let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            do {
+                let files = try FileManager.default.contentsOfDirectory(at: cachesDir, includingPropertiesForKeys: nil)
+                for file in files {
+                    try FileManager.default.removeItem(at: file)
+                    cacheCount += 1
+                }
+                logOutput("🧹 Caches folder cleared. Removed \(cacheCount) files.")
+            } catch {
+                let errorMsg = "Error clearing caches folder: \(error.localizedDescription)"
+                logOutput("❌ \(errorMsg)")
+                errorMessage = errorMessage == nil ? errorMsg : "\(errorMessage!); \(errorMsg)"
+            }
+        }
+        
+        // Clear network cache (URLCache)
+        URLCache.shared.removeAllCachedResponses()
+        networkCacheCleared = true
+        logOutput("🧹 Network cache (URLCache) cleared.")
+        
+        return (tempCount, cacheCount, networkCacheCleared, errorMessage)
+    }
+    
     private func printTempFolderContents(context: String) {
         let tempDir = FileManager.default.temporaryDirectory
         do {
@@ -224,5 +308,50 @@ class FileDownloader: NSObject, URLSessionDownloadDelegate {
         } catch {
             logOutput("❌ Error accessing temp folder: \(error.localizedDescription)")
         }
+    }
+    
+    /// Extract file extension directly from Content-Type header
+    private func extractExtensionFromContentType(_ contentType: String) -> String? {
+        // Remove parameters (e.g., "audio/mpeg; charset=utf-8" -> "audio/mpeg")
+        let mimeType = contentType.components(separatedBy: ";").first?.trimmingCharacters(in: .whitespaces).lowercased() ?? contentType.lowercased()
+        
+        // Simple mapping: extract extension from common Content-Type patterns
+        // audio/mpeg -> mp3, audio/mp4 -> m4a, video/mp4 -> mp4, etc.
+        if mimeType.contains("audio/mpeg") || mimeType == "audio/mp3" {
+            return "mp3"
+        } else if mimeType.contains("audio/mp4") || mimeType.contains("audio/x-m4a") {
+            return "m4a"
+        } else if mimeType.contains("audio/aac") {
+            return "aac"
+        } else if mimeType.contains("audio/wav") || mimeType.contains("audio/x-wav") {
+            return "wav"
+        } else if mimeType.contains("audio/ogg") {
+            return "ogg"
+        } else if mimeType.contains("audio/flac") {
+            return "flac"
+        } else if mimeType.contains("audio/webm") {
+            return "webm"
+        } else if mimeType.contains("audio/webp") {
+            // audio/webp is typically WebM audio, map to webm extension
+            return "webm"
+        } else if mimeType.contains("video/mp4") {
+            return "mp4"
+        } else if mimeType.contains("video/quicktime") {
+            return "mov"
+        } else if mimeType.contains("video/webm") {
+            return "webm"
+        } else if mimeType.contains("video/x-matroska") {
+            return "mkv"
+        } else if mimeType.contains("image/jpeg") || mimeType.contains("image/jpg") {
+            return "jpg"
+        } else if mimeType.contains("image/png") {
+            return "png"
+        } else if mimeType.contains("image/gif") {
+            return "gif"
+        } else if mimeType.contains("image/webp") {
+            return "webp"
+        }
+        
+        return nil
     }
 }

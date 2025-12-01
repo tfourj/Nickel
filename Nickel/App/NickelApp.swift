@@ -22,6 +22,21 @@ struct NickelApp: App {
             logOutput("First launch detected, landing page version initialized to 0")
         }
         
+        let clearCacheOnStart = UserDefaults.standard.object(forKey: "clearCacheOnStart") as? Bool ?? false
+        if clearCacheOnStart {
+            logOutput("🧹 Auto-clearing cache on app start...")
+            let result = FileDownloader.clearAllCache()
+            if let error = result.error {
+                logOutput("⚠️ Cache cleared with errors: \(error)")
+            } else {
+                var logMsg = "✅ Cache cleared successfully: \(result.tempCount) temp files, \(result.cacheCount) cache files"
+                if result.networkCacheCleared {
+                    logMsg += ", network cache cleared"
+                }
+                logOutput(logMsg)
+            }
+        }
+        
         runAppTests()
     }
     var body: some Scene {
@@ -38,6 +53,7 @@ func runAppTests() {
     logOutput("Running in simulator - executing tests")
     
     TestNotification()
+    TestFFmpegVersions()
     
     #else
     

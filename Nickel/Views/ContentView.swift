@@ -1,5 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import AVFoundation
+import CoreMedia
 
 struct IdentifiableURL: Identifiable {
     let id = UUID()
@@ -573,11 +575,21 @@ struct ContentView: View {
                     }
                 }
 
-                if ["mp4", "mov", "webm", "mkv"].contains(fileExtension) || label.contains("video") {
+                // Determine download type based on label first (most reliable), then extension
+                if label.contains("audio") || label.contains("sound") {
+                    downloadType = .audio
+                } else if label.contains("video") {
                     downloadType = .video
-                } else if ["jpg", "png", "jpeg", "gif", "bmp", "webp"].contains(fileExtension) || label.contains("photo") || label.contains("image") {
+                } else if label.contains("photo") || label.contains("image") {
                     downloadType = .image
-                } else if ["mp3", "aac", "wav", "m4a", "ogg"].contains(fileExtension) || label.contains("audio") || label.contains("sound") {
+                } else if ["mp4", "mov", "mkv"].contains(fileExtension) {
+                    downloadType = .video
+                } else if ["webm", "webp"].contains(fileExtension) {
+                    // webm/webp can be audio or video, default to video but will be corrected by Content-Type
+                    downloadType = .video
+                } else if ["jpg", "png", "jpeg", "gif", "bmp"].contains(fileExtension) {
+                    downloadType = .image
+                } else if ["mp3", "aac", "wav", "m4a", "ogg", "flac"].contains(fileExtension) {
                     downloadType = .audio
                 } else {
                     throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
@@ -599,6 +611,75 @@ struct ContentView: View {
         }
     }
 
+    private func isVideoIOSCompatible(_ fileURL: URL) async -> Bool {
+        // iOS Photos app supports MP4, MOV, M4V with H.264/H.265 codecs
+        let ext = fileURL.pathExtension.lowercased()
+        let compatibleExtensions = ["mp4", "mov", "m4v"]
+        
+        guard compatibleExtensions.contains(ext) else {
+            logOutput("Video format \(ext) is not iOS compatible (not MP4/MOV/M4V)")
+            return false
+        }
+        
+        // Check codec compatibility using AVFoundation
+        let asset = AVAsset(url: fileURL)
+        
+        // Load tracks asynchronously
+        do {
+            let tracks = try await asset.loadTracks(withMediaType: .video)
+            
+            guard !tracks.isEmpty else {
+                logOutput("Video file has no video tracks")
+                return false
+            }
+            
+            // Check if video codec is compatible (H.264/H.265)
+            for track in tracks {
+                let formatDescriptions = try await track.load(.formatDescriptions) as? [CMFormatDescription] ?? []
+                for formatDesc in formatDescriptions {
+                    let codecType = CMFormatDescriptionGetMediaSubType(formatDesc)
+                    // H.264 = 'avc1', H.265/HEVC = 'hvc1' or 'hev1'
+                    let codecString = String(format: "%c%c%c%c", 
+                                           (codecType >> 24) & 0xFF,
+                                           (codecType >> 16) & 0xFF,
+                                           (codecType >> 8) & 0xFF,
+                                           codecType & 0xFF)
+                    
+                    if codecString == "avc1" || codecString == "hvc1" || codecString == "hev1" {
+                        logOutput("Video codec \(codecString) is iOS compatible")
+                        return true
+                    }
+                }
+            }
+            
+            logOutput("Video codec is not iOS compatible (not H.264/H.265)")
+            return false
+        } catch {
+            logOutput("Error checking video compatibility: \(error.localizedDescription)")
+            // If we can't check, assume incompatible to be safe
+            return false
+        }
+    }
+    
+    private func isImageIOSCompatible(_ fileURL: URL) -> Bool {
+        // iOS Photos app supports JPEG, PNG, HEIF, HEIC, GIF
+        let ext = fileURL.pathExtension.lowercased()
+        let compatibleExtensions = ["jpg", "jpeg", "png", "gif", "heif", "heic"]
+        
+        if compatibleExtensions.contains(ext) {
+            return true
+        }
+        
+        // For other formats, try to load as UIImage to check compatibility
+        if UIImage(contentsOfFile: fileURL.path) != nil {
+            logOutput("Image format \(ext) can be loaded but may not be fully iOS compatible")
+            return true
+        }
+        
+        logOutput("Image format \(ext) is not iOS compatible")
+        return false
+    }
+
     private func handleDownloadSuccess(_ fileURL: URL) {
         downloadedVideoURL = IdentifiableURL(url: fileURL)
         errorMessage = "Download successful"
@@ -612,19 +693,41 @@ struct ContentView: View {
 
         if settings.autoSaveToPhotos && (isImage || isVideo) {
             if isImage {
-                if let image = UIImage(contentsOfFile: fileURL.path) {
-                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    logOutput("Saving image directly to Photos \(image)")
-                    errorMessage = "Image saved to Photos"
-                    NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
-                    isSuccessMessage = true
+                if isImageIOSCompatible(fileURL) {
+                    if let image = UIImage(contentsOfFile: fileURL.path) {
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                        logOutput("Saving image directly to Photos \(image)")
+                        errorMessage = "Image saved to Photos"
+                        NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
+                        isSuccessMessage = true
+                    }
+                } else {
+                    logOutput("Image format not iOS compatible, opening share sheet instead")
+                    DispatchQueue.main.async {
+                        NotificationManager.sendDownloadCompleteNotification(text: "File downloaded, open app to proceed")
+                        downloadedVideoURL = IdentifiableURL(url: fileURL)
+                        showShareSheet()
+                    }
                 }
             } else if isVideo {
-                UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
-                logOutput("Saving video directly to Photos \(fileURL)")
-                errorMessage = "Video saved to Photos"
-                NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
-                isSuccessMessage = true
+                Task {
+                    if await isVideoIOSCompatible(fileURL) {
+                        await MainActor.run {
+                            UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
+                            logOutput("Saving video directly to Photos \(fileURL)")
+                            errorMessage = "Video saved to Photos"
+                            NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
+                            isSuccessMessage = true
+                        }
+                    } else {
+                        await MainActor.run {
+                            logOutput("Video format/codec not iOS compatible, opening share sheet instead")
+                            NotificationManager.sendDownloadCompleteNotification(text: "File downloaded, open app to proceed")
+                            downloadedVideoURL = IdentifiableURL(url: fileURL)
+                            showShareSheet()
+                        }
+                    }
+                }
             }
         } else {
             DispatchQueue.main.async {

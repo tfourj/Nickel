@@ -53,6 +53,18 @@ class SettingsModel: ObservableObject {
     @Published var maxLinkHistoryEntries: Int {
         didSet { UserDefaults.standard.set(maxLinkHistoryEntries, forKey: "maxLinkHistoryEntries") }
     }
+    @Published var useFFmpegForProcessing: Bool {
+        didSet { UserDefaults.standard.set(useFFmpegForProcessing, forKey: "useFFmpegForProcessing") }
+    }
+    @Published var consoleMaxLines: Int {
+        didSet { UserDefaults.standard.set(consoleMaxLines, forKey: "consoleMaxLines") }
+    }
+    @Published var enableFFmpegLogs: Bool {
+        didSet { UserDefaults.standard.set(enableFFmpegLogs, forKey: "enableFFmpegLogs") }
+    }
+    @Published var clearCacheOnStart: Bool {
+        didSet { UserDefaults.standard.set(clearCacheOnStart, forKey: "clearCacheOnStart") }
+    }
 
     static func checkSettings() {
         let defaultValues: [(String, Any)] = [
@@ -72,7 +84,11 @@ class SettingsModel: ObservableObject {
             ("copyDownloadedVideoURL", false),
             ("askDownloadOptionOnShareSheet", false),
             ("enableLinkHistory", true),
-            ("maxLinkHistoryEntries", 10)
+            ("maxLinkHistoryEntries", 10),
+            ("useFFmpegForProcessing", true),
+            ("enableFFmpegLogs", false), // Disabled by default - slows down performance
+            ("consoleMaxLines", 10000), // Max lines before rotation
+            ("clearCacheOnStart", false) // Clear cache on app start
         ]
         for (key, value) in defaultValues {
             if UserDefaults.standard.object(forKey: key) == nil {
@@ -102,5 +118,9 @@ class SettingsModel: ObservableObject {
         self.askDownloadOptionOnShareSheet = UserDefaults.standard.object(forKey: "askDownloadOptionOnShareSheet") as? Bool ?? false
         self.enableLinkHistory = UserDefaults.standard.object(forKey: "enableLinkHistory") as? Bool ?? true
         self.maxLinkHistoryEntries = UserDefaults.standard.object(forKey: "maxLinkHistoryEntries") as? Int ?? 10
+        self.useFFmpegForProcessing = UserDefaults.standard.object(forKey: "useFFmpegForProcessing") as? Bool ?? true
+        self.enableFFmpegLogs = UserDefaults.standard.object(forKey: "enableFFmpegLogs") as? Bool ?? false
+        self.consoleMaxLines = UserDefaults.standard.object(forKey: "consoleMaxLines") as? Int ?? 10000
+        self.clearCacheOnStart = UserDefaults.standard.object(forKey: "clearCacheOnStart") as? Bool ?? false
     }
 }
