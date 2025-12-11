@@ -10,11 +10,24 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Clone SwiftFFmpeg-iOS
+      run: |
+        cd "$GITHUB_WORKSPACE/.."
+        git clone https://github.com/tfourj/SwiftFFmpeg-iOS.git
+        echo "✅ SwiftFFmpeg-iOS cloned"
+
+    - name: Build SwiftFFmpeg-iOS
+      run: |
+        cd "$GITHUB_WORKSPACE/../SwiftFFmpeg-iOS"
+        chmod +x Scripts/build-ffmpeg-ios.sh
+        ./Scripts/build-ffmpeg-ios.sh --version 8.0.1
+        echo "✅ SwiftFFmpeg-iOS built"
 
     - name: List available Xcode versions
       run: ls -1 /Applications/ | grep Xcode
