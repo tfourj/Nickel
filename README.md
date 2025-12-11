@@ -43,6 +43,15 @@ Visit [getnickel.site](https://getnickel.site) for the latest features and updat
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
+## Credits & Acknowledgments
+
+Nickel uses the following libraries:
+
+- **[FFmpeg](https://ffmpeg.org/)** - A complete, cross-platform solution to record, convert and stream audio and video. FFmpeg is licensed under [LGPL/GPL](https://ffmpeg.org/legal.html).
+- **[LAME](https://lame.sourceforge.io/)** - An MP3 encoder library used for audio encoding. LAME is licensed under [LGPL](https://lame.sourceforge.io/about.php).
+
+These libraries are integrated via [SwiftFFmpeg-iOS](https://github.com/tfourj/SwiftFFmpeg-iOS), which provides Swift bindings for FFmpeg on iOS.
+
 ## License
 
 This project is licensed under the GPLv3 - see the [License](LICENSE) file for details.
