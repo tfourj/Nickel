@@ -252,6 +252,39 @@ class LocalProcessingManager {
         let audioExtensions = ["mp3", "m4a", "aac", "wav", "flac", "ogg"]
         
         if audioExtensions.contains(fileExtension) {
+            if fileExtension == "mp3" {
+                let codecName = await FFmpegProcessingManager.shared.getAudioCodecName(fileURL: mainFile)
+                let normalizedCodec = codecName?.lowercased() ?? ""
+                if normalizedCodec == "mp3" || normalizedCodec == "mp3float" {
+                    logOutput("File is already an MP3 audio file, returning directly")
+                    progressHandler?("Audio file ready")
+                    return mainFile
+                }
+                
+                let baseName = (response.output.filename as NSString).deletingPathExtension
+                let outputFilename = response.output.filename.lowercased().hasSuffix(".mp3") ? response.output.filename : "\(baseName).mp3"
+                
+                logOutput("File has .mp3 extension but codec is \(codecName ?? "unknown"), transcoding to MP3")
+                progressHandler?("Transcoding audio to MP3...")
+                
+                let useFFmpeg = UserDefaults.standard.object(forKey: "useFFmpegForProcessing") as? Bool ?? true
+                if useFFmpeg {
+                    return try await FFmpegProcessingManager.shared.transcodeAudioToMp3(
+                        audioURL: mainFile,
+                        filename: outputFilename,
+                        progressHandler: progressHandler,
+                        shouldCancel: { self.shouldCancel }
+                    )
+                }
+                
+                return try await AVExportProcessingManager.shared.transcodeAudioToMp3(
+                    audioURL: mainFile,
+                    filename: outputFilename,
+                    progressHandler: progressHandler,
+                    shouldCancel: { self.shouldCancel }
+                )
+            }
+            
             logOutput("File is already an audio file (\(fileExtension)), returning directly")
             progressHandler?("Audio file ready")
             return mainFile

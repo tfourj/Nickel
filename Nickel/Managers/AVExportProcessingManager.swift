@@ -169,6 +169,26 @@ class AVExportProcessingManager {
         
         return try await exportComposition(composition, filename: filename, progressHandler: progressHandler, shouldCancel: shouldCancel)
     }
+
+    func transcodeAudioToMp3(audioURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
+        let composition = AVMutableComposition()
+        
+        let audioAsset = AVAsset(url: audioURL)
+        let audioTracks = try await audioAsset.loadTracks(withMediaType: .audio)
+        
+        guard let sourceAudioTrack = audioTracks.first else {
+            throw ProcessingError.processingFailed("No audio tracks found in audio file")
+        }
+        
+        guard let audioTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            throw ProcessingError.processingFailed("Failed to create audio composition track")
+        }
+        
+        let audioTimeRange = try await sourceAudioTrack.load(.timeRange)
+        try audioTrack.insertTimeRange(audioTimeRange, of: sourceAudioTrack, at: .zero)
+        
+        return try await exportComposition(composition, filename: filename, progressHandler: progressHandler, shouldCancel: shouldCancel)
+    }
     
     func remuxVideo(videoURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
         // For remuxing, we'll just copy the video to a new container format
@@ -294,4 +314,3 @@ class AVExportProcessingManager {
         }
     }
 }
-

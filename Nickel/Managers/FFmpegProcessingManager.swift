@@ -250,6 +250,36 @@ class FFmpegProcessingManager {
             shouldCancel: shouldCancel
         )
     }
+
+    func transcodeAudioToMp3(audioURL: URL, filename: String, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
+        logOutput("Starting FFmpeg audio transcode to MP3...")
+        
+        guard FileManager.default.fileExists(atPath: audioURL.path) else {
+            throw ProcessingError.processingFailed("Audio file does not exist at path: \(audioURL.path)")
+        }
+        
+        let finalOutputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        
+        let arguments = [
+            "-i", audioURL.path,
+            "-vn",
+            "-map", "0:a:0",
+            "-c:a", "libmp3lame",
+            "-q:a", "2",
+            "-y",
+            finalOutputURL.path  // Will be replaced with temp path in helper
+        ]
+        
+        logOutput("FFmpeg command: \(arguments.joined(separator: " "))")
+        progressHandler?("Transcoding audio to MP3 with FFmpeg...")
+        
+        return try await executeFFmpegWithTempFile(
+            arguments: arguments,
+            finalOutputURL: finalOutputURL,
+            progressHandler: progressHandler,
+            shouldCancel: shouldCancel
+        )
+    }
     
     func remuxVideo(videoURL: URL, filename: String, hasAudio: Bool = true, progressHandler: ((String) -> Void)?, shouldCancel: @escaping () -> Bool) async throws -> URL {
         logOutput("Starting FFmpeg remux process...")
@@ -348,6 +378,58 @@ class FFmpegProcessingManager {
                     logOutput("Error checking for audio tracks: \(error.localizedDescription)")
                     // If we can't check, assume it has audio to avoid unnecessary remuxing
                     continuation.resume(returning: true)
+                }
+            }
+        }
+    }
+
+    func getAudioCodecName(fileURL: URL) async -> String? {
+        logOutput("Checking audio codec using ffprobe: \(fileURL.path)")
+        
+        let arguments = [
+            "-v", "error",
+            "-select_streams", "a:0",
+            "-show_entries", "stream=codec_name",
+            "-of", "json",
+            fileURL.path
+        ]
+        
+        return await withCheckedContinuation { continuation in
+            ffmpegExecutionQueue.async {
+                do {
+                    let (exitCode, output) = try SwiftFFmpeg.execute(arguments, tool: .ffprobe)
+                    let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                    var codecName: String? = nil
+                    
+                    if let jsonStart = trimmedOutput.firstIndex(of: "{"),
+                       let jsonEnd = trimmedOutput.lastIndex(of: "}") {
+                        let jsonString = String(trimmedOutput[jsonStart...jsonEnd])
+                        if let data = jsonString.data(using: .utf8),
+                           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                           let streams = json["streams"] as? [[String: Any]] {
+                            codecName = streams.compactMap { $0["codec_name"] as? String }.first
+                        }
+                    } else if trimmedOutput.lowercased().contains("mp3") {
+                        codecName = "mp3"
+                    }
+                    
+                    if exitCode == 0, let codecName = codecName, !codecName.isEmpty {
+                        logOutput("ffprobe audio codec result: \(codecName)")
+                        continuation.resume(returning: codecName)
+                    } else {
+                        if exitCode == 0 && !trimmedOutput.isEmpty {
+                            logOutput("ffprobe codec output unrecognized: \(trimmedOutput)")
+                        } else {
+                            logOutput("ffprobe failed to detect codec (exitCode=\(exitCode))")
+                        }
+                        continuation.resume(returning: nil)
+                    }
+                } catch SwiftFFmpegError.executionFailed(let code) {
+                    logOutput("ffprobe codec check failed with exit code \(code)")
+                    continuation.resume(returning: nil)
+                } catch {
+                    logOutput("Error checking audio codec: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
                 }
             }
         }
@@ -568,4 +650,3 @@ class FFmpegProcessingManager {
         }
     }
 }
-
