@@ -16,6 +16,17 @@ class FFmpegProcessingManager {
     private var logMessages: [String] = []
     private var isLogHandlerSet = false
     private let logHandlerLock = NSLock()
+    private let ffmpegLogBufferQueue = DispatchQueue(label: "com.ffmpeg.logbuffer")
+    private var ffmpegLogBuffer: [String] = []
+    private var ffmpegLogFlushTimer: DispatchSourceTimer?
+    private let ffmpegLogFlushInterval: TimeInterval = 0.25
+    private let ffmpegLogMaxBufferLines = 200
+    private let ffmpegLogMaxStoredLines = 2000
+    private var ffmpegLogWindowStart = Date.distantPast
+    private var ffmpegLogWindowCount = 0
+    private var ffmpegLogDroppedCount = 0
+    private let ffmpegLogRateWindow: TimeInterval = 1.0
+    private let ffmpegLogMaxPerWindow = 200
     
     // Dedicated serial queue for FFmpeg execution
     private let ffmpegExecutionQueue = DispatchQueue(label: "com.ffmpeg.execution", qos: .userInitiated)
@@ -37,6 +48,72 @@ class FFmpegProcessingManager {
         DispatchQueue.main.async {
             // Set quiet level by default (will be adjusted per-operation)
             SwiftFFmpeg.setLogLevel(.quiet)
+        }
+    }
+
+    private func enqueueFFmpegLog(_ message: String) {
+        ffmpegLogBufferQueue.async {
+            let now = Date()
+            if now.timeIntervalSince(self.ffmpegLogWindowStart) >= self.ffmpegLogRateWindow {
+                self.ffmpegLogWindowStart = now
+                self.ffmpegLogWindowCount = 0
+            }
+            
+            if self.ffmpegLogWindowCount >= self.ffmpegLogMaxPerWindow {
+                self.ffmpegLogDroppedCount += 1
+                return
+            }
+            self.ffmpegLogWindowCount += 1
+            self.ffmpegLogBuffer.append(message)
+            
+            if self.ffmpegLogBuffer.count >= self.ffmpegLogMaxBufferLines {
+                self.flushFFmpegLogBufferLocked()
+                return
+            }
+            
+            if self.ffmpegLogFlushTimer == nil {
+                let timer = DispatchSource.makeTimerSource(queue: self.ffmpegLogBufferQueue)
+                timer.schedule(deadline: .now() + self.ffmpegLogFlushInterval, repeating: self.ffmpegLogFlushInterval)
+                timer.setEventHandler { [weak self] in
+                    self?.flushFFmpegLogBufferLocked()
+                }
+                self.ffmpegLogFlushTimer = timer
+                timer.resume()
+            }
+        }
+    }
+    
+    private func flushFFmpegLogBufferLocked() {
+        guard !ffmpegLogBuffer.isEmpty else {
+            if let timer = ffmpegLogFlushTimer {
+                timer.cancel()
+                ffmpegLogFlushTimer = nil
+            }
+            return
+        }
+        
+        var messages = ffmpegLogBuffer
+        ffmpegLogBuffer.removeAll(keepingCapacity: true)
+        
+        if ffmpegLogDroppedCount > 0 {
+            messages.append("[FFmpeg] Dropped \(ffmpegLogDroppedCount) log lines to keep app responsive")
+            ffmpegLogDroppedCount = 0
+        }
+        
+        if UserDefaults.standard.bool(forKey: "enableConsole") {
+            ConsoleLogger.shared.appendLogs(messages)
+        }
+        
+        print(messages.joined(separator: "\n"))
+    }
+    
+    private func flushFFmpegLogBuffer() {
+        ffmpegLogBufferQueue.async {
+            self.flushFFmpegLogBufferLocked()
+            if let timer = self.ffmpegLogFlushTimer {
+                timer.cancel()
+                self.ffmpegLogFlushTimer = nil
+            }
         }
     }
     
@@ -445,9 +522,16 @@ class FFmpegProcessingManager {
         logQueue.sync {
             logMessages.removeAll()
         }
-        
         // Set up log handler BEFORE executing FFmpeg
         let enableFFmpegLogs = UserDefaults.standard.bool(forKey: "enableFFmpegLogs")
+        if enableFFmpegLogs {
+            ffmpegLogBufferQueue.sync {
+                ffmpegLogBuffer.removeAll(keepingCapacity: true)
+                ffmpegLogWindowStart = Date.distantPast
+                ffmpegLogWindowCount = 0
+                ffmpegLogDroppedCount = 0
+            }
+        }
         
         // Set log level and handler synchronously
         if enableFFmpegLogs {
@@ -459,6 +543,8 @@ class FFmpegProcessingManager {
         // Create a thread-safe progress handler wrapper
         let progressQueue = DispatchQueue(label: "com.ffmpeg.progress")
         var currentProgressHandler: ((String) -> Void)? = progressHandler
+        var lastProgressUpdate = Date.distantPast
+        let progressUpdateInterval: TimeInterval = 0.25
         
         // Set log handler thread-safely
         logHandlerLock.lock()
@@ -468,6 +554,10 @@ class FFmpegProcessingManager {
             // Thread-safe append (always collect for error reporting)
             self.logQueue.sync {
                 self.logMessages.append(message)
+                if self.logMessages.count > self.ffmpegLogMaxStoredLines {
+                    let overflow = self.logMessages.count - self.ffmpegLogMaxStoredLines
+                    self.logMessages.removeFirst(overflow)
+                }
             }
             
             // Only log to console if FFmpeg logs are enabled
@@ -483,10 +573,7 @@ class FFmpegProcessingManager {
                     levelPrefix = "[FFmpeg \(level)]"
                 }
                 let formattedMessage = "\(levelPrefix) \(message)"
-                // Always print to Xcode console
-                print(formattedMessage)
-                // Add to ConsoleLogger if console is enabled
-                logOutput(formattedMessage)
+                self.enqueueFFmpegLog(formattedMessage)
             }
             
             // Parse progress from FFmpeg output thread-safely
@@ -498,14 +585,22 @@ class FFmpegProcessingManager {
                     if let timeEndRange = timeString.range(of: " ") {
                         let time = String(timeString[..<timeEndRange.lowerBound])
                         progressQueue.async {
-                            currentProgressHandler?("Processing: \(time)")
+                            let now = Date()
+                            if now.timeIntervalSince(lastProgressUpdate) >= progressUpdateInterval {
+                                lastProgressUpdate = now
+                                currentProgressHandler?("Processing: \(time)")
+                            }
                         }
                     } else {
                         // Sometimes time is at the end of the line
                         let time = timeString.trimmingCharacters(in: .whitespacesAndNewlines)
                         if !time.isEmpty {
                             progressQueue.async {
-                                currentProgressHandler?("Processing: \(time)")
+                                let now = Date()
+                                if now.timeIntervalSince(lastProgressUpdate) >= progressUpdateInterval {
+                                    lastProgressUpdate = now
+                                    currentProgressHandler?("Processing: \(time)")
+                                }
                             }
                         }
                     }
@@ -533,6 +628,7 @@ class FFmpegProcessingManager {
                     isLogHandlerSet = false
                 }
                 logHandlerLock.unlock()
+                self.flushFFmpegLogBuffer()
                 
                 // Clear progress handler
                 progressQueue.sync {
@@ -555,6 +651,7 @@ class FFmpegProcessingManager {
                     isLogHandlerSet = false
                 }
                 logHandlerLock.unlock()
+                self.flushFFmpegLogBuffer()
                 
                 // Clear progress handler
                 progressQueue.sync {

@@ -17,8 +17,14 @@ final class ConsoleLogger: ObservableObject {
     
     /// Appends a new message to the log (always logs everything).
     func appendLog(_ message: String) {
+        appendLogs([message])
+    }
+    
+    /// Appends multiple messages to the log (always logs everything).
+    func appendLogs(_ messages: [String]) {
+        guard !messages.isEmpty else { return }
         DispatchQueue.main.async {
-            self.logLines.append(message)
+            self.logLines.append(contentsOf: messages)
             
             // Rotate if exceeding max lines (keep last maxLines)
             if self.logLines.count > self.maxLines {

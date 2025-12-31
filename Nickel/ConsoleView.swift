@@ -5,11 +5,31 @@ import Combine
 final class ConsoleLogger: ObservableObject {
     static let shared = ConsoleLogger()
     @Published private(set) var log: String = ""
+    private var logLines: [String] = []
+    private let maxLines: Int
+
+    init() {
+        let maxLinesSetting = UserDefaults.standard.object(forKey: "consoleMaxLines") as? Int ?? 10000
+        self.maxLines = maxLinesSetting
+    }
 
     /// Appends a new message to the log.
     func appendLog(_ message: String) {
+        appendLogs([message])
+    }
+    
+    /// Appends multiple messages to the log in one UI update.
+    func appendLogs(_ messages: [String]) {
+        guard !messages.isEmpty else { return }
         DispatchQueue.main.async {
-            self.log.append("\(message)\n")
+            self.logLines.append(contentsOf: messages)
+            
+            if self.logLines.count > self.maxLines {
+                let removeCount = self.logLines.count - self.maxLines
+                self.logLines.removeFirst(removeCount)
+            }
+            
+            self.log = self.logLines.joined(separator: "\n")
         }
     }
 }
