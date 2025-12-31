@@ -486,7 +486,21 @@ class FFmpegProcessingManager {
                            let streams = json["streams"] as? [[String: Any]] {
                             codecName = streams.compactMap { $0["codec_name"] as? String }.first
                         }
-                    } else if trimmedOutput.lowercased().contains("mp3") {
+                    }
+                    
+                    if codecName == nil, !trimmedOutput.isEmpty {
+                        let pattern = "\"codec_name\"\\s*:\\s*\"([^\"]+)\""
+                        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                            let range = NSRange(trimmedOutput.startIndex..<trimmedOutput.endIndex, in: trimmedOutput)
+                            if let match = regex.firstMatch(in: trimmedOutput, options: [], range: range),
+                               match.numberOfRanges > 1,
+                               let codecRange = Range(match.range(at: 1), in: trimmedOutput) {
+                                codecName = String(trimmedOutput[codecRange])
+                            }
+                        }
+                    }
+                    
+                    if codecName == nil, trimmedOutput.lowercased().contains("mp3") {
                         codecName = "mp3"
                     }
                     
