@@ -39,12 +39,6 @@ struct UserInterfaceSettingsView: View {
                         }
                     }
                 }
-                
-                #if DEBUG
-                Toggle(isOn: $settings.enableDebugTab) {
-                    Text("Show Debug Tab")
-                }
-                #endif
             }
             
             Section(header: Text("Link History")) {

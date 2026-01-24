@@ -8,9 +8,13 @@
 import SwiftUI
 
 struct AboutView: View {
+    @EnvironmentObject var settings: SettingsModel
     @State private var isCheckingForUpdate = false
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
+    @State private var tapCount = 0
+    @State private var lastTapTime: Date?
+    @State private var showDebugModeAlert = false
     
     var appVersion: String {
         guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
@@ -35,6 +39,9 @@ struct AboutView: View {
                         .scaledToFit()
                         .frame(width: 80, height: 80)
                         .cornerRadius(16)
+                        .onTapGesture {
+                            handleLogoTap()
+                        }
                     
                     VStack(spacing: 4) {
                         Text("Nickel")
@@ -132,9 +139,40 @@ struct AboutView: View {
                 }
             }
         }
+        .alert("Debug Mode", isPresented: $showDebugModeAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(settings.enableDebugTab ? "Debug mode enabled" : "Debug mode disabled")
+        }
+    }
+    
+    private func handleLogoTap() {
+        let now = Date()
+        
+        if let lastTap = lastTapTime, now.timeIntervalSince(lastTap) > 0.8 {
+            tapCount = 0
+        }
+        
+        tapCount += 1
+        lastTapTime = now
+        
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        if tapCount >= 5 {
+            settings.enableDebugTab.toggle()
+            tapCount = 0
+            lastTapTime = nil
+            
+            let successGenerator = UINotificationFeedbackGenerator()
+            successGenerator.notificationOccurred(.success)
+            
+            showDebugModeAlert = true
+        }
     }
 }
 
 #Preview {
     AboutView()
+        .environmentObject(SettingsModel())
 } 

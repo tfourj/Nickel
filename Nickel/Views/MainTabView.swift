@@ -41,7 +41,7 @@ struct MainTabView: View {
                         }
                         .tag(2) // Console tab
                 }
-#if DEBUG
+                
                 if settings.enableDebugTab {
                     DebugView()
                         .tabItem {
@@ -49,7 +49,6 @@ struct MainTabView: View {
                         }
                         .tag(3) // Debug tab
                 }
-#endif
             }
             if completedLandingPageVersion != currentLandingPageVersion {
                 LandingPageView(completedVersion: $completedLandingPageVersion, currentVersion: currentLandingPageVersion)

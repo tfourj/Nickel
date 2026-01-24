@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-#if DEBUG
 struct DebugView: View {
     @EnvironmentObject var settings: SettingsModel
     @State private var showRemoveAlert = false
@@ -291,5 +290,4 @@ struct FolderSection: View {
         )
     }
 }
-#endif
 
