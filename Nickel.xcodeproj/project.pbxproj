@@ -26,8 +26,8 @@
 		82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */; };
 		82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */; };
 		82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */; };
-		82D39CDC2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */; };
 		82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */; };
+		82D39CDF2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		82E007052E19702000F68C7D /* LocalProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E007042E19701800F68C7D /* LocalProcessingManager.swift */; };
 		82E1A07D2ED64A170097A764 /* FFmpegTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E1A07C2ED64A170097A764 /* FFmpegTest.swift */; };
@@ -85,11 +85,11 @@
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
 		82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVExportProcessingManager.swift; sourceTree = "<group>"; };
 		82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessingManager.swift; sourceTree = "<group>"; };
-		82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadBehaviorSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestConfigurationSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInterfaceSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/DownloadBehaviorSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/NotificationsSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/ProcessingSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/RequestConfigurationSettingsView.swift; sourceTree = "<group>"; };
+		82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/UserInterfaceSettingsView.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		82E007042E19701800F68C7D /* LocalProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProcessingManager.swift; sourceTree = "<group>"; };
 		82E1A07C2ED64A170097A764 /* FFmpegTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegTest.swift; sourceTree = "<group>"; };
@@ -186,7 +186,7 @@
 				82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */,
 				82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */,
 				82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */,
-				82D39CD82EC6547B008CAB64 /* UserInterfaceSettingsView.swift */,
+				82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */,
 				821651F02EBA920400D75A67 /* LinkHistoryView.swift */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
 				FE83506F2D66964400861765 /* ContentView.swift */,
@@ -366,8 +366,8 @@
 				82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */,
 				82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */,
 				82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */,
-				82D39CDC2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */,
 				82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */,
+				82D39CDF2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */,
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
 				820F25A62DAAB68400289272 /* AppAttest.swift in Sources */,
