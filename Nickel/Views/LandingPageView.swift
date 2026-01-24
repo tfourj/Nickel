@@ -147,7 +147,7 @@ struct LandingPageView: View {
                         .padding(.bottom, 20)
 
                         Button(action: {
-                            if let url = URL(string: "https://getnickel.site/discord") {
+                            if let url = URL(string: "https://getnickel.app/discord") {
                                 UIApplication.shared.open(url)
                             }
                         }) {

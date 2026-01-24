@@ -14,12 +14,12 @@ The app does not interface directly with social media platforms - it relies on y
 ```
 This project is designed to work with:
 - [Cobalt API](https://github.com/imputnet/cobalt)
-- [Nickel-Auth](https://github.com/tfourj/Nickel-Auth) *(optional, but recommended)*
+- [Nickel-Auth](https://github.com/tfourj/Nickel-Auth) *(Works as authentication bridge for public instances)*
 - [SwiftFFmpeg-iOS](https://github.com/tfourj/SwiftFFmpeg-iOS)
 
 ## Features
 
-Visit [getnickel.site](https://getnickel.site) for the latest features and updates.
+Visit [getnickel.site](https://getnickel.app) for the latest features and updates.
 
 ## Requirements
 
@@ -30,13 +30,13 @@ Visit [getnickel.site](https://getnickel.site) for the latest features and updat
 
 ## Installation
 
-- Download from [TestFlight](https://getnickel.site/testflight)
+- Download from [TestFlight](https://getnickel.app/testflight)
 - Sideload the [IPA](https://github.com/tfourj/Nickel/actions) using tools like AltStore or ESign
 
 ## Configuration
 
 1. Open app settings
-2. Enter your custom API URL and authentication details or get them from [public list](https://getnickel.site/instances)
+2. Enter your custom API URL and authentication details or get them from [public list](https://getnickel.app/instances)
 3. Configure optional settings like auto-save and notifications
 
 ## Contributing

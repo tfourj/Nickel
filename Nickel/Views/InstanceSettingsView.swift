@@ -89,7 +89,7 @@ struct InstanceSettingsView: View {
                     }
                 } else if settings.authMethod == "Nickel-Auth" || settings.authMethod == "Nickel-Auth (Custom)" {
                     Button(action: {
-                        if let url = URL(string: "https://getnickel.site/instances/") {
+                        if let url = URL(string: "https://getnickel.app/instances/") {
                             UIApplication.shared.open(url)
                         }
                     }) {

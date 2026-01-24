@@ -79,7 +79,7 @@ struct AboutView: View {
             
             Section(header: Text("Support")) {
                 Button(action: {
-                    if let url = URL(string: "https://getnickel.site") {
+                    if let url = URL(string: "https://getnickel.app") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -92,7 +92,7 @@ struct AboutView: View {
                 }
                 
                 Button(action: {
-                    if let url = URL(string: "https://getnickel.site/instances/") {
+                    if let url = URL(string: "https://getnickel.app/instances/") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -104,7 +104,7 @@ struct AboutView: View {
                     }
                 }
                                 Button(action: {
-                    if let url = URL(string: "https://getnickel.site/discord") {
+                    if let url = URL(string: "https://getnickel.app/discord") {
                         UIApplication.shared.open(url)
                     }
                 }) {
