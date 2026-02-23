@@ -23,11 +23,11 @@
 		82BDA7F12D981FA300E33E30 /* NotificationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BDA7F02D981F9900E33E30 /* NotificationTest.swift */; };
 		82D39CD22EC653E8008CAB64 /* AVExportProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */; };
 		82D39CD32EC653E8008CAB64 /* FFmpegProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */; };
-		82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */; };
-		82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */; };
-		82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */; };
-		82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */; };
-		82D39CDF2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */; };
+		82D39CD92EC6547B008CAB64 /* Settings/NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD52EC6547B008CAB64 /* Settings/NotificationsSettingsView.swift */; };
+		82D39CDA2EC6547B008CAB64 /* Settings/ProcessingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD62EC6547B008CAB64 /* Settings/ProcessingSettingsView.swift */; };
+		82D39CDB2EC6547B008CAB64 /* Settings/DownloadBehaviorSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD42EC6547B008CAB64 /* Settings/DownloadBehaviorSettingsView.swift */; };
+		82D39CDD2EC6547B008CAB64 /* Settings/RequestConfigurationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CD72EC6547B008CAB64 /* Settings/RequestConfigurationSettingsView.swift */; };
+		82D39CDF2EC6547B008CAB64 /* Settings/UserInterfaceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D39CDE2EC6547B008CAB64 /* Settings/UserInterfaceSettingsView.swift */; };
 		82D449E52DAC65C3005D3763 /* LandingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D449E42DAC65C3005D3763 /* LandingPageView.swift */; };
 		82E007052E19702000F68C7D /* LocalProcessingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E007042E19701800F68C7D /* LocalProcessingManager.swift */; };
 		82E1A07D2ED64A170097A764 /* FFmpegTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E1A07C2ED64A170097A764 /* FFmpegTest.swift */; };
@@ -85,11 +85,11 @@
 		82BDA7F02D981F9900E33E30 /* NotificationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTest.swift; sourceTree = "<group>"; };
 		82D39CD02EC653E8008CAB64 /* AVExportProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVExportProcessingManager.swift; sourceTree = "<group>"; };
 		82D39CD12EC653E8008CAB64 /* FFmpegProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegProcessingManager.swift; sourceTree = "<group>"; };
-		82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/DownloadBehaviorSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/NotificationsSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/ProcessingSettingsView.swift; sourceTree = "<group>"; };
-		82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/RequestConfigurationSettingsView.swift; sourceTree = "<group>"; };
-		82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/UserInterfaceSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD42EC6547B008CAB64 /* Settings/DownloadBehaviorSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/DownloadBehaviorSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD52EC6547B008CAB64 /* Settings/NotificationsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/NotificationsSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD62EC6547B008CAB64 /* Settings/ProcessingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/ProcessingSettingsView.swift; sourceTree = "<group>"; };
+		82D39CD72EC6547B008CAB64 /* Settings/RequestConfigurationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/RequestConfigurationSettingsView.swift; sourceTree = "<group>"; };
+		82D39CDE2EC6547B008CAB64 /* Settings/UserInterfaceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings/UserInterfaceSettingsView.swift; sourceTree = "<group>"; };
 		82D449E42DAC65C3005D3763 /* LandingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPageView.swift; sourceTree = "<group>"; };
 		82E007042E19701800F68C7D /* LocalProcessingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProcessingManager.swift; sourceTree = "<group>"; };
 		82E1A07C2ED64A170097A764 /* FFmpegTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegTest.swift; sourceTree = "<group>"; };
@@ -182,11 +182,11 @@
 		82D449E92DAC65D3005D3763 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				82D39CD42EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift */,
-				82D39CD52EC6547B008CAB64 /* NotificationsSettingsView.swift */,
-				82D39CD62EC6547B008CAB64 /* ProcessingSettingsView.swift */,
-				82D39CD72EC6547B008CAB64 /* RequestConfigurationSettingsView.swift */,
-				82D39CDE2EC6547B008CAB64 /* UserInterfaceSettingsView.swift */,
+				82D39CD42EC6547B008CAB64 /* Settings/DownloadBehaviorSettingsView.swift */,
+				82D39CD52EC6547B008CAB64 /* Settings/NotificationsSettingsView.swift */,
+				82D39CD62EC6547B008CAB64 /* Settings/ProcessingSettingsView.swift */,
+				82D39CD72EC6547B008CAB64 /* Settings/RequestConfigurationSettingsView.swift */,
+				82D39CDE2EC6547B008CAB64 /* Settings/UserInterfaceSettingsView.swift */,
 				821651F02EBA920400D75A67 /* LinkHistoryView.swift */,
 				FE83506E2D66964400861765 /* ConsoleView.swift */,
 				FE83506F2D66964400861765 /* ContentView.swift */,
@@ -363,11 +363,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				82024C5C2DB181E9005FFEF4 /* SettingsModel.swift in Sources */,
-				82D39CD92EC6547B008CAB64 /* NotificationsSettingsView.swift in Sources */,
-				82D39CDA2EC6547B008CAB64 /* ProcessingSettingsView.swift in Sources */,
-				82D39CDB2EC6547B008CAB64 /* DownloadBehaviorSettingsView.swift in Sources */,
-				82D39CDD2EC6547B008CAB64 /* RequestConfigurationSettingsView.swift in Sources */,
-				82D39CDF2EC6547B008CAB64 /* UserInterfaceSettingsView.swift in Sources */,
+				82D39CD92EC6547B008CAB64 /* Settings/NotificationsSettingsView.swift in Sources */,
+				82D39CDA2EC6547B008CAB64 /* Settings/ProcessingSettingsView.swift in Sources */,
+				82D39CDB2EC6547B008CAB64 /* Settings/DownloadBehaviorSettingsView.swift in Sources */,
+				82D39CDD2EC6547B008CAB64 /* Settings/RequestConfigurationSettingsView.swift in Sources */,
+				82D39CDF2EC6547B008CAB64 /* Settings/UserInterfaceSettingsView.swift in Sources */,
 				FE83507B2D66964400861765 /* ConsoleView.swift in Sources */,
 				FE83507C2D66964400861765 /* ContentView.swift in Sources */,
 				820F25A62DAAB68400289272 /* AppAttest.swift in Sources */,
@@ -485,7 +485,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SHARED_BUILD_NUMBER = 001;
-				SHARED_VERSION_NUMBER = 2.2.1;
+				SHARED_VERSION_NUMBER = 2.2.2;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -544,7 +544,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SHARED_BUILD_NUMBER = 001;
-				SHARED_VERSION_NUMBER = 2.2.1;
+				SHARED_VERSION_NUMBER = 2.2.2;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
