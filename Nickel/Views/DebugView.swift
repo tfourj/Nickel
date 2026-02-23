@@ -24,7 +24,7 @@ struct DebugView: View {
                     Text("Temporary Auth Key")
                         .font(.headline)
                     if let key = tempKey, !key.isEmpty {
-                        Text(key)
+                        Text(displayedAuthKey(from: key))
                             .font(.system(.body, design: .monospaced))
                             .padding()
                             .background(Color(.secondarySystemBackground))
@@ -177,6 +177,16 @@ struct DebugView: View {
             return []
         }
     }
+
+    private func displayedAuthKey(from key: String) -> String {
+        #if DEBUG
+        return key
+        #else
+        guard key.count > 5 else { return key }
+        let prefix = key.prefix(5)
+        return "\(prefix)\(String(repeating: "*", count: max(0, key.count - 5)))"
+        #endif
+    }
 }
 
 struct FolderItem: Identifiable {
@@ -290,4 +300,3 @@ struct FolderSection: View {
         )
     }
 }
-
