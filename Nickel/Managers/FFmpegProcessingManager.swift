@@ -51,6 +51,15 @@ class FFmpegProcessingManager {
         }
     }
 
+    private func combinedFFmpegOutput(stdout: String, stderr: String) -> String {
+        let trimmedStdout = stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedStderr = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedStdout.isEmpty { return trimmedStderr }
+        if trimmedStderr.isEmpty { return trimmedStdout }
+        return "\(trimmedStdout)\n\(trimmedStderr)"
+    }
+
     private func enqueueFFmpegLog(_ message: String) {
         ffmpegLogBufferQueue.async {
             let now = Date()
@@ -447,8 +456,10 @@ class FFmpegProcessingManager {
                     logOutput("ffprobe result: exitCode=\(exitCode), hasAudio=\(hasAudio), output=\(trimmedOutput.isEmpty ? "(empty)" : trimmedOutput)")
                     
                     continuation.resume(returning: hasAudio)
-                } catch SwiftFFmpegError.executionFailed(let code) {
-                    logOutput("ffprobe failed with exit code \(code)")
+                } catch SwiftFFmpegError.executionFailed(code: let code, stdout: let stdout, stderr: let stderr) {
+                    let details = self.combinedFFmpegOutput(stdout: stdout, stderr: stderr)
+                    let suffix = details.isEmpty ? "" : ": \(details)"
+                    logOutput("ffprobe failed with exit code \(code)\(suffix)")
                     // If ffprobe fails, assume it has audio to avoid unnecessary remuxing
                     continuation.resume(returning: true)
                 } catch {
@@ -515,8 +526,10 @@ class FFmpegProcessingManager {
                         }
                         continuation.resume(returning: nil)
                     }
-                } catch SwiftFFmpegError.executionFailed(let code) {
-                    logOutput("ffprobe codec check failed with exit code \(code)")
+                } catch SwiftFFmpegError.executionFailed(code: let code, stdout: let stdout, stderr: let stderr) {
+                    let details = self.combinedFFmpegOutput(stdout: stdout, stderr: stderr)
+                    let suffix = details.isEmpty ? "" : ": \(details)"
+                    logOutput("ffprobe codec check failed with exit code \(code)\(suffix)")
                     continuation.resume(returning: nil)
                 } catch {
                     logOutput("Error checking audio codec: \(error.localizedDescription)")
@@ -737,18 +750,28 @@ class FFmpegProcessingManager {
                         logOutput("FFmpeg error: Output file not created. Exit code: \(exitCode). Output: \(fullOutput)")
                         safeResume(throwing: ProcessingError.processingFailed("Output file not created. FFmpeg output: \(fullOutput)"))
                     }
-                } catch SwiftFFmpegError.executionFailed(let code) {
+                } catch SwiftFFmpegError.executionFailed(code: let code, stdout: let stdout, stderr: let stderr) {
                     let allLogs = self.logQueue.sync { self.logMessages.joined(separator: "\n") }
-                    logOutput("FFmpeg error (exit code \(code)): \(allLogs)")
+                    let commandOutput = self.combinedFFmpegOutput(stdout: stdout, stderr: stderr)
+                    let allDetails: String
+                    if allLogs.isEmpty {
+                        allDetails = commandOutput
+                    } else if commandOutput.isEmpty {
+                        allDetails = allLogs
+                    } else {
+                        allDetails = "\(commandOutput)\n\(allLogs)"
+                    }
+
+                    logOutput("FFmpeg error (exit code \(code)): \(allDetails)")
                     
                     // Provide more helpful error message
                     let errorMsg: String
                     if code == -1 {
-                        errorMsg = "FFmpeg crashed or returned invalid exit code. Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
+                        errorMsg = "FFmpeg crashed or returned invalid exit code. Logs: \(allDetails.isEmpty ? "No logs available" : allDetails)"
                     } else if code == 512 {
-                        errorMsg = "FFmpeg returned unusual exit code 512 (possible crash). Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
+                        errorMsg = "FFmpeg returned unusual exit code 512 (possible crash). Logs: \(allDetails.isEmpty ? "No logs available" : allDetails)"
                     } else {
-                        errorMsg = "FFmpeg failed with exit code \(code). Logs: \(allLogs.isEmpty ? "No logs available" : allLogs)"
+                        errorMsg = "FFmpeg failed with exit code \(code). Logs: \(allDetails.isEmpty ? "No logs available" : allDetails)"
                     }
                     
                     safeResume(throwing: ProcessingError.processingFailed(errorMsg))
