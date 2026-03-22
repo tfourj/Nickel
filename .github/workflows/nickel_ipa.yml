@@ -16,18 +16,41 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Clone SwiftFFmpeg-iOS
-      run: |
-        cd "$GITHUB_WORKSPACE/.."
-        git clone https://github.com/tfourj/SwiftFFmpeg-iOS.git
-        echo "✅ SwiftFFmpeg-iOS cloned"
+    - name: Download SwiftFFmpeg-iOS
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: tfourj/SwiftFFmpeg-iOS
+        latest: true
+        fileName: SwiftFFmpeg-iOS.zip
+        out-file-path: swiftffmpeg-download
+        extract: true
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build SwiftFFmpeg-iOS
+    - name: Install SwiftFFmpeg-iOS
       run: |
-        cd "$GITHUB_WORKSPACE/../SwiftFFmpeg-iOS"
-        chmod +x Scripts/build-ffmpeg-ios.sh
-        ./Scripts/build-ffmpeg-ios.sh --version 8.0.1
-        echo "✅ SwiftFFmpeg-iOS built"
+        set -euo pipefail
+
+        SOURCE_DIR=""
+        TARGET_DIR="$GITHUB_WORKSPACE/../SwiftFFmpeg-iOS"
+        EXTRACT_DIR="$GITHUB_WORKSPACE/swiftffmpeg-download"
+
+        if [ -d "$EXTRACT_DIR/SwiftFFmpeg-iOS" ]; then
+          SOURCE_DIR="$EXTRACT_DIR/SwiftFFmpeg-iOS"
+        else
+          SOURCE_DIR=$(find "$EXTRACT_DIR" -maxdepth 2 -type f -name "Package.swift" -exec dirname {} \; | head -n 1)
+        fi
+
+        if [ -z "$SOURCE_DIR" ] || [ ! -d "$SOURCE_DIR" ]; then
+          echo "Could not locate extracted SwiftFFmpeg-iOS folder."
+          find "$EXTRACT_DIR" -maxdepth 3 -print
+          exit 1
+        fi
+
+        rm -rf "$TARGET_DIR"
+        cp -R "$SOURCE_DIR" "$TARGET_DIR"
+
+        echo "Installed SwiftFFmpeg-iOS:"
+        ls -la "$TARGET_DIR"
 
     - name: List available Xcode versions
       run: ls -1 /Applications/ | grep Xcode
