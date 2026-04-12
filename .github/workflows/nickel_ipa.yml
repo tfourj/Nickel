@@ -31,7 +31,7 @@ jobs:
         set -euo pipefail
 
         SOURCE_DIR=""
-        TARGET_DIR="$GITHUB_WORKSPACE/../SwiftFFmpeg-iOS"
+        TARGET_DIR="$GITHUB_WORKSPACE/Frameworks/SwiftFFmpeg-iOS"
         EXTRACT_DIR="$GITHUB_WORKSPACE/swiftffmpeg-download"
 
         if [ -d "$EXTRACT_DIR/SwiftFFmpeg-iOS" ]; then
@@ -47,6 +47,7 @@ jobs:
         fi
 
         rm -rf "$TARGET_DIR"
+        mkdir -p "$(dirname "$TARGET_DIR")"
         cp -R "$SOURCE_DIR" "$TARGET_DIR"
 
         echo "Installed SwiftFFmpeg-iOS:"

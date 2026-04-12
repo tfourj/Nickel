@@ -727,9 +727,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */ = {
+		827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "Frameworks/SwiftFFmpeg-iOS" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../SwiftFFmpeg-iOS";
+			relativePath = Frameworks/SwiftFFmpeg-iOS;
 		};
 /* End XCLocalSwiftPackageReference section */
 
