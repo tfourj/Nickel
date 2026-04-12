@@ -34,6 +34,14 @@ class DownloadManager {
         case localProcessing(LocalProcessingResponse, String?) // response, title
     }
 
+    private func cobaltAPIError(_ message: String, statusCode: Int = 1) -> NSError {
+        NSError(
+            domain: "CobaltAPI",
+            code: statusCode,
+            userInfo: [NSLocalizedDescriptionKey: message]
+        )
+    }
+
     func fetchCobaltURL(
         inputURL: URL,
         downloadModeOverride: String? = nil,
@@ -177,17 +185,21 @@ class DownloadManager {
             let isJSONResponse = contentType.contains("application/json")
 
             if isJSONResponse {
-                // Parse JSON error response
                 let errorDetails = String(data: data, encoding: .utf8) ?? "Unknown error"
                 logOutput("❌ API Error Response (JSON): \(errorDetails)")
-                throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
-                              userInfo: [NSLocalizedDescriptionKey: errorDetails])
+
+                if let cobaltError = CobaltErrorTranslator.decodeResponse(from: data) {
+                    let translatedMessage = CobaltErrorTranslator.message(from: cobaltError)
+                    logOutput("❌ Translated Cobalt API error: \(translatedMessage)")
+                    throw cobaltAPIError(translatedMessage, statusCode: httpResponse.statusCode)
+                }
+
+                throw cobaltAPIError(CobaltErrorTranslator.fallbackMessage, statusCode: httpResponse.statusCode)
             } else {
                 // HTML response (likely Cloudflare or server error)
                 logOutput("❌ HTML Error Response (likely Cloudflare): Status \(httpResponse.statusCode)")
                 let genericError = "Server temporarily unavailable. Please try again later."
-                throw NSError(domain: "CobaltAPI", code: httpResponse.statusCode,
-                              userInfo: [NSLocalizedDescriptionKey: genericError])
+                throw cobaltAPIError(genericError, statusCode: httpResponse.statusCode)
             }
         }
 
@@ -258,8 +270,13 @@ class DownloadManager {
             
         case "error":
             logOutput("❌ API returned an error status")
-            throw NSError(domain: "CobaltAPI", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "API returned an error."])
+            if let cobaltError = CobaltErrorTranslator.decodeResponse(from: data) {
+                let translatedMessage = CobaltErrorTranslator.message(from: cobaltError)
+                logOutput("❌ Translated Cobalt API error: \(translatedMessage)")
+                throw cobaltAPIError(translatedMessage)
+            }
+
+            throw cobaltAPIError(CobaltErrorTranslator.fallbackMessage)
             
         case "local-processing":
             logOutput("Handling local-processing response...")
