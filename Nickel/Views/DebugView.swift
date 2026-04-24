@@ -15,10 +15,51 @@ struct DebugView: View {
     @State private var documentsFolderContents: [FolderItem] = []
     @State private var cachesFolderContents: [FolderItem] = []
     @State private var isLoading = false
+    @State private var testErrorCode = "youtube.login"
+    @State private var testService = "youtube"
+    @State private var testLimit = ""
+    @State private var useNickelAuthOverride = false
+    @State private var translatedErrorPreview = ""
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Error Translation Test")
+                        .font(.headline)
+
+                    TextField("Error code", text: $testErrorCode)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    TextField("Service override", text: $testService)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    TextField("Limit override", text: $testLimit)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.numberPad)
+
+                    Toggle("Use Nickel-Auth override", isOn: $useNickelAuthOverride)
+
+                    Button("Show translated error in UI") {
+                        showTranslatedErrorPreview()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    if !translatedErrorPreview.isEmpty {
+                        Text(translatedErrorPreview)
+                            .font(.subheadline)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                    }
+                }
+
+                Divider()
+
                 // Temporary Auth Key Section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Temporary Auth Key")
@@ -111,8 +152,27 @@ struct DebugView: View {
             .padding()
         }
         .onAppear {
+            useNickelAuthOverride = settings.authMethod.contains("Nickel-Auth")
             loadAllFolderContents()
         }
+    }
+
+    private func showTranslatedErrorPreview() {
+        let service = testService.trimmingCharacters(in: .whitespacesAndNewlines)
+        let limit = testLimit.trimmingCharacters(in: .whitespacesAndNewlines)
+        let translatedMessage = CobaltErrorTranslator.message(
+            for: testErrorCode.trimmingCharacters(in: .whitespacesAndNewlines),
+            service: service.isEmpty ? nil : service,
+            limit: limit.isEmpty ? nil : limit,
+            usesNickelAuth: useNickelAuthOverride
+        )
+
+        translatedErrorPreview = translatedMessage
+        NotificationCenter.default.post(
+            name: Notification.Name("ShowMessageUI"),
+            object: nil,
+            userInfo: ["text": translatedMessage]
+        )
     }
     
     private func loadAllFolderContents() {

@@ -328,7 +328,7 @@
 			mainGroup = FE654B1D2D53E9C500E89563;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "../SwiftFFmpeg-iOS" */,
+				827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "Frameworks/SwiftFFmpeg-iOS" */,
 			);
 			productRefGroup = FE654B272D53E9C500E89563 /* Products */;
 			projectDirPath = "";
@@ -489,7 +489,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SHARED_BUILD_NUMBER = 001;
-				SHARED_VERSION_NUMBER = 2.2.2;
+				SHARED_VERSION_NUMBER = 2.2.3;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -548,7 +548,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SHARED_BUILD_NUMBER = 001;
-				SHARED_VERSION_NUMBER = 2.2.2;
+				SHARED_VERSION_NUMBER = 2.2.3;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -729,7 +729,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		827C977F2ED4FA7100F71D19 /* XCLocalSwiftPackageReference "Frameworks/SwiftFFmpeg-iOS" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Frameworks/SwiftFFmpeg-iOS;
+			relativePath = "Frameworks/SwiftFFmpeg-iOS";
 		};
 /* End XCLocalSwiftPackageReference section */
 

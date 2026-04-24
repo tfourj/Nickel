@@ -69,12 +69,13 @@ class DownloadManager {
         let storedAPIURL = settings.customAPIURL
         let storedAPIKey = settings.customAPIKey
         let authType = settings.authMethod
+        let usesNickelAuth = authType.contains("Nickel-Auth")
 
         logOutput("Loaded config - API URL: \(storedAPIURL), Auth Type: \(authType)")
 
         var apiURL: URL
 
-        if authType.contains("Nickel-Auth") {
+        if usesNickelAuth {
             logOutput("Fetching Nickel-Auth URL from AppAttestClient")
             let appAttestClient = AppAttestClient()
             apiURL = appAttestClient.buildEndpointURL(path: "ios-request")
@@ -100,7 +101,7 @@ class DownloadManager {
         
         // Add URL and api-url to the request body
         requestBody["url"] = inputURL.absoluteString
-        if authType.contains("Nickel-Auth") {
+        if usesNickelAuth {
             requestBody["api-url"] = storedAPIURL
         }
 
@@ -120,7 +121,7 @@ class DownloadManager {
         request.httpBody = jsonData
 
         // Set the Authorization header
-        if authType.contains("Nickel-Auth") {
+        if usesNickelAuth {
             var authValue: String
             let appAttestClient = AppAttestClient()
             
@@ -189,7 +190,7 @@ class DownloadManager {
                 logOutput("❌ API Error Response (JSON): \(errorDetails)")
 
                 if let cobaltError = CobaltErrorTranslator.decodeResponse(from: data) {
-                    let translatedMessage = CobaltErrorTranslator.message(from: cobaltError)
+                    let translatedMessage = CobaltErrorTranslator.message(from: cobaltError, usesNickelAuth: usesNickelAuth)
                     logOutput("❌ Translated Cobalt API error: \(translatedMessage)")
                     throw cobaltAPIError(translatedMessage, statusCode: httpResponse.statusCode)
                 }
@@ -271,7 +272,7 @@ class DownloadManager {
         case "error":
             logOutput("❌ API returned an error status")
             if let cobaltError = CobaltErrorTranslator.decodeResponse(from: data) {
-                let translatedMessage = CobaltErrorTranslator.message(from: cobaltError)
+                let translatedMessage = CobaltErrorTranslator.message(from: cobaltError, usesNickelAuth: usesNickelAuth)
                 logOutput("❌ Translated Cobalt API error: \(translatedMessage)")
                 throw cobaltAPIError(translatedMessage)
             }

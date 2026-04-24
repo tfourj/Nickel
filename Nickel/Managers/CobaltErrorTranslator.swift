@@ -83,11 +83,13 @@ enum CobaltErrorTranslator {
         "timed_out": "the processing instance took too long to respond. it may be overwhelmed at the moment, try again in a few seconds!",
         "rate_exceeded": "you're making too many requests. try again in {{ limit }} seconds.",
         "capacity": "cobalt is at capacity and can't process your request at the moment. try again in a few seconds!",
+        "nickelauth.capacity": "Nickel is at capacity and can't process your request at the moment. try again in a few seconds!",
         "generic": genericMessage,
         "unknown_response": "couldn't read the response from the processing instance. this is probably caused by the web app being out of date. reload the app and try again!",
         "invalid_body": "couldn't send the request to the processing instance. this is probably caused by the web app being out of date. reload the app and try again!",
         "service.unsupported": "this service is not supported yet. have you pasted the right link?",
         "service.disabled": "this service is generally supported by cobalt, but it's disabled on this processing instance. try a link from another service!",
+        "nickelauth.service.disabled": "this service is generally supported by Nickel, but it's disabled on this processing instance. try a link from another service!",
         "service.audio_not_supported": "this service doesn't support audio extraction. try a link from another service!",
         "link.invalid": "your link is invalid or this service is not supported yet. have you pasted the right link?",
         "link.unsupported": "{{ service }} is supported, but i couldn't recognize your link. have you pasted the right one?",
@@ -105,12 +107,15 @@ enum CobaltErrorTranslator {
         "content.video.region": "this video is region locked, and the processing instance is in a different location. try a different link!",
         "content.region": "this content is region locked, and the processing instance is in a different location. try a different link!",
         "content.paid": "this content requires purchase. cobalt can't download paid content. try a different link!",
+        "nickelauth.content.paid": "this content requires purchase. Nickel can't download paid content. try a different link!",
         "content.post.unavailable": "couldn't find anything about this post. its visibility may be limited or it may not exist. make sure your link works and try again in a few seconds!",
         "content.post.private": "couldn't get anything about this post because it's from a private account. try a different link!",
         "content.post.age": "this post is age-restricted, so i can't access it anonymously. try again or try a different link!",
         "youtube.no_matching_format": "youtube didn't return any acceptable formats. cobalt may not support them or they're re-encoding on youtube's side. try again a bit later, but if this issue sticks, please report it!",
+        "nickelauth.youtube.no_matching_format": "youtube didn't return any acceptable formats. Nickel may not support them or they're re-encoding on youtube's side. try again a bit later, but if this issue sticks, please report it!",
         "youtube.decipher": "youtube updated its decipher algorithm and i couldn't extract the info about the video. try again in a few seconds, but if this issue sticks, please report it!",
         "youtube.login": "couldn't get this video because youtube asked the processing instance to prove that it's not a bot. try again in a few seconds, but if it still doesn't work, please report this issue!",
+        "nickelauth.youtube.login": "couldn't get this video because nickel's instances are currently IP blocked/limited. try again later. \n\nWe also recommend trying our new app Palladium (getpalladium.app) which runs yt-dlp on dirrectly from your device and minimizes problems with YouTube!",
         "youtube.token_expired": "couldn't get this video because the youtube token expired and wasn't refreshed. try again in a few seconds, but if it still doesn't work, please report this issue!",
         "youtube.no_hls_streams": "couldn't find any matching HLS streams for this video. try downloading it without HLS!",
         "youtube.api_error": "youtube updated something about its api and i couldn't get any info about this video. try again in a few seconds, but if this issue sticks, please report it!",
@@ -127,17 +132,51 @@ enum CobaltErrorTranslator {
         genericMessage
     }
 
-    static func message(from response: CobaltErrorResponse) -> String {
+    static func message(from response: CobaltErrorResponse, usesNickelAuth: Bool = false) -> String {
         guard let normalizedCode = normalizeCode(response.error?.code) else {
-            return genericMessage
-        }
-
-        guard let template = messages[normalizedCode] else {
             return genericMessage
         }
 
         let service = response.error?.service ?? response.service
         let limit = response.error?.limit ?? response.limit
+
+        return resolvedMessage(
+            normalizedCode: normalizedCode,
+            service: service,
+            limit: limit,
+            usesNickelAuth: usesNickelAuth
+        )
+    }
+
+    static func message(
+        for code: String,
+        service: String? = nil,
+        limit: String? = nil,
+        usesNickelAuth: Bool = false
+    ) -> String {
+        guard let normalizedCode = normalizeCode(code) else {
+            return genericMessage
+        }
+
+        return resolvedMessage(
+            normalizedCode: normalizedCode,
+            service: service,
+            limit: limit,
+            usesNickelAuth: usesNickelAuth
+        )
+    }
+
+    private static func resolvedMessage(
+        normalizedCode: String,
+        service: String?,
+        limit: String?,
+        usesNickelAuth: Bool
+    ) -> String {
+
+        guard let messageCode = messageCode(for: normalizedCode, usesNickelAuth: usesNickelAuth),
+              let template = messages[messageCode] else {
+            return genericMessage
+        }
 
         if template.contains("{{ service }}"), service == nil {
             return fallbackMessage(for: normalizedCode) ?? genericMessage
@@ -166,6 +205,21 @@ enum CobaltErrorTranslator {
         }
 
         return code
+    }
+
+    private static func messageCode(for normalizedCode: String, usesNickelAuth: Bool) -> String? {
+        if usesNickelAuth {
+            let nickelAuthCode = "nickelauth.\(normalizedCode)"
+            if messages[nickelAuthCode] != nil {
+                return nickelAuthCode
+            }
+        }
+
+        if messages[normalizedCode] != nil {
+            return normalizedCode
+        }
+
+        return nil
     }
 
     private static func fallbackMessage(for normalizedCode: String) -> String? {
