@@ -259,17 +259,39 @@ struct ContentView: View {
 
                     VStack(spacing: 10) {
                         HStack(spacing: 12) {
-                            Button("Select All") {
+                            Button(action: {
                                 selectedPickerOptionIDs = Set(pickerOptions.map(\.id))
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle")
+                                    Text("Select All")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(pickerOptions.isEmpty || selectedPickerOptionIDs.count == pickerOptions.count ? 0.06 : 0.14))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
                             }
                             .disabled(pickerOptions.isEmpty || selectedPickerOptionIDs.count == pickerOptions.count)
 
-                            Button("Clear") {
+                            Button(action: {
                                 selectedPickerOptionIDs.removeAll()
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "xmark.circle")
+                                    Text("Clear")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(selectedPickerOptionIDs.isEmpty ? 0.06 : 0.14))
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
                             }
                             .disabled(selectedPickerOptionIDs.isEmpty)
                         }
-                        .font(.subheadline)
+                        .font(.body)
 
                         Button(action: {
                             let selectedOptions = pickerOptions.filter { selectedPickerOptionIDs.contains($0.id) }
