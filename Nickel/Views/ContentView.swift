@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var downloadedVideoURL: IdentifiableURL?
     @State private var pickerOptions: [PickerOption] = []
     @State private var showPicker = false
+    @State private var selectedPickerOptionIDs: Set<String> = []
     @State private var listRefreshID = UUID()
     @State private var selectedDownloadMode: String = "auto"
     @State private var shouldCancelDownload = false
@@ -239,44 +240,74 @@ struct ContentView: View {
         }
         
         .sheet(isPresented: $showPicker) {
-                    VStack {
-                        Text("Select a Download Option")
-                            .font(.headline)
-                            .padding()
-                        
-                        List(pickerOptions, id: \.id) { option in
-                            Button(action: {
-                                selectPickerOption(option)
-                            }) {
-                                HStack {
-                                    // Conditionally display either an image or a music note icon
-                                    if option.label.contains("audio") {  // Check if label contains "audio"
-                                        Image(systemName: "music.note")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 50, height: 50)
-                                    } else {
-                                        // Image preview
-                                        AsyncImage(url: option.url) { image in
-                                            image.resizable()
-                                                .scaledToFit()
-                                                .frame(width: 50, height: 50)
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                    }
-                                    
-                                    Text(option.label)
-                                        .padding(.leading)
-                                }
+            NavigationView {
+                VStack(spacing: 0) {
+                    ScrollView {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 14),
+                                GridItem(.flexible(), spacing: 14)
+                            ],
+                            spacing: 14
+                        ) {
+                            ForEach(pickerOptions, id: \.id) { option in
+                                pickerOptionCard(option)
                             }
                         }
+                        .padding()
                     }
-                    .id(listRefreshID)
-                    .onAppear {
-                        logOutput("Picker appeared with \(pickerOptions.count) options")
-                        listRefreshID = UUID() // Trigger a refresh
+
+                    VStack(spacing: 10) {
+                        HStack(spacing: 12) {
+                            Button("Select All") {
+                                selectedPickerOptionIDs = Set(pickerOptions.map(\.id))
+                            }
+                            .disabled(pickerOptions.isEmpty || selectedPickerOptionIDs.count == pickerOptions.count)
+
+                            Button("Clear") {
+                                selectedPickerOptionIDs.removeAll()
+                            }
+                            .disabled(selectedPickerOptionIDs.isEmpty)
+                        }
+                        .font(.subheadline)
+
+                        Button(action: {
+                            let selectedOptions = pickerOptions.filter { selectedPickerOptionIDs.contains($0.id) }
+                            downloadSelectedPickerOptions(selectedOptions)
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.down.circle.fill")
+                                Text(selectedPickerOptionIDs.isEmpty ? "Select Downloads" : "Download Selected (\(selectedPickerOptionIDs.count))")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(selectedPickerOptionIDs.isEmpty ? Color.gray.opacity(0.4) : Color.blue.opacity(0.85))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(selectedPickerOptionIDs.isEmpty)
                     }
+                    .padding()
+                    .background(Color.black.opacity(0.9))
+                }
+                .navigationTitle(selectedPickerOptionIDs.isEmpty ? "Select Downloads" : "\(selectedPickerOptionIDs.count) Selected")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showPicker = false
+                        }
+                    }
+                }
+            }
+            .id(listRefreshID)
+            .preferredColorScheme(.dark)
+            .onAppear {
+                logOutput("Picker appeared with \(pickerOptions.count) options")
+                listRefreshID = UUID() // Trigger a refresh
+                selectedPickerOptionIDs.removeAll()
+            }
         }
         .sheet(isPresented: $showShareSheetDownloadPicker) {
             VStack(spacing: 20) {
@@ -405,6 +436,66 @@ struct ContentView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .preferredColorScheme(.dark)
+    }
+
+    private func pickerOptionCard(_ option: PickerOption) -> some View {
+        let isSelected = selectedPickerOptionIDs.contains(option.id)
+        let isAudio = option.label.lowercased().contains("audio")
+
+        return Button(action: {
+            if isSelected {
+                selectedPickerOptionIDs.remove(option.id)
+            } else {
+                selectedPickerOptionIDs.insert(option.id)
+            }
+        }) {
+            VStack(alignment: .leading, spacing: 8) {
+                ZStack(alignment: .topTrailing) {
+                    Group {
+                        if isAudio {
+                            Image(systemName: "music.note")
+                                .font(.system(size: 54, weight: .semibold))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color.green.opacity(0.18))
+                        } else {
+                            AsyncImage(url: option.url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            } placeholder: {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(Color.white.opacity(0.08))
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .aspectRatio(1, contentMode: .fit)
+                    .clipped()
+                    .cornerRadius(8)
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundColor(isSelected ? .blue : .white.opacity(0.8))
+                        .padding(8)
+                }
+
+                Text(option.label.capitalized)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(8)
+            .background(Color.white.opacity(isSelected ? 0.16 : 0.08))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.blue : Color.white.opacity(0.12), lineWidth: isSelected ? 3 : 1)
+            )
+            .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
     }
 
     private func downloadVideo(mode: String = "auto") {
@@ -536,6 +627,12 @@ struct ContentView: View {
     }
 
     private func selectPickerOption(_ option: PickerOption) {
+        downloadSelectedPickerOptions([option])
+    }
+
+    private func downloadSelectedPickerOptions(_ options: [PickerOption]) {
+        guard !options.isEmpty else { return }
+
         // Cancel any existing operations before starting new ones
         if isLoading {
             cancelAllOperations()
@@ -543,7 +640,9 @@ struct ContentView: View {
         
         isLoading = true
         showPicker = false
+        selectedPickerOptionIDs.removeAll()
         errorMessage = ""
+        shouldCancelDownload = false
 
         // Start background task to ensure completion even if app goes to background
         let backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "PickerDownload") {
@@ -561,42 +660,34 @@ struct ContentView: View {
             }
             
             do {
-                let fileExtension = option.url.pathExtension.lowercased()
-                let label = option.label.lowercased()
-                var downloadURL: URL
-                var downloadType: FileDownloader.DownloadType = .video
+                var downloadedFiles: [URL] = []
 
-                let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
-                    DispatchQueue.main.async {
-                        self.errorMessage = total <= 0 
-                            ? "Downloading: \(String(format: "%.1f", downloaded)) MB"
-                            : "Downloading: \(String(format: "%.1f", downloaded))/\(String(format: "%.1f", total)) MB"
-                        self.isSuccessMessage = true
+                for (index, option) in options.enumerated() {
+                    if shouldCancelDownload || Task.isCancelled {
+                        throw CancellationError()
                     }
+
+                    let downloadType = try pickerDownloadType(for: option)
+                    let progressHandler: FileDownloader.ProgressHandler = { downloaded, total in
+                        DispatchQueue.main.async {
+                            let fileCount = options.count > 1 ? "\(index + 1)/\(options.count): " : ""
+                            self.errorMessage = total <= 0
+                                ? "Downloading \(fileCount)\(String(format: "%.1f", downloaded)) MB"
+                                : "Downloading \(fileCount)\(String(format: "%.1f", downloaded))/\(String(format: "%.1f", total)) MB"
+                            self.isSuccessMessage = true
+                        }
+                    }
+
+                    let downloadURL = try await FileDownloader.shared.downloadFile(
+                        from: option.url,
+                        type: downloadType,
+                        onProgress: progressHandler,
+                        skipTempCleanup: index != 0
+                    )
+                    downloadedFiles.append(downloadURL)
                 }
 
-                // Determine download type based on label first (most reliable), then extension
-                if label.contains("audio") || label.contains("sound") {
-                    downloadType = .audio
-                } else if label.contains("video") {
-                    downloadType = .video
-                } else if label.contains("photo") || label.contains("image") {
-                    downloadType = .image
-                } else if ["mp4", "mov", "mkv"].contains(fileExtension) {
-                    downloadType = .video
-                } else if ["webm", "webp"].contains(fileExtension) {
-                    // webm/webp can be audio or video, default to video but will be corrected by Content-Type
-                    downloadType = .video
-                } else if ["jpg", "png", "jpeg", "gif", "bmp"].contains(fileExtension) {
-                    downloadType = .image
-                } else if ["mp3", "aac", "wav", "m4a", "ogg", "flac"].contains(fileExtension) {
-                    downloadType = .audio
-                } else {
-                    throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
-                }
-
-                downloadURL = try await FileDownloader.shared.downloadFile(from: option.url, type: downloadType, onProgress: progressHandler)
-                handleDownloadSuccess(downloadURL)
+                handleBatchDownloadSuccess(downloadedFiles)
             } catch {
                 if shouldCancelDownload || error is CancellationError {
                     errorMessage = "Download cancelled"
@@ -608,6 +699,31 @@ struct ContentView: View {
                 urlInput = ""
             }
             isLoading = false
+        }
+    }
+
+    private func pickerDownloadType(for option: PickerOption) throws -> FileDownloader.DownloadType {
+        let fileExtension = option.url.pathExtension.lowercased()
+        let label = option.label.lowercased()
+
+        // Determine download type based on label first (most reliable), then extension
+        if label.contains("audio") || label.contains("sound") {
+            return .audio
+        } else if label.contains("video") {
+            return .video
+        } else if label.contains("photo") || label.contains("image") {
+            return .image
+        } else if ["mp4", "mov", "mkv"].contains(fileExtension) {
+            return .video
+        } else if ["webm", "webp"].contains(fileExtension) {
+            // webm/webp can be audio or video, default to video but will be corrected by Content-Type
+            return .video
+        } else if ["jpg", "png", "jpeg", "gif", "bmp"].contains(fileExtension) {
+            return .image
+        } else if ["mp3", "aac", "wav", "m4a", "ogg", "flac"].contains(fileExtension) {
+            return .audio
+        } else {
+            throw NSError(domain: "Unsupported file type", code: 0, userInfo: nil)
         }
     }
 
@@ -739,6 +855,72 @@ struct ContentView: View {
         }
     }
 
+    private func handleBatchDownloadSuccess(_ fileURLs: [URL]) {
+        guard !fileURLs.isEmpty else { return }
+
+        Task {
+            var shareURLs: [URL] = []
+            var savedCount = 0
+
+            if settings.autoSaveToPhotos {
+                for fileURL in fileURLs {
+                    let ext = fileURL.pathExtension.lowercased()
+                    let isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].contains(ext)
+                    let isVideo = ["mp4", "mov", "webm", "mkv"].contains(ext)
+
+                    if isImage {
+                        if isImageIOSCompatible(fileURL) {
+                            await MainActor.run {
+                                if let image = UIImage(contentsOfFile: fileURL.path) {
+                                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                                    logOutput("Saving image directly to Photos \(image)")
+                                    savedCount += 1
+                                } else {
+                                    shareURLs.append(fileURL)
+                                }
+                            }
+                        } else {
+                            logOutput("Image format not iOS compatible, adding to batch share sheet")
+                            shareURLs.append(fileURL)
+                        }
+                    } else if isVideo {
+                        if await isVideoIOSCompatible(fileURL) {
+                            await MainActor.run {
+                                UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
+                                logOutput("Saving video directly to Photos \(fileURL)")
+                                savedCount += 1
+                            }
+                        } else {
+                            logOutput("Video format/codec not iOS compatible, adding to batch share sheet")
+                            shareURLs.append(fileURL)
+                        }
+                    } else {
+                        shareURLs.append(fileURL)
+                    }
+                }
+            } else {
+                shareURLs = fileURLs
+            }
+
+            await MainActor.run {
+                downloadedVideoURL = IdentifiableURL(url: fileURLs[0])
+
+                if shareURLs.isEmpty {
+                    errorMessage = savedCount == 1 ? "Saved 1 file" : "Saved \(savedCount) files"
+                    NotificationManager.sendDownloadCompleteNotification(text: errorMessage)
+                } else {
+                    let downloadedText = fileURLs.count == 1 ? "File downloaded" : "\(fileURLs.count) files downloaded"
+                    errorMessage = downloadedText
+                    NotificationManager.sendDownloadCompleteNotification(text: "\(downloadedText), open app to proceed")
+                    showShareSheet(urls: shareURLs)
+                }
+
+                isSuccessMessage = true
+                urlInput = ""
+            }
+        }
+    }
+
     private func pasteURL() {
         logOutput("📋 pasteURL called, isLoading: \(isLoading), urlInput: \(urlInput)")
         if let clipboardText = UIPasteboard.general.string {
@@ -767,9 +949,19 @@ struct ContentView: View {
 
     private func showShareSheet() {
         if let downloadedVideoURL = downloadedVideoURL {
-            (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.present(UIActivityViewController(activityItems: [downloadedVideoURL.url], applicationActivities: nil), animated: true)
+            showShareSheet(urls: [downloadedVideoURL.url])
             }
         }
+
+    private func showShareSheet(urls: [URL]) {
+        guard !urls.isEmpty else { return }
+
+        (UIApplication.shared.connectedScenes.first as? UIWindowScene)?
+            .windows
+            .first?
+            .rootViewController?
+            .present(UIActivityViewController(activityItems: urls, applicationActivities: nil), animated: true)
+    }
 
     private func cancelAllOperations(clearURL: Bool = true) {
         logOutput("🛑 Canceling all operations, clearURL: \(clearURL), isLoading before: \(isLoading)")
@@ -787,6 +979,7 @@ struct ContentView: View {
             }
             self.downloadedVideoURL = nil
             self.pickerOptions = []
+            self.selectedPickerOptionIDs.removeAll()
             self.showPicker = false
             self.listRefreshID = UUID()
             logOutput("🛑 Operations canceled, isLoading after: \(self.isLoading)")
