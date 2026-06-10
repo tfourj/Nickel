@@ -440,7 +440,7 @@ struct ContentView: View {
 
     private func pickerOptionCard(_ option: PickerOption) -> some View {
         let isSelected = selectedPickerOptionIDs.contains(option.id)
-        let isAudio = option.label.lowercased().contains("audio")
+        let mediaKind = pickerMediaKind(for: option)
 
         return Button(action: {
             if isSelected {
@@ -452,12 +452,18 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 8) {
                 ZStack(alignment: .topTrailing) {
                     Group {
-                        if isAudio {
+                        switch mediaKind {
+                        case .audio:
                             Image(systemName: "music.note")
                                 .font(.system(size: 54, weight: .semibold))
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(Color.green.opacity(0.18))
-                        } else {
+                        case .video:
+                            Image(systemName: "play.rectangle.fill")
+                                .font(.system(size: 58, weight: .semibold))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color.blue.opacity(0.18))
+                        case .image:
                             AsyncImage(url: option.url) { image in
                                 image
                                     .resizable()
@@ -496,6 +502,27 @@ struct ContentView: View {
             .cornerRadius(10)
         }
         .buttonStyle(.plain)
+    }
+
+    private enum PickerMediaKind {
+        case audio
+        case video
+        case image
+    }
+
+    private func pickerMediaKind(for option: PickerOption) -> PickerMediaKind {
+        let label = option.label.lowercased()
+        let fileExtension = option.url.pathExtension.lowercased()
+
+        if label.contains("audio") || label.contains("sound") || ["mp3", "aac", "wav", "m4a", "ogg", "flac"].contains(fileExtension) {
+            return .audio
+        }
+
+        if label.contains("video") || ["mp4", "mov", "mkv", "webm"].contains(fileExtension) {
+            return .video
+        }
+
+        return .image
     }
 
     private func downloadVideo(mode: String = "auto") {
