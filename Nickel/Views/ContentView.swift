@@ -489,7 +489,9 @@ struct ContentView: View {
                             AsyncImage(url: option.url) { image in
                                 image
                                     .resizable()
-                                    .scaledToFill()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(Color.white.opacity(0.08))
                             } placeholder: {
                                 ProgressView()
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -499,7 +501,6 @@ struct ContentView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .aspectRatio(1, contentMode: .fit)
-                    .clipped()
                     .cornerRadius(8)
 
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -516,6 +517,8 @@ struct ContentView: View {
                     .minimumScaleFactor(0.8)
             }
             .padding(8)
+            .frame(maxWidth: .infinity)
+            .frame(height: 210, alignment: .top)
             .background(Color.white.opacity(isSelected ? 0.16 : 0.08))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
