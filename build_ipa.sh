@@ -44,6 +44,7 @@ xcodebuild clean build \
   -configuration Release \
   -destination "generic/platform=iOS" \
   -sdk "$SDK" \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS=SIDELOADED_IPA \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO || { echo "❌ Build failed"; exit 1; }
@@ -59,6 +60,7 @@ xcodebuild archive \
   -archivePath "$BUILD_DIR/archive.xcarchive" \
   -destination "generic/platform=iOS" \
   -sdk "$SDK" \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS=SIDELOADED_IPA \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO || { echo "❌ Archive failed"; exit 1; }
