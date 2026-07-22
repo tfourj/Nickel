@@ -88,6 +88,16 @@ struct InstanceSettingsView: View {
                             .foregroundColor(.blue)
                     }
                 } else if settings.authMethod == "Nickel-Auth" || settings.authMethod == "Nickel-Auth (Custom)" {
+                    if !AppAttestAvailability.isAvailable {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Nickel-Auth Unavailable", systemImage: "exclamationmark.triangle.fill")
+                                .font(.headline)
+                            Text(AppAttestAvailability.unavailableMessage)
+                                .font(.footnote)
+                        }
+                        .foregroundStyle(.orange)
+                    }
+
                     Button(action: {
                         if let url = URL(string: "https://getnickel.app/instances/") {
                             UIApplication.shared.open(url)

@@ -15,6 +15,7 @@ struct MainTabView: View {
     @State private var showUpdateAvailable = false
     @State private var latestVersion: String = ""
     @State private var showURLSetAlert = false
+    @State private var showAppAttestUnavailableAlert = false
     private let currentLandingPageVersion = 2
     @State private var completedLandingPageVersion = UserDefaults.standard.integer(forKey: "landingPageVersion")
 
@@ -77,11 +78,34 @@ struct MainTabView: View {
                 }
             }
         }
+        .onAppear {
+            showAppAttestWarningIfNeeded()
+        }
+        .onChange(of: settings.authMethod) {
+            showAppAttestWarningIfNeeded()
+        }
         .alert("URL Set", isPresented: $showURLSetAlert) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("The API URL has been updated to: \(settings.customAPIURL) and authMethod to: Nickel-Auth")
         }
+        .alert("Nickel-Auth Unavailable", isPresented: $showAppAttestUnavailableAlert) {
+            Button("Open Settings") {
+                selectedTab = 1
+            }
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(AppAttestAvailability.unavailableMessage)
+        }
+    }
+
+    private func showAppAttestWarningIfNeeded() {
+        guard settings.authMethod.contains("Nickel-Auth"),
+              !AppAttestAvailability.isAvailable else {
+            return
+        }
+
+        showAppAttestUnavailableAlert = true
     }
 }
 
