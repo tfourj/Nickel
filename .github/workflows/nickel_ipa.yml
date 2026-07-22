@@ -53,18 +53,10 @@ jobs:
         echo "Installed SwiftFFmpeg-iOS:"
         ls -la "$TARGET_DIR"
 
-    - name: List available Xcode versions
-      run: ls -1 /Applications/ | grep Xcode
-
-    - name: Auto-select latest Xcode 16.x
-      run: |
-        LATEST_XCODE=$(ls -1 /Applications/ | grep "Xcode_16" | grep -v "beta" | sort -V | tail -n 1)
-        if [ -z "$LATEST_XCODE" ]; then
-          echo "❌ No Xcode 16.x found!"
-          exit 1
-        fi
-        echo "✅ Using $LATEST_XCODE"
-        sudo xcode-select -s "/Applications/$LATEST_XCODE/Contents/Developer"
+    - name: Set up Xcode 26.2
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: "26.2"
 
     - name: Show Xcode Version
       run: xcodebuild -version
