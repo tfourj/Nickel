@@ -111,7 +111,7 @@ struct AboutView: View {
                     }
                 }
                                 Button(action: {
-                    if let url = URL(string: "https://getnickel.app/discord") {
+                    if let url = URL(string: "https://discord.tfourj.com") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -175,4 +175,4 @@ struct AboutView: View {
 #Preview {
     AboutView()
         .environmentObject(SettingsModel())
-} 
+}
