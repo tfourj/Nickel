@@ -9,6 +9,30 @@ import DeviceCheck
 import CryptoKit
 import UIKit
 
+enum AppAttestAvailability {
+    static var isSideloadedBuild: Bool {
+        #if SIDELOADED_IPA
+        true
+        #else
+        false
+        #endif
+    }
+
+    static var isAvailable: Bool {
+        !isSideloadedBuild && DCAppAttestService.shared.isSupported
+    }
+
+    static var unavailableMessage: String {
+        if isSideloadedBuild {
+            return "Nickel-Auth requires Apple App Attest and will not work in this sideloaded IPA. " +
+                "Choose a different authentication method."
+        }
+
+        return "Nickel-Auth requires Apple App Attest, which is unavailable on this device. " +
+            "Choose a different authentication method."
+    }
+}
+
 class AppAttestClient {
     var settings: SettingsModel = SettingsModel()
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
@@ -28,12 +52,18 @@ class AppAttestClient {
         beginBackgroundTask()
         defer { endBackgroundTask() }
         
-        let service = DCAppAttestService.shared
-        guard service.isSupported else {
-            logOutput("❌ App Attest not supported on this device.")
-            throw NSError(domain: "AppAttest", code: 1, userInfo: [NSLocalizedDescriptionKey: "App Attest not supported on this device."])
+        guard AppAttestAvailability.isAvailable else {
+            let message = AppAttestAvailability.unavailableMessage
+            logOutput("❌ \(message)")
+            throw NSError(
+                domain: "AppAttest",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: message]
+            )
         }
         logOutput("✅ App Attest is supported on this device.")
+
+        let service = DCAppAttestService.shared
 
         // Send progress update
         DispatchQueue.main.async {
